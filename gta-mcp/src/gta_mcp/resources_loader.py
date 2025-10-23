@@ -1,0 +1,242 @@
+"""Resource loading and parsing utilities for GTA MCP server."""
+
+import os
+import re
+from pathlib import Path
+from typing import Dict, Optional
+
+
+# Cache for loaded resources
+_CACHE: Dict[str, str] = {}
+
+
+def get_resources_dir() -> Path:
+	"""Get the path to the resources directory."""
+	# Resources are in the project root, not in src/
+	current_file = Path(__file__)
+	project_root = current_file.parent.parent.parent
+	return project_root / "resources"
+
+
+def load_jurisdictions_table() -> str:
+	"""Load the complete jurisdictions table from markdown file.
+
+	Returns:
+		Complete markdown table content
+	"""
+	if "jurisdictions" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "gta_jurisdictions.md"
+
+		if not file_path.exists():
+			return "Error: Jurisdictions resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["jurisdictions"] = f.read()
+
+	return _CACHE["jurisdictions"]
+
+
+def load_intervention_types() -> str:
+	"""Load the complete intervention types descriptions from markdown file.
+
+	Returns:
+		Complete markdown content with all intervention type descriptions
+	"""
+	if "intervention_types" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "GTA intervention type descriptions.md"
+
+		if not file_path.exists():
+			return "Error: Intervention types resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["intervention_types"] = f.read()
+
+	return _CACHE["intervention_types"]
+
+
+def parse_jurisdiction_by_iso(iso_code: str) -> Optional[str]:
+	"""Parse jurisdiction table and find entry by ISO code.
+
+	Args:
+		iso_code: ISO 3-letter country code (e.g., USA, CHN, DEU)
+
+	Returns:
+		Formatted string with jurisdiction details or None if not found
+	"""
+	table = load_jurisdictions_table()
+
+	if table.startswith("Error:"):
+		return table
+
+	# Normalize ISO code
+	iso_upper = iso_code.upper().strip()
+
+	# Parse table line by line
+	lines = table.strip().split('\n')
+
+	# Skip header and separator
+	for line in lines[2:]:
+		if not line.strip():
+			continue
+
+		# Split by pipe and clean
+		parts = [p.strip() for p in line.split('|')]
+
+		# Table format: |jurisdiction_id|jurisdiction_name|gta_jurisdiction_id|iso_code|...
+		if len(parts) >= 10:
+			jurisdiction_id = parts[1]
+			jurisdiction_name = parts[2]
+			gta_jurisdiction_id = parts[3]
+			iso = parts[4]
+			jurisdiction_name_short = parts[5]
+			jurisdiction_name_adj = parts[6]
+
+			if iso == iso_upper:
+				return f"""Jurisdiction: {jurisdiction_name}
+UN Code (jurisdiction_id): {jurisdiction_id}
+ISO Code: {iso}
+GTA Jurisdiction ID: {gta_jurisdiction_id}
+Short Name: {jurisdiction_name_short}
+Adjective Form: {jurisdiction_name_adj}"""
+
+	return f"Jurisdiction with ISO code '{iso_code}' not found. Please use a valid ISO 3-letter code (e.g., USA, CHN, DEU, GBR)."
+
+
+def parse_intervention_type(type_slug: str) -> Optional[str]:
+	"""Parse intervention types and extract section for specific type.
+
+	Args:
+		type_slug: Slugified intervention type name (e.g., export-ban, import-tariff)
+
+	Returns:
+		Markdown section with intervention type details or None if not found
+	"""
+	content = load_intervention_types()
+
+	if content.startswith("Error:"):
+		return content
+
+	# Normalize slug
+	slug = type_slug.lower().strip().replace('_', '-')
+
+	# Try to find the heading matching this slug
+	# Intervention types are level 2 headings (##)
+	lines = content.split('\n')
+
+	# Common intervention type name variations
+	search_patterns = [
+		slug.replace('-', ' '),  # "export-ban" -> "export ban"
+		slug.replace('-', ' ').title(),  # "export-ban" -> "Export Ban"
+	]
+
+	section_start = None
+	section_heading = None
+
+	for i, line in enumerate(lines):
+		if line.startswith('## '):
+			heading_text = line[3:].strip()
+			heading_lower = heading_text.lower()
+
+			# Check if this heading matches our search
+			for pattern in search_patterns:
+				if heading_lower == pattern:
+					section_start = i
+					section_heading = heading_text
+					break
+
+			if section_start is not None:
+				break
+
+	if section_start is None:
+		# List available types (just the main headings)
+		available = []
+		for line in lines:
+			if line.startswith('## ') and not line.startswith('# '):
+				heading = line[3:].strip()
+				available.append(heading)
+
+		available_list = "\n- ".join(available[:20])  # Show first 20
+		return f"""Intervention type '{type_slug}' not found.
+
+Available intervention types:
+- {available_list}
+
+Tip: Use slugified names like 'export-ban', 'import-tariff', 'state-loan'"""
+
+	# Extract section until next ## heading or end
+	section_lines = [f"# {section_heading}\n"]
+	for line in lines[section_start + 1:]:
+		# Stop at next level 1 or 2 heading
+		if line.startswith('## ') or line.startswith('# '):
+			break
+		section_lines.append(line)
+
+	return '\n'.join(section_lines)
+
+
+def list_available_intervention_types() -> str:
+	"""Get a list of all available intervention types.
+
+	Returns:
+		Formatted list of intervention type names
+	"""
+	content = load_intervention_types()
+
+	if content.startswith("Error:"):
+		return content
+
+	types = []
+	lines = content.split('\n')
+
+	for line in lines:
+		if line.startswith('## '):
+			heading = line[3:].strip()
+			# Create slug
+			slug = heading.lower().replace(' ', '-')
+			types.append(f"- {heading} (slug: `{slug}`)")
+
+	return f"""Available GTA Intervention Types:
+
+{chr(10).join(types)}
+
+Use `gta://intervention-type/{{slug}}` to get details for a specific type."""
+
+
+def load_search_guide() -> str:
+	"""Load the search guide from markdown file.
+
+	Returns:
+		Complete markdown content with search best practices
+	"""
+	if "search_guide" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "search_guide.md"
+
+		if not file_path.exists():
+			return "Error: Search guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["search_guide"] = f.read()
+
+	return _CACHE["search_guide"]
+
+
+def load_date_fields_guide() -> str:
+	"""Load the date fields guide from markdown file.
+
+	Returns:
+		Complete markdown content explaining GTA date fields
+	"""
+	if "date_fields_guide" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "date_fields_guide.md"
+
+		if not file_path.exists():
+			return "Error: Date fields guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["date_fields_guide"] = f.read()
+
+	return _CACHE["date_fields_guide"]
