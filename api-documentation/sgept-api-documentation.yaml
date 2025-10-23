@@ -1,0 +1,3184 @@
+openapi: 3.0.3
+info:
+  title: SGEPT API Documentation
+  version: 1.0.0
+  description: "The following access points are existing:\n\n### GTA Data\nGTA Data\
+    \ access allows to extract lists of policies from the GTA database filtered by\
+    \ different criteria.\n\n- V1: https://api.globaltradealert.org/api/v1/data/\n\
+    - V2: https://api.globaltradealert.org/api/v2/gta/data/\n\n### GTA Ticker\nGTA\
+    \ Ticker access allows to more easily extract updates to existing policies. When\
+    \ we're updating a policy description, the ticker endpoint provides you with a\
+    \ ticker entry for that update.\n\n- https://api.globaltradealert.org/api/v1/gta/ticker/\n\
+    \n### GTA Impact Chains\nGTA impact chain endpoints can be used to extract actual\
+    \ implementing_jurisdiction-product_id-affected_jurisdiction tuples. While the\
+    \ GTA data endpoints aggregates this kind of data into a single entry, the impact\
+    \ chain endpoints provide the actual relationships between each value.\n\n- https://api.globaltradealert.org/api/v1/gta/impact-chains/product/\n\
+    - https://api.globaltradealert.org/api/v1/gta/impact-chains/sector/\n\n### DPA\
+    \ Data\nDPA Data access allows to extract lists of policies from the DPA database\
+    \ filtered by different criteria.\n\n- https://api.globaltradealert.org/api/v1/dpa/events/\n\
+    \n\t\t"
+paths:
+  /api/v1/data/:
+    post:
+      operationId: Querying of trade policies (V1)
+      tags:
+      - GTA Data V1 (Deprecated)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInterventionListPublicList'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - intervention_id: 138295
+                      state_act_id: 87754
+                      state_act_title: 'EU: Changes to the list of agricultural and
+                        industrial products subject to a reduction of import duties
+                        (July 2024)'
+                      intervention_description: "<p>On 4 July 2024, the European Union\
+                        \ adopted Council Regulation (EU) 2024/1851 increasing&nbsp;the\
+                        \ import duties of 49 agricultural and industrial products\
+                        \ enclosed in 20 six-digit tariff subheadings. Specifically,\
+                        \ the regulation eliminates these goods from the list of products\
+                        \ with a temporary customs duty suspension.&nbsp;The measure\
+                        \ enters into force retroactively on 1 July 2024.</p>\r\n\
+                        <p>Among the affected products there are&nbsp;several chemical\
+                        \ and pharmaceutical products, fertilisers and plastics. According\
+                        \ to the WTO Tariff Download Facility, the new duties, i.e.\
+                        \ the MFN duties, range from 0.7% to 6.5%. The preferential\
+                        \ duties still exclude imports from Russia and Belarus.&nbsp;</p>\r\
+                        \n<p>The Regulation amends&nbsp;Council Regulation (EU) 2023/2890\
+                        \ of December 2023. According to its text, the objective is\
+                        \ \"to ensure a sufficient and uninterrupted supply of certain\
+                        \ agricultural and industrial products which are not produced\
+                        \ in the Union and thereby avoid any disturbances on the market\
+                        \ for those products\".&nbsp;</p>\r\n<p>The regulation also\
+                        \ adds other&nbsp;goods to the list of products with a temporary\
+                        \ customs duty suspension (see related intervention).&nbsp;</p>"
+                      intervention_url: https://www.globaltradealert.org/intervention/138295
+                      state_act_url: https://www.globaltradealert.org/state-act/87754
+                      state_act_source: "Official Journal of the EU - EUR-Lex (4 July\
+                        \ 2024). Council Regulation (EU) 2024/1851 of 25 June 2024\
+                        \ amending Regulation (EU) 2021/2278 suspending the Common\
+                        \ Customs Tariff duties referred to in Article 56(2), point\
+                        \ (c), of Regulation (EU) No 952/2013 of the European Parliament\
+                        \ and of the Council on certain agricultural and industrial\
+                        \ products:\r\nhttps://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202401851\r\
+                        \n\r\nOfficial Journal of the EU - EUR-Lex (29 December 2023).\
+                        \ Council Regulation (EU) 2023/2890 of 19 December 2023 amending\
+                        \ Regulation (EU) 2021/2278 suspending the Common Customs\
+                        \ Tariff duties referred to in Article 56(2), point (c), of\
+                        \ Regulation (EU) No 952/2013 on certain agricultural and\
+                        \ industrial products:\r\nhttps://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32023R2890&qid=1693489952256\r\
+                        \n\r\nWTO Tariff Download Facility. Accessed June 2024: http://tariffdata.wto.org/Default.aspx"
+                      is_official_source: true
+                      gta_evaluation: Red
+                      implementing_jurisdictions:
+                      - id: 40
+                        name: Austria
+                        iso: AUT
+                      - id: 56
+                        name: Belgium
+                        iso: BEL
+                      - id: 100
+                        name: Bulgaria
+                        iso: BGR
+                      implementing_jurisdiction_groups:
+                      - name: European Union
+                      affected_jurisdictions:
+                      - id: 32
+                        name: Argentina
+                        iso: ARG
+                      - id: 36
+                        name: Australia
+                        iso: AUS
+                      - id: 84
+                        name: Belize
+                        iso: BLZ
+                      implementation_level: Supranational
+                      eligible_firm: all
+                      intervention_type: Import tariff
+                      mast_chapter: Tariff measures
+                      mast_subchapter: Tariff measures
+                      affected_sectors:
+                      - 341
+                      - 352
+                      - 379
+                      - 346
+                      - 369
+                      - 469
+                      - 354
+                      affected_products:
+                      - product_id: 292149
+                        prior_level: '3.5'
+                        new_level: '6.5'
+                        unit: null
+                      - product_id: 292229
+                        prior_level: '0'
+                        new_level: '6.5'
+                        unit: null
+                      - product_id: 292429
+                        prior_level: '0'
+                        new_level: '3.3'
+                        unit: null
+                      date_announced: '2024-07-04'
+                      date_published: '2024-07-08'
+                      date_implemented: '2024-07-01'
+                      date_removed: null
+                      is_in_force: 1
+                  summary: Full Access Example
+                BasicAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - intervention_id: 138295
+                      state_act_id: 87754
+                      state_act_title: 'EU: Changes to the list of agricultural and
+                        industrial products subject to a reduction of import duties
+                        (July 2024)'
+                      intervention_url: https://www.globaltradealert.org/intervention/138295
+                      state_act_url: https://www.globaltradealert.org/state-act/87754
+                      gta_evaluation: Red
+                      implementing_jurisdictions:
+                      - id: 40
+                        name: Austria
+                        iso: AUT
+                      - id: 56
+                        name: Belgium
+                        iso: BEL
+                      - id: 100
+                        name: Bulgaria
+                        iso: BGR
+                      implementing_jurisdiction_groups:
+                      - name: European Union
+                      affected_jurisdictions:
+                      - id: 32
+                        name: Argentina
+                        iso: ARG
+                      - id: 36
+                        name: Australia
+                        iso: AUS
+                      - id: 84
+                        name: Belize
+                        iso: BLZ
+                      implementation_level: Supranational
+                      eligible_firm: all
+                      intervention_type: Import tariff
+                      mast_chapter: Tariff measures
+                      mast_subchapter: Tariff measures
+                      affected_sectors:
+                      - 341
+                      - 352
+                      - 379
+                      - 346
+                      - 369
+                      - 469
+                      - 354
+                      affected_products:
+                      - 292149
+                      - 292229
+                      - 292429
+                      date_announced: '2024-07-04'
+                      date_published: '2024-07-08'
+                      date_implemented: '2024-07-01'
+                      date_removed: null
+                      is_in_force: 1
+                  summary: Basic Access Example
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+  /api/v1/dpa/events/:
+    post:
+      operationId: Querying of digital policies
+      tags:
+      - DPA Data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventsRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventsRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventsRequestBody'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventListPublicAPIList'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - id: 20442
+                      title: Adopted Second Edition Model AI Governance Framework
+                      url: https://digitalpolicyalert.org/event/20442-adopted-model-ai-governance-framework-for-generative-ai
+                      description: On 21 January 2020, the Infocomm Media Development
+                        Authority (IMDA) of Singapore, together with the Personal
+                        Data Privacy Commission (PDPC) and in collaboration with the
+                        World Economic Forum (WEF), adopted the Second Edition Model
+                        AI Governance Framework. The Governance Framework updates
+                        the First Edition Model AI Governance Framework, adopted in
+                        2019, [...]
+                      date: '2020-01-21'
+                      status: adopted
+                      event_type: outline
+                      action_type: adoption
+                      implementers:
+                      - name: Singapore
+                        id: 702
+                      implementer_groups: []
+                      policy_area: Design and testing standards
+                      policy_instrument: Artificial Intelligence authority governance
+                      economic_activities:
+                      - name: ML and AI development
+                        id: 9
+                      implementation_level: national
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+  /api/v1/dpa/mappings/:
+    post:
+      operationId: Querying of DPA mapping helpers
+      tags:
+      - Mapping Helpers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DPAMappingRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DPAMappingRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DPAMappingRequestBody'
+        required: true
+      security:
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DPAMappingKeys'
+              examples:
+                FullAccessExample:
+                  value:
+                    economic_activities:
+                    - id: 1
+                      slug: cross-cutting
+                      name: cross-cutting
+                    - '...'
+                    - id: 22
+                      slug: infrastructure-provider-other
+                      name: 'infrastructure provider: other'
+                    policy_areas:
+                    - id: 1
+                      name: International trade
+                      name_short: International trade
+                    - '...'
+                    - id: 17
+                      name: Regulatory Compliance and Transparency
+                      name_short: Regulatory Compliance and Transparency
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+  /api/v1/gta/data/:
+    post:
+      operationId: Querying of trade policies (V2)
+      description: 'Query trade policies endpoint. URL: POST /api/public/v2/gta/data/'
+      summary: Query Trade Policies V2
+      tags:
+      - GTA Data V2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterventionRequestBody'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInterventionFullListPublicSerializerV2List'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - - intervention_id: 138295
+                        state_act_id: 87754
+                        state_act_title: 'EU: Changes to the list of agricultural
+                          and industrial products subject to a reduction of import
+                          duties (July 2024)'
+                        intervention_description:
+                        - id: 84578
+                          status: static
+                          description: "<p>On 4 July 2024, the European Union adopted\
+                            \ Council Regulation (EU) 2024/1851 increasing&nbsp;the\
+                            \ import duties of 49 agricultural and industrial products\
+                            \ enclosed in 20 six-digit tariff subheadings. Specifically,\
+                            \ the regulation eliminates these goods from the list\
+                            \ of products with a temporary customs duty suspension.&nbsp;The\
+                            \ measure enters into force retroactively on 1 July 2024.</p>\r\
+                            \n<p>Among the affected products there are&nbsp;several\
+                            \ chemical and pharmaceutical products, fertilisers and\
+                            \ plastics. According to the WTO Tariff Download Facility,\
+                            \ the new duties, i.e. the MFN duties, range from 0.7%\
+                            \ to 6.5%. The preferential duties still exclude imports\
+                            \ from Russia and Belarus.&nbsp;</p>\r\n<p>The Regulation\
+                            \ amends&nbsp;Council Regulation (EU) 2023/2890 of December\
+                            \ 2023. According to its text, the objective is \"to ensure\
+                            \ a sufficient and uninterrupted supply of certain agricultural\
+                            \ and industrial products which are not produced in the\
+                            \ Union and thereby avoid any disturbances on the market\
+                            \ for those products\".&nbsp;</p>\r\n<p>The regulation\
+                            \ also adds other&nbsp;goods to the list of products with\
+                            \ a temporary customs duty suspension (see related intervention).&nbsp;</p>"
+                          datetime_created: 2024-07-08 00:00
+                          datetime_modified: 2024-07-08 00:00
+                          order_nr: 1
+                        intervention_url: https://globaltradealert.org/intervention/138295
+                        state_act_url: https://www.globaltradealert.org/state-act/87754
+                        state_act_source:
+                        - id: 66692
+                          status: static
+                          source: "Official Journal of the EU - EUR-Lex (4 July 2024).\
+                            \ Council Regulation (EU) 2024/1851 of 25 June 2024 amending\
+                            \ Regulation (EU) 2021/2278 suspending the Common Customs\
+                            \ Tariff duties referred to in Article 56(2), point (c),\
+                            \ of Regulation (EU) No 952/2013 of the European Parliament\
+                            \ and of the Council on certain agricultural and industrial\
+                            \ products:\r\nhttps://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202401851\r\
+                            \n\r\nOfficial Journal of the EU - EUR-Lex (29 December\
+                            \ 2023). Council Regulation (EU) 2023/2890 of 19 December\
+                            \ 2023 amending Regulation (EU) 2021/2278 suspending the\
+                            \ Common Customs Tariff duties referred to in Article\
+                            \ 56(2), point (c), of Regulation (EU) No 952/2013 on\
+                            \ certain agricultural and industrial products:\r\nhttps://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32023R2890&qid=1693489952256\r\
+                            \n\r\nWTO Tariff Download Facility. Accessed June 2024:\
+                            \ http://tariffdata.wto.org/Default.aspx"
+                          datetime_created: 2024-07-08 00:00
+                          datetime_modified: 2024-07-08 00:00
+                          order_nr: 1
+                        is_official_source: true
+                        gta_evaluation: Red
+                        implementing_jurisdictions:
+                        - id: 40
+                          name: Austria
+                          iso: AUT
+                        - id: 56
+                          name: Belgium
+                          iso: BEL
+                        - id: 100
+                          name: Bulgaria
+                          iso: BGR
+                        implementing_jurisdiction_groups:
+                        - name: European Union
+                        affected_jurisdictions:
+                        - id: 32
+                          name: Argentina
+                          iso: ARG
+                        - id: 36
+                          name: Australia
+                          iso: AUS
+                        - id: 84
+                          name: Belize
+                          iso: BLZ
+                        inferred_jurisdictions: Excluded
+                        implementation_level: Supranational
+                        eligible_firm: all
+                        intervention_type: Import tariff
+                        mast_chapter: Tariff measures
+                        mast_subchapter: Tariff measures
+                        affected_sectors:
+                        - sector_id: 341
+                          name: Basic organic chemicals
+                        - sector_id: 352
+                          name: Pharmaceutical products
+                        affected_products:
+                        - product_id: 292149
+                          name: Amine-function compounds; aromatic monoamines and
+                            their derivatives; salts thereof; n.e.c. in item no. 2921.4
+                          prior_level: '3.5'
+                          new_level: '6.5'
+                          unit: null
+                          date_implemented: null
+                          date_removed: null
+                        - product_id: 292229
+                          name: Amino-naphthols and other amino-phenols, other than
+                            those containing more than one kind of oxygen function,
+                            their ethers and esters; salts thereof n.e.c. in item
+                            no. 2922.2
+                          prior_level: '0'
+                          new_level: '6.5'
+                          unit: null
+                          date_implemented: null
+                          date_removed: null
+                        - product_id: 292429
+                          name: Cyclic amides (including cyclic carbamates) and their
+                            derivatives; other than the derivatives and salts of ureines,
+                            2-acetamidobenzoic acid (N-acetylanthancillic acid),ethinamate
+                            S, and alachlor (ISO) and their derivatives and salts
+                          prior_level: '0.0'
+                          new_level: '3.3'
+                          unit: null
+                          date_implemented: null
+                          date_removed: null
+                        date_announced: '2024-07-04'
+                        date_published: '2024-07-08'
+                        date_implemented: '2024-07-01'
+                        date_removed: null
+                        is_in_force: 1
+                        last_updated: '2025-05-23'
+                  summary: Full response with all fields
+                  description: Complete example showing all available fields for full
+                    access users
+                BasicAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - - intervention_id: 138295
+                        state_act_id: 87754
+                        state_act_title: 'EU: Changes to the list of agricultural
+                          and industrial products subject to a reduction of import
+                          duties (July 2024)'
+                        intervention_url: https://globaltradealert.org/intervention/138295
+                        state_act_url: https://www.globaltradealert.org/state-act/87754
+                        gta_evaluation: Red
+                        implementing_jurisdictions:
+                        - id: 40
+                          name: Austria
+                          iso: AUT
+                        - id: 56
+                          name: Belgium
+                          iso: BEL
+                        - id: 100
+                          name: Bulgaria
+                          iso: BGR
+                        implementing_jurisdiction_groups:
+                        - name: European Union
+                        affected_jurisdictions:
+                        - id: 32
+                          name: Argentina
+                          iso: ARG
+                        - id: 36
+                          name: Australia
+                          iso: AUS
+                        - id: 84
+                          name: Belize
+                          iso: BLZ
+                        inferred_jurisdictions: Excluded
+                        implementation_level: Supranational
+                        eligible_firm: all
+                        intervention_type: Import tariff
+                        mast_chapter: Tariff measures
+                        mast_subchapter: Tariff measures
+                        affected_sectors:
+                        - sector_id: 341
+                          name: Basic organic chemicals
+                        - sector_id: 352
+                          name: Pharmaceutical products
+                        affected_products:
+                        - product_id: 292149
+                          name: Amine-function compounds; aromatic monoamines and
+                            their derivatives; salts thereof; n.e.c. in item no. 2921.4
+                        - product_id: 292229
+                          name: Amino-naphthols and other amino-phenols, other than
+                            those containing more than one kind of oxygen function,
+                            their ethers and esters; salts thereof n.e.c. in item
+                            no. 2922.2
+                        - product_id: 292429
+                          name: Cyclic amides (including cyclic carbamates) and their
+                            derivatives; other than the derivatives and salts of ureines,
+                            2-acetamidobenzoic acid (N-acetylanthancillic acid),ethinamate
+                            S, and alachlor (ISO) and their derivatives and salts
+                        date_announced: '2024-07-04'
+                        date_published: '2024-07-08'
+                        date_implemented: '2024-07-01'
+                        date_removed: null
+                        is_in_force: 1
+                        last_updated: '2025-05-23'
+                  summary: Basic response with essential fields
+                  description: Simplified example showing essential fields for basic
+                    access users
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+  /api/v1/gta/impact-chains/product/:
+    post:
+      operationId: Query impact chain product data
+      tags:
+      - GTA Impact Chains
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedImpactChainProductListList'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - intervention_id: 138295
+                      intervention_url: https://globaltradealert.org/intervention/138295
+                      affected_product:
+                        product_id: 292149
+                        name: Amine-function compounds; aromatic monoamines and their
+                          derivatives; salts thereof; n.e.c. in item no. 2921.4
+                      implementing_jurisdiction:
+                        id: 40
+                        name: European Union
+                        iso: EU
+                      affected_jurisdictions:
+                      - id: 1
+                        name: World
+                        iso: WLD
+                      - id: 32
+                        name: Argentina
+                        iso: ARG
+                      date_implemented: '2024-07-01'
+                      date_removed: null
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+  /api/v1/gta/impact-chains/sector/:
+    post:
+      operationId: Query impact chain sector data
+      tags:
+      - GTA Impact Chains
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GTAListRequest'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedImpactChainSectorListList'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - intervention_id: 138295
+                      intervention_url: https://globaltradealert.org/intervention/138295
+                      affected_sector:
+                        sector_id: 341
+                        name: Basic organic chemicals
+                      implementing_jurisdiction:
+                        id: 40
+                        name: European Union
+                        iso: EU
+                      affected_jurisdictions:
+                      - id: 1
+                        name: World
+                        iso: WLD
+                      - id: 32
+                        name: Argentina
+                        iso: ARG
+                      date_implemented: '2024-07-01'
+                      date_removed: null
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+  /api/v1/gta/mappings/:
+    post:
+      operationId: Querying of GTA mapping helpers
+      tags:
+      - Mapping Helpers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GTAMappingRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GTAMappingRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GTAMappingRequestBody'
+        required: true
+      security:
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GTAMappingKeys'
+              examples:
+                FullAccessExample:
+                  value:
+                    jurisdictions:
+                    - id: 4
+                      name: Afghanistan
+                      type: country
+                      iso_code: AFG
+                    - '....'
+                    - id: 716
+                      name: Zimbabwe
+                      type: country
+                      iso_code: ZWE
+                    implementation_levels:
+                    - implementation_level_id: 1
+                      implementation_level_name: Supranational
+                      implementation_level_name_long: Supranational agency
+                      implementation_level_description: 'null'
+                    - '....'
+                    - implementation_level_id: 6
+                      implementation_level_name: NFI
+                      implementation_level_name_long: National financial institution
+                      implementation_level_description: 'null'
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+  /api/v1/gta/ticker/:
+    post:
+      operationId: Querying of database updates
+      description: Main endpoint logic for /ticker
+      tags:
+      - GTA Ticker
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventionTickerRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterventionTickerRequestBody'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterventionTickerRequestBody'
+        required: true
+      security:
+      - APIKey: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInterventionTickerPublicSerializerV2List'
+              examples:
+                FullAccessExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - intervention_id: 138295
+                      update_id: 1
+                      status: new
+                      modified: '2024-07-08T00:00:00Z'
+                      description: <p>On 4 July 2024, the European Union adopted Council
+                        Regulation (EU) 2024/1851...</p>
+                      intervention:
+                        intervention_id: 138295
+                        state_act_id: 87754
+                        state_act_title: 'EU: Changes to the list of agricultural
+                          and industrial products subject to a reduction of import
+                          duties (July 2024)'
+                        intervention_url: https://globaltradealert.org/intervention/138295
+                        state_act_url: https://www.globaltradealert.org/state-act/87754
+                        gta_evaluation: Red
+                        implementing_jurisdictions:
+                        - id: 40
+                          name: European Union
+                          iso: EU
+                        affected_jurisdictions:
+                        - id: 1
+                          name: World
+                          iso: WLD
+                        affected_sectors:
+                        - sector_id: 1
+                          name: Agriculture
+                        affected_products:
+                        - product_id: 123456
+                          name: Chemical products
+                        date_announced: '2024-07-04'
+                        date_implemented: '2024-07-01'
+                        is_in_force: 1
+                        last_updated: '2024-07-08'
+                  summary: Full Access Example
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+components:
+  schemas:
+    AffectedFlowEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      type: integer
+      description: |-
+        * `1` - Inward
+        * `2` - Outward
+        * `3` - Outward subsidy
+    DPAMappingKeys:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+      required:
+      - keys
+    DPAMappingRequestBody:
+      type: object
+      description: Serializer for DPA mapping request body
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+          example:
+          - economic_activities
+          - policy_areassss
+          description: Define the parameters you would like to get the mappings to
+            output to, choices are `jurisdictions`, `economic_activities`, `government_branches`,
+            `event_types`, `policy_areas`, `implementation_levels`.
+      required:
+      - keys
+    DpaImplementationLevelEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+      description: |-
+        * `1` - national
+        * `2` - supranational
+        * `3` - subnational
+        * `4` - bi- or plurilateral agreement
+        * `5` - multilateral agreement
+        * `6` - other
+    EconomicActivityEnum:
+      enum:
+      - 1
+      - 2
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      type: integer
+      description: |-
+        * `1` - cross-cutting
+        * `2` - infrastructure provider: internet and telecom services
+        * `4` - online advertising provider
+        * `5` - online platform
+        * `6` - internet service provider
+        * `7` - online marketplace provider
+        * `8` - data broker
+        * `9` - web hosting provider
+        * `10` - cloud service provider
+        * `11` - social media provider
+        * `12` - content distributor
+        * `13` - search provider
+        * `14` - telecommunications provider
+        * `15` - app store provider
+        * `16` - payment service provider
+        * `17` - gatekeeper
+        * `18` - technology provider
+        * `19` - IT hardware provider
+        * `20` - software provider
+        * `21` - infrastructure provider: network hardware and equipment
+        * `22` - infrastructure provider: other
+    EligibleFirmsEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      type: integer
+      description: |-
+        * `1` - all
+        * `2` - SMEs
+        * `3` - firm-specific
+        * `4` - state-controlled
+        * `5` - state trading enterprise
+        * `6` - sector-specific
+        * `7` - location-specific
+        * `8` - processing trade
+    EventListPublicAPI:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        url:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+        event_type:
+          type: string
+        action_type:
+          type: string
+        implementers:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        implementer_groups:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        policy_area:
+          type: string
+        policy_instrument:
+          type: string
+        economic_activities:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        implementation_level:
+          type: string
+      required:
+      - action_type
+      - date
+      - description
+      - economic_activities
+      - event_type
+      - id
+      - implementation_level
+      - implementer_groups
+      - implementers
+      - policy_area
+      - policy_instrument
+      - status
+      - title
+      - url
+    EventTypeEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      type: integer
+      description: |-
+        * `1` - order
+        * `2` - outline
+        * `3` - inquiry
+        * `4` - decision
+        * `5` - ruling
+        * `6` - enforcement action
+        * `7` - comment
+        * `8` - proposal
+        * `9` - investigation
+        * `10` - declaration
+        * `11` - civil lawsuit
+    EventsRequestBody:
+      type: object
+      description: Reusable serializer for events API request body
+      properties:
+        limit:
+          type: integer
+          default: 10
+          description: Set the size of the result set here. Accepted is any number
+            between 0 and 1000.
+        offset:
+          type: integer
+          default: 0
+          description: Use this parameter to paginate through the output, it accepts
+            any number.
+        sorting:
+          type: array
+          items:
+            type: string
+          default:
+          - -intervention_id
+          description: Define the parameters you would like to sort the output by,
+            accepted is `id`, `date`, `status`, `type`, `action_type`. Combine multiple
+            order clauses together in the same string by separating them via a comma,
+            e.g. `date,type`. Reverse the order by adding a `-` in front of the order
+            clause you want to reverse, e.g. `-date`.
+        request_data:
+          allOf:
+          - $ref: '#/components/schemas/EventsRequestDataFilters'
+          description: This parameter accepts an object containing the key-value pairs
+            used as filters.
+      required:
+      - request_data
+    EventsRequestDataFilters:
+      type: object
+      description: |-
+        Serializer for events request data filters
+
+        To customize which choice fields to include, override selected_fields:
+            class CustomSerializer(EventsRequestDataFiltersSerializer):
+                selected_fields = ['implementing_jurisdiction', 'economic_activity']
+
+        By default, includes all DPA choice fields.
+      properties:
+        event_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the latest event occurs.
+        implementing_jurisdiction:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementerEnum'
+          description: <details><summary>Filters by jurisdictions, accepted values
+            are UN country codes, multiple possible.</summary><code>4</code> - Afghanistan<br><code>8</code>
+            - Albania<br><code>12</code> - Algeria<br><code>16</code> - American Samoa<br><code>20</code>
+            - Andorra<br><code>24</code> - Angola<br><code>28</code> - Antigua & Barbuda<br><code>31</code>
+            - Azerbaijan<br><code>32</code> - Argentina<br><code>36</code> - Australia<br><code>40</code>
+            - Austria<br><code>44</code> - Bahamas<br><code>48</code> - Bahrain<br><code>50</code>
+            - Bangladesh<br><code>51</code> - Armenia<br><code>52</code> - Barbados<br><code>56</code>
+            - Belgium<br><code>60</code> - Bermuda<br><code>64</code> - Bhutan<br><code>68</code>
+            - Bolivia<br><code>70</code> - Bosnia & Herzegovina<br><code>72</code>
+            - Botswana<br><code>76</code> - Brazil<br><code>84</code> - Belize<br><code>90</code>
+            - Solomon Islands<br><code>92</code> - British Virgin Islands<br><code>96</code>
+            - Brunei Darussalam<br><code>100</code> - Bulgaria<br><code>104</code>
+            - Myanmar<br><code>108</code> - Burundi<br><code>112</code> - Belarus<br><code>116</code>
+            - Cambodia<br><code>120</code> - Cameroon<br><code>124</code> - Canada<br><code>132</code>
+            - Cape Verde<br><code>136</code> - Cayman Islands<br><code>140</code>
+            - Central African Republic<br><code>144</code> - Sri Lanka<br><code>148</code>
+            - Chad<br><code>152</code> - Chile<br><code>156</code> - China<br><code>158</code>
+            - Chinese Taipei<br><code>170</code> - Colombia<br><code>174</code> -
+            Comoros<br><code>175</code> - Mayotte<br><code>178</code> - Congo<br><code>180</code>
+            - DR Congo<br><code>184</code> - Cook Islands<br><code>188</code> - Costa
+            Rica<br><code>191</code> - Croatia<br><code>192</code> - Cuba<br><code>196</code>
+            - Cyprus<br><code>203</code> - Czechia<br><code>204</code> - Benin<br><code>208</code>
+            - Denmark<br><code>212</code> - Dominica<br><code>214</code> - Dominican
+            Republic<br><code>218</code> - Ecuador<br><code>222</code> - El Salvador<br><code>226</code>
+            - Equatorial Guinea<br><code>231</code> - Ethiopia<br><code>232</code>
+            - Eritrea<br><code>233</code> - Estonia<br><code>234</code> - Faeroe Islands<br><code>238</code>
+            - Falkland Islands<br><code>242</code> - Fiji<br><code>246</code> - Finland<br><code>251</code>
+            - France<br><code>254</code> - French Guiana<br><code>258</code> - French
+            Polynesia<br><code>262</code> - Djibouti<br><code>266</code> - Gabon<br><code>268</code>
+            - Georgia<br><code>270</code> - Gambia<br><code>275</code> - State of
+            Palestine<br><code>276</code> - Germany<br><code>288</code> - Ghana<br><code>296</code>
+            - Kiribati<br><code>300</code> - Greece<br><code>304</code> - Greenland<br><code>308</code>
+            - Grenada<br><code>312</code> - Guadeloupe<br><code>316</code> - Guam<br><code>320</code>
+            - Guatemala<br><code>324</code> - Guinea<br><code>328</code> - Guyana<br><code>332</code>
+            - Haiti<br><code>336</code> - Vatican<br><code>340</code> - Honduras<br><code>344</code>
+            - Hong Kong<br><code>348</code> - Hungary<br><code>352</code> - Iceland<br><code>360</code>
+            - Indonesia<br><code>364</code> - Iran<br><code>368</code> - Iraq<br><code>372</code>
+            - Ireland<br><code>376</code> - Israel<br><code>381</code> - Italy<br><code>384</code>
+            - Ivory Coast<br><code>388</code> - Jamaica<br><code>392</code> - Japan<br><code>398</code>
+            - Kazakhstan<br><code>400</code> - Jordan<br><code>404</code> - Kenya<br><code>408</code>
+            - DPR Korea<br><code>410</code> - Republic of Korea<br><code>414</code>
+            - Kuwait<br><code>417</code> - Kyrgyzstan<br><code>418</code> - Lao<br><code>422</code>
+            - Lebanon<br><code>426</code> - Lesotho<br><code>428</code> - Latvia<br><code>430</code>
+            - Liberia<br><code>434</code> - Libya<br><code>438</code> - Liechtenstein<br><code>440</code>
+            - Lithuania<br><code>442</code> - Luxembourg<br><code>446</code> - Macao<br><code>450</code>
+            - Madagascar<br><code>454</code> - Malawi<br><code>458</code> - Malaysia<br><code>462</code>
+            - Maldives<br><code>466</code> - Mali<br><code>470</code> - Malta<br><code>474</code>
+            - Martinique<br><code>478</code> - Mauritania<br><code>480</code> - Mauritius<br><code>484</code>
+            - Mexico<br><code>492</code> - Monaco<br><code>496</code> - Mongolia<br><code>498</code>
+            - Republic of Moldova<br><code>499</code> - Montenegro<br><code>500</code>
+            - Montserrat<br><code>504</code> - Morocco<br><code>508</code> - Mozambique<br><code>512</code>
+            - Oman<br><code>516</code> - Namibia<br><code>520</code> - Nauru<br><code>524</code>
+            - Nepal<br><code>528</code> - Netherlands<br><code>532</code> - Netherlands
+            Antilles<br><code>533</code> - Aruba<br><code>540</code> - New Caledonia<br><code>548</code>
+            - Vanuatu<br><code>554</code> - New Zealand<br><code>558</code> - Nicaragua<br><code>562</code>
+            - Niger<br><code>566</code> - Nigeria<br><code>570</code> - Niue<br><code>574</code>
+            - Norfolk Island<br><code>578</code> - Norway<br><code>580</code> - Northern
+            Mariana Islands<br><code>583</code> - Micronesia<br><code>584</code> -
+            Marshall Islands<br><code>585</code> - Palau<br><code>586</code> - Pakistan<br><code>591</code>
+            - Panama<br><code>598</code> - Papua New Guinea<br><code>600</code> -
+            Paraguay<br><code>604</code> - Peru<br><code>608</code> - Philippines<br><code>612</code>
+            - Pitcairn<br><code>616</code> - Poland<br><code>620</code> - Portugal<br><code>624</code>
+            - Guinea-Bissau<br><code>626</code> - Timor-Leste<br><code>630</code>
+            - Puerto Rico<br><code>634</code> - Qatar<br><code>638</code> - Réunion<br><code>642</code>
+            - Romania<br><code>643</code> - Russia<br><code>646</code> - Rwanda<br><code>652</code>
+            - Saint-Barthélemy<br><code>654</code> - Saint Helena<br><code>659</code>
+            - Saint Kitts & Nevis<br><code>660</code> - Anguilla<br><code>662</code>
+            - Saint Lucia<br><code>663</code> - Saint-Martin<br><code>666</code> -
+            Saint Pierre & Miquelon<br><code>670</code> - Saint Vincent & the Grenadines<br><code>674</code>
+            - San Marino<br><code>678</code> - Sao Tome & Principe<br><code>682</code>
+            - Saudi Arabia<br><code>686</code> - Senegal<br><code>688</code> - Serbia<br><code>690</code>
+            - Seychelles<br><code>694</code> - Sierra Leone<br><code>699</code> -
+            India<br><code>702</code> - Singapore<br><code>703</code> - Slovakia<br><code>704</code>
+            - Vietnam<br><code>705</code> - Slovenia<br><code>706</code> - Somalia<br><code>710</code>
+            - South Africa<br><code>716</code> - Zimbabwe<br><code>724</code> - Spain<br><code>728</code>
+            - South Sudan<br><code>729</code> - Republic of the Sudan<br><code>732</code>
+            - Western Sahara<br><code>740</code> - Suriname<br><code>744</code> -
+            Svalbard & Jan Mayen Islands<br><code>748</code> - Eswatini<br><code>752</code>
+            - Sweden<br><code>756</code> - Switzerland<br><code>760</code> - Syria<br><code>762</code>
+            - Tajikistan<br><code>764</code> - Thailand<br><code>768</code> - Togo<br><code>772</code>
+            - Tokelau<br><code>776</code> - Tonga<br><code>780</code> - Trinidad &
+            Tobago<br><code>784</code> - United Arab Emirates<br><code>788</code>
+            - Tunisia<br><code>792</code> - Turkiye<br><code>795</code> - Turkmenistan<br><code>796</code>
+            - Turks & Caicos Islands<br><code>798</code> - Tuvalu<br><code>800</code>
+            - Uganda<br><code>804</code> - Ukraine<br><code>807</code> - Macedonia<br><code>818</code>
+            - Egypt<br><code>826</code> - United Kingdom<br><code>834</code> - Tanzania<br><code>840</code>
+            - United States of America<br><code>850</code> - US Virgin Islands<br><code>854</code>
+            - Burkina Faso<br><code>858</code> - Uruguay<br><code>860</code> - Uzbekistan<br><code>862</code>
+            - Venezuela<br><code>876</code> - Wallis & Futuna Islands<br><code>882</code>
+            - Samoa<br><code>887</code> - Yemen<br><code>894</code> - Zambia<br><code>999</code>
+            - Republic of Kosovo<br></details>
+        economic_activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicActivityEnum'
+          description: '<details><summary>Filters by economic activities. Accepted
+            is a list of economic activity codes.</summary><code>1</code> - cross-cutting<br><code>2</code>
+            - infrastructure provider: internet and telecom services<br><code>4</code>
+            - online advertising provider<br><code>5</code> - online platform<br><code>6</code>
+            - internet service provider<br><code>7</code> - online marketplace provider<br><code>8</code>
+            - data broker<br><code>9</code> - web hosting provider<br><code>10</code>
+            - cloud service provider<br><code>11</code> - social media provider<br><code>12</code>
+            - content distributor<br><code>13</code> - search provider<br><code>14</code>
+            - telecommunications provider<br><code>15</code> - app store provider<br><code>16</code>
+            - payment service provider<br><code>17</code> - gatekeeper<br><code>18</code>
+            - technology provider<br><code>19</code> - IT hardware provider<br><code>20</code>
+            - software provider<br><code>21</code> - infrastructure provider: network
+            hardware and equipment<br><code>22</code> - infrastructure provider: other<br></details>'
+        government_branch:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovernmentBranchEnum'
+          description: <details><summary>Filters by government branches. Accepted
+            is a list of government branch codes.</summary><code>1</code> - legislature<br><code>2</code>
+            - executive<br><code>3</code> - judiciary<br></details>
+        event_type:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventTypeEnum'
+          description: <details><summary>Filters by event types. Accepted is a list
+            of event type codes.</summary><code>1</code> - order<br><code>2</code>
+            - outline<br><code>3</code> - inquiry<br><code>4</code> - decision<br><code>5</code>
+            - ruling<br><code>6</code> - enforcement action<br><code>7</code> - comment<br><code>8</code>
+            - proposal<br><code>9</code> - investigation<br><code>10</code> - declaration<br><code>11</code>
+            - civil lawsuit<br></details>
+        policy_area:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyAreaEnum'
+          description: <details><summary>Filters by policy areas. Accepted is a list
+            of policy area codes.</summary><code>1</code> - International trade<br><code>2</code>
+            - Competition<br><code>3</code> - Content moderation<br><code>4</code>
+            - Privacy and data protection<br><code>5</code> - Consumer protection<br><code>6</code>
+            - Artificial intelligence<br><code>7</code> - Cybersecurity<br><code>8</code>
+            - Digital taxation<br><code>9</code> - E-commerce<br><code>10</code> -
+            State aid<br><code>11</code> - Digital strategy<br><code>12</code> - Social
+            media<br><code>13</code> - Legal entity establishment<br><code>14</code>
+            - Financial regulation<br><code>15</code> - Intellectual property protection<br><code>16</code>
+            - Design and testing standards<br><code>17</code> - Regulatory Compliance
+            and Transparency<br></details>
+        dpa_implementation_level:
+          type: array
+          items:
+            $ref: '#/components/schemas/DpaImplementationLevelEnum'
+          description: <details><summary>Filters by implementation levels. Accepted
+            is a list of implementation level codes.</summary><code>1</code> - national<br><code>2</code>
+            - supranational<br><code>3</code> - subnational<br><code>4</code> - bi-
+            or plurilateral agreement<br><code>5</code> - multilateral agreement<br><code>6</code>
+            - other<br></details>
+    GTAListRequest:
+      type: object
+      properties:
+        request_data:
+          writeOnly: true
+        source:
+          type: string
+        limit:
+          type: integer
+          default: 50
+        offset:
+          type: integer
+          default: 0
+        sorting:
+          type: string
+          default: ''
+      required:
+      - request_data
+    GTAMappingKeys:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+      required:
+      - keys
+    GTAMappingRequestBody:
+      type: object
+      description: Serializer for GTA mapping request body
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+          example:
+          - jurisdictions
+          - implementation_levels
+          description: Define the parameters you would like to get the mappings to
+            output to, choices are `jurisdictions`, `evaluations`, `affected_flows`,
+            `intervention_types`, `mast_chapters`, `mast_subchapters`, `eligible_firms`,
+            `implementation_levels`.
+      required:
+      - keys
+    GovernmentBranchEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      type: integer
+      description: |-
+        * `1` - legislature
+        * `2` - executive
+        * `3` - judiciary
+    GtaEvaluationEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      type: integer
+      description: |-
+        * `1` - Red - Harmful to trade
+        * `2` - Amber - Murky/unclear impact
+        * `3` - Green - Liberalizing to trade
+        * `4` - Harmful - Includes both Red and Amber interventions
+        * `5` - Liberalizing - Equivalent to Green interventions
+    ImpactChainJurisdiction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        iso:
+          type: string
+      required:
+      - id
+      - iso
+      - name
+    ImpactChainProduct:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        name:
+          type: string
+      required:
+      - name
+      - product_id
+    ImpactChainProductList:
+      type: object
+      properties:
+        intervention_id:
+          type: integer
+          readOnly: true
+        intervention_url:
+          type: string
+          readOnly: true
+        affected_product:
+          $ref: '#/components/schemas/ImpactChainProduct'
+        implementing_jurisdiction:
+          $ref: '#/components/schemas/ImpactChainJurisdiction'
+        affected_jurisdictions:
+          type: string
+          readOnly: true
+        date_implemented:
+          type: string
+          format: date
+        date_removed:
+          type: string
+          format: date
+      required:
+      - affected_jurisdictions
+      - affected_product
+      - date_implemented
+      - date_removed
+      - implementing_jurisdiction
+      - intervention_id
+      - intervention_url
+    ImpactChainSector:
+      type: object
+      properties:
+        sector_id:
+          type: integer
+        name:
+          type: string
+      required:
+      - name
+      - sector_id
+    ImpactChainSectorList:
+      type: object
+      properties:
+        intervention_id:
+          type: integer
+          readOnly: true
+        intervention_url:
+          type: string
+          readOnly: true
+        affected_sector:
+          $ref: '#/components/schemas/ImpactChainSector'
+        implementing_jurisdiction:
+          $ref: '#/components/schemas/ImpactChainJurisdiction'
+        affected_jurisdictions:
+          type: string
+          readOnly: true
+        date_implemented:
+          type: string
+          format: date
+        date_removed:
+          type: string
+          format: date
+      required:
+      - affected_jurisdictions
+      - affected_sector
+      - date_implemented
+      - date_removed
+      - implementing_jurisdiction
+      - intervention_id
+      - intervention_url
+    ImplementationLevelEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+      description: |-
+        * `1` - Supranational
+        * `2` - National
+        * `3` - Subnational
+        * `4` - SEZ
+        * `5` - IFI
+        * `6` - NFI
+    ImplementerEnum:
+      enum:
+      - 4
+      - 8
+      - 12
+      - 16
+      - 20
+      - 24
+      - 28
+      - 31
+      - 32
+      - 36
+      - 40
+      - 44
+      - 48
+      - 50
+      - 51
+      - 52
+      - 56
+      - 60
+      - 64
+      - 68
+      - 70
+      - 72
+      - 76
+      - 84
+      - 90
+      - 92
+      - 96
+      - 100
+      - 104
+      - 108
+      - 112
+      - 116
+      - 120
+      - 124
+      - 132
+      - 136
+      - 140
+      - 144
+      - 148
+      - 152
+      - 156
+      - 158
+      - 170
+      - 174
+      - 175
+      - 178
+      - 180
+      - 184
+      - 188
+      - 191
+      - 192
+      - 196
+      - 203
+      - 204
+      - 208
+      - 212
+      - 214
+      - 218
+      - 222
+      - 226
+      - 231
+      - 232
+      - 233
+      - 234
+      - 238
+      - 242
+      - 246
+      - 251
+      - 254
+      - 258
+      - 262
+      - 266
+      - 268
+      - 270
+      - 275
+      - 276
+      - 288
+      - 296
+      - 300
+      - 304
+      - 308
+      - 312
+      - 316
+      - 320
+      - 324
+      - 328
+      - 332
+      - 336
+      - 340
+      - 344
+      - 348
+      - 352
+      - 360
+      - 364
+      - 368
+      - 372
+      - 376
+      - 381
+      - 384
+      - 388
+      - 392
+      - 398
+      - 400
+      - 404
+      - 408
+      - 410
+      - 414
+      - 417
+      - 418
+      - 422
+      - 426
+      - 428
+      - 430
+      - 434
+      - 438
+      - 440
+      - 442
+      - 446
+      - 450
+      - 454
+      - 458
+      - 462
+      - 466
+      - 470
+      - 474
+      - 478
+      - 480
+      - 484
+      - 492
+      - 496
+      - 498
+      - 499
+      - 500
+      - 504
+      - 508
+      - 512
+      - 516
+      - 520
+      - 524
+      - 528
+      - 532
+      - 533
+      - 540
+      - 548
+      - 554
+      - 558
+      - 562
+      - 566
+      - 570
+      - 574
+      - 578
+      - 580
+      - 583
+      - 584
+      - 585
+      - 586
+      - 591
+      - 598
+      - 600
+      - 604
+      - 608
+      - 612
+      - 616
+      - 620
+      - 624
+      - 626
+      - 630
+      - 634
+      - 638
+      - 642
+      - 643
+      - 646
+      - 652
+      - 654
+      - 659
+      - 660
+      - 662
+      - 663
+      - 666
+      - 670
+      - 674
+      - 678
+      - 682
+      - 686
+      - 688
+      - 690
+      - 694
+      - 699
+      - 702
+      - 703
+      - 704
+      - 705
+      - 706
+      - 710
+      - 716
+      - 724
+      - 728
+      - 729
+      - 732
+      - 740
+      - 744
+      - 748
+      - 752
+      - 756
+      - 760
+      - 762
+      - 764
+      - 768
+      - 772
+      - 776
+      - 780
+      - 784
+      - 788
+      - 792
+      - 795
+      - 796
+      - 798
+      - 800
+      - 804
+      - 807
+      - 818
+      - 826
+      - 834
+      - 840
+      - 850
+      - 854
+      - 858
+      - 860
+      - 862
+      - 876
+      - 882
+      - 887
+      - 894
+      - 999
+      type: integer
+      description: |-
+        * `4` - Afghanistan
+        * `8` - Albania
+        * `12` - Algeria
+        * `16` - American Samoa
+        * `20` - Andorra
+        * `24` - Angola
+        * `28` - Antigua & Barbuda
+        * `31` - Azerbaijan
+        * `32` - Argentina
+        * `36` - Australia
+        * `40` - Austria
+        * `44` - Bahamas
+        * `48` - Bahrain
+        * `50` - Bangladesh
+        * `51` - Armenia
+        * `52` - Barbados
+        * `56` - Belgium
+        * `60` - Bermuda
+        * `64` - Bhutan
+        * `68` - Bolivia
+        * `70` - Bosnia & Herzegovina
+        * `72` - Botswana
+        * `76` - Brazil
+        * `84` - Belize
+        * `90` - Solomon Islands
+        * `92` - British Virgin Islands
+        * `96` - Brunei Darussalam
+        * `100` - Bulgaria
+        * `104` - Myanmar
+        * `108` - Burundi
+        * `112` - Belarus
+        * `116` - Cambodia
+        * `120` - Cameroon
+        * `124` - Canada
+        * `132` - Cape Verde
+        * `136` - Cayman Islands
+        * `140` - Central African Republic
+        * `144` - Sri Lanka
+        * `148` - Chad
+        * `152` - Chile
+        * `156` - China
+        * `158` - Chinese Taipei
+        * `170` - Colombia
+        * `174` - Comoros
+        * `175` - Mayotte
+        * `178` - Congo
+        * `180` - DR Congo
+        * `184` - Cook Islands
+        * `188` - Costa Rica
+        * `191` - Croatia
+        * `192` - Cuba
+        * `196` - Cyprus
+        * `203` - Czechia
+        * `204` - Benin
+        * `208` - Denmark
+        * `212` - Dominica
+        * `214` - Dominican Republic
+        * `218` - Ecuador
+        * `222` - El Salvador
+        * `226` - Equatorial Guinea
+        * `231` - Ethiopia
+        * `232` - Eritrea
+        * `233` - Estonia
+        * `234` - Faeroe Islands
+        * `238` - Falkland Islands
+        * `242` - Fiji
+        * `246` - Finland
+        * `251` - France
+        * `254` - French Guiana
+        * `258` - French Polynesia
+        * `262` - Djibouti
+        * `266` - Gabon
+        * `268` - Georgia
+        * `270` - Gambia
+        * `275` - State of Palestine
+        * `276` - Germany
+        * `288` - Ghana
+        * `296` - Kiribati
+        * `300` - Greece
+        * `304` - Greenland
+        * `308` - Grenada
+        * `312` - Guadeloupe
+        * `316` - Guam
+        * `320` - Guatemala
+        * `324` - Guinea
+        * `328` - Guyana
+        * `332` - Haiti
+        * `336` - Vatican
+        * `340` - Honduras
+        * `344` - Hong Kong
+        * `348` - Hungary
+        * `352` - Iceland
+        * `360` - Indonesia
+        * `364` - Iran
+        * `368` - Iraq
+        * `372` - Ireland
+        * `376` - Israel
+        * `381` - Italy
+        * `384` - Ivory Coast
+        * `388` - Jamaica
+        * `392` - Japan
+        * `398` - Kazakhstan
+        * `400` - Jordan
+        * `404` - Kenya
+        * `408` - DPR Korea
+        * `410` - Republic of Korea
+        * `414` - Kuwait
+        * `417` - Kyrgyzstan
+        * `418` - Lao
+        * `422` - Lebanon
+        * `426` - Lesotho
+        * `428` - Latvia
+        * `430` - Liberia
+        * `434` - Libya
+        * `438` - Liechtenstein
+        * `440` - Lithuania
+        * `442` - Luxembourg
+        * `446` - Macao
+        * `450` - Madagascar
+        * `454` - Malawi
+        * `458` - Malaysia
+        * `462` - Maldives
+        * `466` - Mali
+        * `470` - Malta
+        * `474` - Martinique
+        * `478` - Mauritania
+        * `480` - Mauritius
+        * `484` - Mexico
+        * `492` - Monaco
+        * `496` - Mongolia
+        * `498` - Republic of Moldova
+        * `499` - Montenegro
+        * `500` - Montserrat
+        * `504` - Morocco
+        * `508` - Mozambique
+        * `512` - Oman
+        * `516` - Namibia
+        * `520` - Nauru
+        * `524` - Nepal
+        * `528` - Netherlands
+        * `532` - Netherlands Antilles
+        * `533` - Aruba
+        * `540` - New Caledonia
+        * `548` - Vanuatu
+        * `554` - New Zealand
+        * `558` - Nicaragua
+        * `562` - Niger
+        * `566` - Nigeria
+        * `570` - Niue
+        * `574` - Norfolk Island
+        * `578` - Norway
+        * `580` - Northern Mariana Islands
+        * `583` - Micronesia
+        * `584` - Marshall Islands
+        * `585` - Palau
+        * `586` - Pakistan
+        * `591` - Panama
+        * `598` - Papua New Guinea
+        * `600` - Paraguay
+        * `604` - Peru
+        * `608` - Philippines
+        * `612` - Pitcairn
+        * `616` - Poland
+        * `620` - Portugal
+        * `624` - Guinea-Bissau
+        * `626` - Timor-Leste
+        * `630` - Puerto Rico
+        * `634` - Qatar
+        * `638` - Réunion
+        * `642` - Romania
+        * `643` - Russia
+        * `646` - Rwanda
+        * `652` - Saint-Barthélemy
+        * `654` - Saint Helena
+        * `659` - Saint Kitts & Nevis
+        * `660` - Anguilla
+        * `662` - Saint Lucia
+        * `663` - Saint-Martin
+        * `666` - Saint Pierre & Miquelon
+        * `670` - Saint Vincent & the Grenadines
+        * `674` - San Marino
+        * `678` - Sao Tome & Principe
+        * `682` - Saudi Arabia
+        * `686` - Senegal
+        * `688` - Serbia
+        * `690` - Seychelles
+        * `694` - Sierra Leone
+        * `699` - India
+        * `702` - Singapore
+        * `703` - Slovakia
+        * `704` - Vietnam
+        * `705` - Slovenia
+        * `706` - Somalia
+        * `710` - South Africa
+        * `716` - Zimbabwe
+        * `724` - Spain
+        * `728` - South Sudan
+        * `729` - Republic of the Sudan
+        * `732` - Western Sahara
+        * `740` - Suriname
+        * `744` - Svalbard & Jan Mayen Islands
+        * `748` - Eswatini
+        * `752` - Sweden
+        * `756` - Switzerland
+        * `760` - Syria
+        * `762` - Tajikistan
+        * `764` - Thailand
+        * `768` - Togo
+        * `772` - Tokelau
+        * `776` - Tonga
+        * `780` - Trinidad & Tobago
+        * `784` - United Arab Emirates
+        * `788` - Tunisia
+        * `792` - Turkiye
+        * `795` - Turkmenistan
+        * `796` - Turks & Caicos Islands
+        * `798` - Tuvalu
+        * `800` - Uganda
+        * `804` - Ukraine
+        * `807` - Macedonia
+        * `818` - Egypt
+        * `826` - United Kingdom
+        * `834` - Tanzania
+        * `840` - United States of America
+        * `850` - US Virgin Islands
+        * `854` - Burkina Faso
+        * `858` - Uruguay
+        * `860` - Uzbekistan
+        * `862` - Venezuela
+        * `876` - Wallis & Futuna Islands
+        * `882` - Samoa
+        * `887` - Yemen
+        * `894` - Zambia
+        * `999` - Republic of Kosovo
+    InterventionDescription:
+      type: object
+      properties:
+        status:
+          type: string
+          readOnly: true
+        order_nr:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        modified:
+          type: string
+          readOnly: true
+        text:
+          type: string
+          readOnly: true
+      required:
+      - modified
+      - status
+      - text
+    InterventionFullListPublicSerializerV2:
+      type: object
+      description: |-
+        Used in Public API V2.
+        V2 Changes: intervention_description and state_act_source should be outputted as
+                    array of description and source entries respectively.
+
+        intervention_description: [
+            {
+                "status": "existing", // lowercase status
+                "order_nr": 1,
+                "modified": "2025-01-01 12:23",
+                "text": "Description text"
+            },
+        ]
+
+        state_act_source: [
+            {
+                "status": "new", // lowercase status
+                "order_nr": 1,
+                "modified": "2025-01-01 12:23",
+                "text": "Source text"
+            },
+        ]
+      properties:
+        intervention_id:
+          type: integer
+          readOnly: true
+        state_act_id:
+          type: integer
+          readOnly: true
+        state_act_title:
+          type: string
+          readOnly: true
+        intervention_description:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionDescription'
+        intervention_url:
+          type: string
+          format: uri
+        state_act_url:
+          type: string
+          format: uri
+        state_act_source:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateActSource'
+        is_official_source:
+          type: boolean
+          readOnly: true
+        gta_evaluation:
+          type: string
+          readOnly: true
+          nullable: true
+        implementing_jurisdictions:
+          type: string
+          readOnly: true
+        implementing_jurisdiction_groups:
+          type: string
+          readOnly: true
+        affected_jurisdictions:
+          type: string
+          readOnly: true
+        inferred_jurisdictions:
+          type: string
+          readOnly: true
+        implementation_level:
+          type: string
+          readOnly: true
+          nullable: true
+        eligible_firm:
+          type: string
+          readOnly: true
+          nullable: true
+        intervention_type:
+          type: string
+          readOnly: true
+          nullable: true
+        mast_chapter:
+          type: string
+          readOnly: true
+          nullable: true
+        mast_subchapter:
+          type: string
+          readOnly: true
+          nullable: true
+        affected_sectors:
+          type: string
+          readOnly: true
+        affected_products:
+          type: string
+          readOnly: true
+        date_announced:
+          type: string
+          format: date
+          nullable: true
+        date_published:
+          type: string
+          format: date
+          nullable: true
+        date_implemented:
+          type: string
+          format: date
+          nullable: true
+        date_removed:
+          type: string
+          format: date
+          nullable: true
+        is_in_force:
+          type: string
+          readOnly: true
+        last_updated:
+          type: string
+          readOnly: true
+      required:
+      - affected_jurisdictions
+      - affected_products
+      - affected_sectors
+      - eligible_firm
+      - gta_evaluation
+      - implementation_level
+      - implementing_jurisdiction_groups
+      - implementing_jurisdictions
+      - inferred_jurisdictions
+      - intervention_description
+      - intervention_id
+      - intervention_type
+      - intervention_url
+      - is_in_force
+      - is_official_source
+      - last_updated
+      - mast_chapter
+      - mast_subchapter
+      - state_act_id
+      - state_act_source
+      - state_act_title
+      - state_act_url
+    InterventionListPublic:
+      type: object
+      description: Used in Public API.
+      properties:
+        intervention_id:
+          type: integer
+          readOnly: true
+        state_act_id:
+          type: integer
+          readOnly: true
+        state_act_title:
+          type: string
+          readOnly: true
+        intervention_url:
+          type: string
+          format: uri
+        state_act_url:
+          type: string
+          format: uri
+        gta_evaluation:
+          type: string
+          readOnly: true
+          nullable: true
+        implementing_jurisdictions:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        implementing_jurisdiction_groups:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        affected_jurisdictions:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        inferred_jurisdictions:
+          type: string
+          readOnly: true
+        implementation_level:
+          type: string
+          readOnly: true
+          nullable: true
+        eligible_firm:
+          type: string
+          readOnly: true
+          nullable: true
+        intervention_type:
+          type: string
+          readOnly: true
+          nullable: true
+        mast_chapter:
+          type: string
+          readOnly: true
+          nullable: true
+        mast_subchapter:
+          type: string
+          readOnly: true
+          nullable: true
+        affected_sectors:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+        affected_products:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+        date_announced:
+          type: string
+          format: date
+          nullable: true
+        date_published:
+          type: string
+          format: date
+          nullable: true
+        date_implemented:
+          type: string
+          format: date
+          nullable: true
+        date_removed:
+          type: string
+          format: date
+          nullable: true
+        is_in_force:
+          type: integer
+          readOnly: true
+        last_updated:
+          type: string
+          readOnly: true
+      required:
+      - affected_jurisdictions
+      - affected_products
+      - affected_sectors
+      - eligible_firm
+      - gta_evaluation
+      - implementation_level
+      - implementing_jurisdiction_groups
+      - implementing_jurisdictions
+      - inferred_jurisdictions
+      - intervention_id
+      - intervention_type
+      - intervention_url
+      - is_in_force
+      - last_updated
+      - mast_chapter
+      - mast_subchapter
+      - state_act_id
+      - state_act_title
+      - state_act_url
+    InterventionRequestBody:
+      type: object
+      description: Reusable serializer for intervention API request body
+      properties:
+        limit:
+          type: integer
+          default: 10
+          description: Set the size of the result set here. Accepted is any number
+            between 0 and 1000.
+        offset:
+          type: integer
+          default: 0
+          description: Use this parameter to paginate through the output, it accepts
+            any number.
+        sorting:
+          type: array
+          items:
+            type: string
+          default:
+          - -intervention_id
+          description: Define the parameters you would like to sort the output by,
+            accepted are `date_announced`, `date_published`, `date_implemented`, `date_removed`,
+            `intervention_id`. Combine multiple order clauses together in the same
+            string by separating them via a comma, e.g. `date_announced,date_implemented`.
+            Reverse the order by adding a `-` in front of the order clause you want
+            to reverse, e.g. `-date_announced`.
+        show_full_names:
+          type: boolean
+          default: false
+          description: Boolean filter defining if product and sector names should
+            be outputted in full. Per default these values are truncated to 20 characters,
+            in order to reduce the result size.
+        request_data:
+          allOf:
+          - $ref: '#/components/schemas/InterventionRequestDataFilters'
+          description: This parameter accepts an object containing the key-value pairs
+            used as filters.
+      required:
+      - request_data
+    InterventionRequestDataFilters:
+      type: object
+      description: |-
+        Serializer for intervention request data filters
+
+        To customize which choice fields to include, override selected_fields:
+            class CustomSerializer(InterventionRequestDataFiltersSerializer):
+                selected_fields = ['gta_evaluation', 'affected_flow']
+
+        By default, includes all GTA choice fields.
+      properties:
+        keep_affected:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen commercial flow values should
+            be in- or excluded
+        keep_implementer:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen implementing jurisdiction
+            values should be in- or excluded
+        keep_intervention_types:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen intervention types should
+            be in- or excluded
+        keep_mast_chapters:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen mast chapter values should
+            be in- or excluded
+        keep_implementation_level:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen implementation levels values
+            should be in- or excluded
+        keep_eligible_firms:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen eligible firms values should
+            be in- or excluded
+        announcement_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            announced. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        implementation_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            implemented. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        keep_implementation_period_na:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions with no implementation
+            date should be in- or excluded
+        revocation_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            revoked. `None` values are treated as unfiltered (=any date into the past
+            or future).
+        keep_revocation_na:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions with no revocation
+            date should be in- or excluded
+        submission_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            published. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        in_force_on_date:
+          type: string
+          format: date
+          example: '2024-12-31'
+          description: A single datestring value defining a date on which the intervention
+            was in force.
+        keep_in_force_on_date:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions that were in force
+            on that date should be in- or excluded
+        affected_sectors:
+          type: array
+          items:
+            type: integer
+          example:
+          - 341
+          - 352
+          - 379
+          description: Filters by a list of CPC sector codes, accepted values are
+            CPC sector codes, multiple possible
+        keep_affected_sectors:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen CPC sectors should be in-
+            or excluded
+        affected_products:
+          type: array
+          items:
+            type: integer
+          example:
+          - 292149
+          - 292229
+          - 292429
+          description: Filters by a list of HS codes, accepted values are HS product
+            codes, multiple possible
+        keep_affected_products:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen hs codes should be in- or
+            excluded
+        intervention_id:
+          type: array
+          items:
+            type: integer
+          example:
+          - 138295
+          - 138296
+          - 138297
+          description: Filters by a list of intervention_ids directly, multiple possible
+        keep_intervention_id:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen intervention ids should be
+            in- or excluded
+        lag_adjustment:
+          type: string
+          format: date
+          example: '2024-12-31'
+          description: Datestring that filters interventions based on a lag date.
+            Interventions with publishing date after the yearly lag date are excluded.
+            The year component of this datevalue is ignored.
+        gta_evaluation:
+          type: array
+          items:
+            $ref: '#/components/schemas/GtaEvaluationEnum'
+          description: <details><summary>Filters by evaluation value, multiple possible.
+            Values 4 and 5 are conceptual groupings that map to base values 1-3.</summary><code>1</code>
+            - Red - Harmful to trade<br><code>2</code> - Amber - Murky/unclear impact<br><code>3</code>
+            - Green - Liberalizing to trade<br><code>4</code> - Harmful - Includes
+            both Red and Amber interventions<br><code>5</code> - Liberalizing - Equivalent
+            to Green interventions<br></details>
+        affected_flow:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffectedFlowEnum'
+          description: <details><summary>Filters by affected flow value, multiple
+            possible. Affected flows determine the trade flow, that an intervention
+            affects.</summary><code>1</code> - Inward<br><code>2</code> - Outward<br><code>3</code>
+            - Outward subsidy<br></details>
+        affected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementerEnum'
+          description: <details><summary>Filters by jurisdictions, accepted values
+            are UN country codes, multiple possible.</summary><code>4</code> - Afghanistan<br><code>8</code>
+            - Albania<br><code>12</code> - Algeria<br><code>16</code> - American Samoa<br><code>20</code>
+            - Andorra<br><code>24</code> - Angola<br><code>28</code> - Antigua & Barbuda<br><code>31</code>
+            - Azerbaijan<br><code>32</code> - Argentina<br><code>36</code> - Australia<br><code>40</code>
+            - Austria<br><code>44</code> - Bahamas<br><code>48</code> - Bahrain<br><code>50</code>
+            - Bangladesh<br><code>51</code> - Armenia<br><code>52</code> - Barbados<br><code>56</code>
+            - Belgium<br><code>60</code> - Bermuda<br><code>64</code> - Bhutan<br><code>68</code>
+            - Bolivia<br><code>70</code> - Bosnia & Herzegovina<br><code>72</code>
+            - Botswana<br><code>76</code> - Brazil<br><code>84</code> - Belize<br><code>90</code>
+            - Solomon Islands<br><code>92</code> - British Virgin Islands<br><code>96</code>
+            - Brunei Darussalam<br><code>100</code> - Bulgaria<br><code>104</code>
+            - Myanmar<br><code>108</code> - Burundi<br><code>112</code> - Belarus<br><code>116</code>
+            - Cambodia<br><code>120</code> - Cameroon<br><code>124</code> - Canada<br><code>132</code>
+            - Cape Verde<br><code>136</code> - Cayman Islands<br><code>140</code>
+            - Central African Republic<br><code>144</code> - Sri Lanka<br><code>148</code>
+            - Chad<br><code>152</code> - Chile<br><code>156</code> - China<br><code>158</code>
+            - Chinese Taipei<br><code>170</code> - Colombia<br><code>174</code> -
+            Comoros<br><code>175</code> - Mayotte<br><code>178</code> - Congo<br><code>180</code>
+            - DR Congo<br><code>184</code> - Cook Islands<br><code>188</code> - Costa
+            Rica<br><code>191</code> - Croatia<br><code>192</code> - Cuba<br><code>196</code>
+            - Cyprus<br><code>203</code> - Czechia<br><code>204</code> - Benin<br><code>208</code>
+            - Denmark<br><code>212</code> - Dominica<br><code>214</code> - Dominican
+            Republic<br><code>218</code> - Ecuador<br><code>222</code> - El Salvador<br><code>226</code>
+            - Equatorial Guinea<br><code>231</code> - Ethiopia<br><code>232</code>
+            - Eritrea<br><code>233</code> - Estonia<br><code>234</code> - Faeroe Islands<br><code>238</code>
+            - Falkland Islands<br><code>242</code> - Fiji<br><code>246</code> - Finland<br><code>251</code>
+            - France<br><code>254</code> - French Guiana<br><code>258</code> - French
+            Polynesia<br><code>262</code> - Djibouti<br><code>266</code> - Gabon<br><code>268</code>
+            - Georgia<br><code>270</code> - Gambia<br><code>275</code> - State of
+            Palestine<br><code>276</code> - Germany<br><code>288</code> - Ghana<br><code>296</code>
+            - Kiribati<br><code>300</code> - Greece<br><code>304</code> - Greenland<br><code>308</code>
+            - Grenada<br><code>312</code> - Guadeloupe<br><code>316</code> - Guam<br><code>320</code>
+            - Guatemala<br><code>324</code> - Guinea<br><code>328</code> - Guyana<br><code>332</code>
+            - Haiti<br><code>336</code> - Vatican<br><code>340</code> - Honduras<br><code>344</code>
+            - Hong Kong<br><code>348</code> - Hungary<br><code>352</code> - Iceland<br><code>360</code>
+            - Indonesia<br><code>364</code> - Iran<br><code>368</code> - Iraq<br><code>372</code>
+            - Ireland<br><code>376</code> - Israel<br><code>381</code> - Italy<br><code>384</code>
+            - Ivory Coast<br><code>388</code> - Jamaica<br><code>392</code> - Japan<br><code>398</code>
+            - Kazakhstan<br><code>400</code> - Jordan<br><code>404</code> - Kenya<br><code>408</code>
+            - DPR Korea<br><code>410</code> - Republic of Korea<br><code>414</code>
+            - Kuwait<br><code>417</code> - Kyrgyzstan<br><code>418</code> - Lao<br><code>422</code>
+            - Lebanon<br><code>426</code> - Lesotho<br><code>428</code> - Latvia<br><code>430</code>
+            - Liberia<br><code>434</code> - Libya<br><code>438</code> - Liechtenstein<br><code>440</code>
+            - Lithuania<br><code>442</code> - Luxembourg<br><code>446</code> - Macao<br><code>450</code>
+            - Madagascar<br><code>454</code> - Malawi<br><code>458</code> - Malaysia<br><code>462</code>
+            - Maldives<br><code>466</code> - Mali<br><code>470</code> - Malta<br><code>474</code>
+            - Martinique<br><code>478</code> - Mauritania<br><code>480</code> - Mauritius<br><code>484</code>
+            - Mexico<br><code>492</code> - Monaco<br><code>496</code> - Mongolia<br><code>498</code>
+            - Republic of Moldova<br><code>499</code> - Montenegro<br><code>500</code>
+            - Montserrat<br><code>504</code> - Morocco<br><code>508</code> - Mozambique<br><code>512</code>
+            - Oman<br><code>516</code> - Namibia<br><code>520</code> - Nauru<br><code>524</code>
+            - Nepal<br><code>528</code> - Netherlands<br><code>532</code> - Netherlands
+            Antilles<br><code>533</code> - Aruba<br><code>540</code> - New Caledonia<br><code>548</code>
+            - Vanuatu<br><code>554</code> - New Zealand<br><code>558</code> - Nicaragua<br><code>562</code>
+            - Niger<br><code>566</code> - Nigeria<br><code>570</code> - Niue<br><code>574</code>
+            - Norfolk Island<br><code>578</code> - Norway<br><code>580</code> - Northern
+            Mariana Islands<br><code>583</code> - Micronesia<br><code>584</code> -
+            Marshall Islands<br><code>585</code> - Palau<br><code>586</code> - Pakistan<br><code>591</code>
+            - Panama<br><code>598</code> - Papua New Guinea<br><code>600</code> -
+            Paraguay<br><code>604</code> - Peru<br><code>608</code> - Philippines<br><code>612</code>
+            - Pitcairn<br><code>616</code> - Poland<br><code>620</code> - Portugal<br><code>624</code>
+            - Guinea-Bissau<br><code>626</code> - Timor-Leste<br><code>630</code>
+            - Puerto Rico<br><code>634</code> - Qatar<br><code>638</code> - Réunion<br><code>642</code>
+            - Romania<br><code>643</code> - Russia<br><code>646</code> - Rwanda<br><code>652</code>
+            - Saint-Barthélemy<br><code>654</code> - Saint Helena<br><code>659</code>
+            - Saint Kitts & Nevis<br><code>660</code> - Anguilla<br><code>662</code>
+            - Saint Lucia<br><code>663</code> - Saint-Martin<br><code>666</code> -
+            Saint Pierre & Miquelon<br><code>670</code> - Saint Vincent & the Grenadines<br><code>674</code>
+            - San Marino<br><code>678</code> - Sao Tome & Principe<br><code>682</code>
+            - Saudi Arabia<br><code>686</code> - Senegal<br><code>688</code> - Serbia<br><code>690</code>
+            - Seychelles<br><code>694</code> - Sierra Leone<br><code>699</code> -
+            India<br><code>702</code> - Singapore<br><code>703</code> - Slovakia<br><code>704</code>
+            - Vietnam<br><code>705</code> - Slovenia<br><code>706</code> - Somalia<br><code>710</code>
+            - South Africa<br><code>716</code> - Zimbabwe<br><code>724</code> - Spain<br><code>728</code>
+            - South Sudan<br><code>729</code> - Republic of the Sudan<br><code>732</code>
+            - Western Sahara<br><code>740</code> - Suriname<br><code>744</code> -
+            Svalbard & Jan Mayen Islands<br><code>748</code> - Eswatini<br><code>752</code>
+            - Sweden<br><code>756</code> - Switzerland<br><code>760</code> - Syria<br><code>762</code>
+            - Tajikistan<br><code>764</code> - Thailand<br><code>768</code> - Togo<br><code>772</code>
+            - Tokelau<br><code>776</code> - Tonga<br><code>780</code> - Trinidad &
+            Tobago<br><code>784</code> - United Arab Emirates<br><code>788</code>
+            - Tunisia<br><code>792</code> - Turkiye<br><code>795</code> - Turkmenistan<br><code>796</code>
+            - Turks & Caicos Islands<br><code>798</code> - Tuvalu<br><code>800</code>
+            - Uganda<br><code>804</code> - Ukraine<br><code>807</code> - Macedonia<br><code>818</code>
+            - Egypt<br><code>826</code> - United Kingdom<br><code>834</code> - Tanzania<br><code>840</code>
+            - United States of America<br><code>850</code> - US Virgin Islands<br><code>854</code>
+            - Burkina Faso<br><code>858</code> - Uruguay<br><code>860</code> - Uzbekistan<br><code>862</code>
+            - Venezuela<br><code>876</code> - Wallis & Futuna Islands<br><code>882</code>
+            - Samoa<br><code>887</code> - Yemen<br><code>894</code> - Zambia<br><code>999</code>
+            - Republic of Kosovo<br></details>
+        implementer:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementerEnum'
+          description: <details><summary>Filters by jurisdictions, accepted values
+            are UN country codes, multiple possible.</summary><code>4</code> - Afghanistan<br><code>8</code>
+            - Albania<br><code>12</code> - Algeria<br><code>16</code> - American Samoa<br><code>20</code>
+            - Andorra<br><code>24</code> - Angola<br><code>28</code> - Antigua & Barbuda<br><code>31</code>
+            - Azerbaijan<br><code>32</code> - Argentina<br><code>36</code> - Australia<br><code>40</code>
+            - Austria<br><code>44</code> - Bahamas<br><code>48</code> - Bahrain<br><code>50</code>
+            - Bangladesh<br><code>51</code> - Armenia<br><code>52</code> - Barbados<br><code>56</code>
+            - Belgium<br><code>60</code> - Bermuda<br><code>64</code> - Bhutan<br><code>68</code>
+            - Bolivia<br><code>70</code> - Bosnia & Herzegovina<br><code>72</code>
+            - Botswana<br><code>76</code> - Brazil<br><code>84</code> - Belize<br><code>90</code>
+            - Solomon Islands<br><code>92</code> - British Virgin Islands<br><code>96</code>
+            - Brunei Darussalam<br><code>100</code> - Bulgaria<br><code>104</code>
+            - Myanmar<br><code>108</code> - Burundi<br><code>112</code> - Belarus<br><code>116</code>
+            - Cambodia<br><code>120</code> - Cameroon<br><code>124</code> - Canada<br><code>132</code>
+            - Cape Verde<br><code>136</code> - Cayman Islands<br><code>140</code>
+            - Central African Republic<br><code>144</code> - Sri Lanka<br><code>148</code>
+            - Chad<br><code>152</code> - Chile<br><code>156</code> - China<br><code>158</code>
+            - Chinese Taipei<br><code>170</code> - Colombia<br><code>174</code> -
+            Comoros<br><code>175</code> - Mayotte<br><code>178</code> - Congo<br><code>180</code>
+            - DR Congo<br><code>184</code> - Cook Islands<br><code>188</code> - Costa
+            Rica<br><code>191</code> - Croatia<br><code>192</code> - Cuba<br><code>196</code>
+            - Cyprus<br><code>203</code> - Czechia<br><code>204</code> - Benin<br><code>208</code>
+            - Denmark<br><code>212</code> - Dominica<br><code>214</code> - Dominican
+            Republic<br><code>218</code> - Ecuador<br><code>222</code> - El Salvador<br><code>226</code>
+            - Equatorial Guinea<br><code>231</code> - Ethiopia<br><code>232</code>
+            - Eritrea<br><code>233</code> - Estonia<br><code>234</code> - Faeroe Islands<br><code>238</code>
+            - Falkland Islands<br><code>242</code> - Fiji<br><code>246</code> - Finland<br><code>251</code>
+            - France<br><code>254</code> - French Guiana<br><code>258</code> - French
+            Polynesia<br><code>262</code> - Djibouti<br><code>266</code> - Gabon<br><code>268</code>
+            - Georgia<br><code>270</code> - Gambia<br><code>275</code> - State of
+            Palestine<br><code>276</code> - Germany<br><code>288</code> - Ghana<br><code>296</code>
+            - Kiribati<br><code>300</code> - Greece<br><code>304</code> - Greenland<br><code>308</code>
+            - Grenada<br><code>312</code> - Guadeloupe<br><code>316</code> - Guam<br><code>320</code>
+            - Guatemala<br><code>324</code> - Guinea<br><code>328</code> - Guyana<br><code>332</code>
+            - Haiti<br><code>336</code> - Vatican<br><code>340</code> - Honduras<br><code>344</code>
+            - Hong Kong<br><code>348</code> - Hungary<br><code>352</code> - Iceland<br><code>360</code>
+            - Indonesia<br><code>364</code> - Iran<br><code>368</code> - Iraq<br><code>372</code>
+            - Ireland<br><code>376</code> - Israel<br><code>381</code> - Italy<br><code>384</code>
+            - Ivory Coast<br><code>388</code> - Jamaica<br><code>392</code> - Japan<br><code>398</code>
+            - Kazakhstan<br><code>400</code> - Jordan<br><code>404</code> - Kenya<br><code>408</code>
+            - DPR Korea<br><code>410</code> - Republic of Korea<br><code>414</code>
+            - Kuwait<br><code>417</code> - Kyrgyzstan<br><code>418</code> - Lao<br><code>422</code>
+            - Lebanon<br><code>426</code> - Lesotho<br><code>428</code> - Latvia<br><code>430</code>
+            - Liberia<br><code>434</code> - Libya<br><code>438</code> - Liechtenstein<br><code>440</code>
+            - Lithuania<br><code>442</code> - Luxembourg<br><code>446</code> - Macao<br><code>450</code>
+            - Madagascar<br><code>454</code> - Malawi<br><code>458</code> - Malaysia<br><code>462</code>
+            - Maldives<br><code>466</code> - Mali<br><code>470</code> - Malta<br><code>474</code>
+            - Martinique<br><code>478</code> - Mauritania<br><code>480</code> - Mauritius<br><code>484</code>
+            - Mexico<br><code>492</code> - Monaco<br><code>496</code> - Mongolia<br><code>498</code>
+            - Republic of Moldova<br><code>499</code> - Montenegro<br><code>500</code>
+            - Montserrat<br><code>504</code> - Morocco<br><code>508</code> - Mozambique<br><code>512</code>
+            - Oman<br><code>516</code> - Namibia<br><code>520</code> - Nauru<br><code>524</code>
+            - Nepal<br><code>528</code> - Netherlands<br><code>532</code> - Netherlands
+            Antilles<br><code>533</code> - Aruba<br><code>540</code> - New Caledonia<br><code>548</code>
+            - Vanuatu<br><code>554</code> - New Zealand<br><code>558</code> - Nicaragua<br><code>562</code>
+            - Niger<br><code>566</code> - Nigeria<br><code>570</code> - Niue<br><code>574</code>
+            - Norfolk Island<br><code>578</code> - Norway<br><code>580</code> - Northern
+            Mariana Islands<br><code>583</code> - Micronesia<br><code>584</code> -
+            Marshall Islands<br><code>585</code> - Palau<br><code>586</code> - Pakistan<br><code>591</code>
+            - Panama<br><code>598</code> - Papua New Guinea<br><code>600</code> -
+            Paraguay<br><code>604</code> - Peru<br><code>608</code> - Philippines<br><code>612</code>
+            - Pitcairn<br><code>616</code> - Poland<br><code>620</code> - Portugal<br><code>624</code>
+            - Guinea-Bissau<br><code>626</code> - Timor-Leste<br><code>630</code>
+            - Puerto Rico<br><code>634</code> - Qatar<br><code>638</code> - Réunion<br><code>642</code>
+            - Romania<br><code>643</code> - Russia<br><code>646</code> - Rwanda<br><code>652</code>
+            - Saint-Barthélemy<br><code>654</code> - Saint Helena<br><code>659</code>
+            - Saint Kitts & Nevis<br><code>660</code> - Anguilla<br><code>662</code>
+            - Saint Lucia<br><code>663</code> - Saint-Martin<br><code>666</code> -
+            Saint Pierre & Miquelon<br><code>670</code> - Saint Vincent & the Grenadines<br><code>674</code>
+            - San Marino<br><code>678</code> - Sao Tome & Principe<br><code>682</code>
+            - Saudi Arabia<br><code>686</code> - Senegal<br><code>688</code> - Serbia<br><code>690</code>
+            - Seychelles<br><code>694</code> - Sierra Leone<br><code>699</code> -
+            India<br><code>702</code> - Singapore<br><code>703</code> - Slovakia<br><code>704</code>
+            - Vietnam<br><code>705</code> - Slovenia<br><code>706</code> - Somalia<br><code>710</code>
+            - South Africa<br><code>716</code> - Zimbabwe<br><code>724</code> - Spain<br><code>728</code>
+            - South Sudan<br><code>729</code> - Republic of the Sudan<br><code>732</code>
+            - Western Sahara<br><code>740</code> - Suriname<br><code>744</code> -
+            Svalbard & Jan Mayen Islands<br><code>748</code> - Eswatini<br><code>752</code>
+            - Sweden<br><code>756</code> - Switzerland<br><code>760</code> - Syria<br><code>762</code>
+            - Tajikistan<br><code>764</code> - Thailand<br><code>768</code> - Togo<br><code>772</code>
+            - Tokelau<br><code>776</code> - Tonga<br><code>780</code> - Trinidad &
+            Tobago<br><code>784</code> - United Arab Emirates<br><code>788</code>
+            - Tunisia<br><code>792</code> - Turkiye<br><code>795</code> - Turkmenistan<br><code>796</code>
+            - Turks & Caicos Islands<br><code>798</code> - Tuvalu<br><code>800</code>
+            - Uganda<br><code>804</code> - Ukraine<br><code>807</code> - Macedonia<br><code>818</code>
+            - Egypt<br><code>826</code> - United Kingdom<br><code>834</code> - Tanzania<br><code>840</code>
+            - United States of America<br><code>850</code> - US Virgin Islands<br><code>854</code>
+            - Burkina Faso<br><code>858</code> - Uruguay<br><code>860</code> - Uzbekistan<br><code>862</code>
+            - Venezuela<br><code>876</code> - Wallis & Futuna Islands<br><code>882</code>
+            - Samoa<br><code>887</code> - Yemen<br><code>894</code> - Zambia<br><code>999</code>
+            - Republic of Kosovo<br></details>
+        intervention_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionTypesEnum'
+          description: '<details><summary>Filters by a list of intervention types
+            directly, multiple possible.</summary><code>1</code> - Capital injection
+            and equity stakes (including bailouts)<br><code>2</code> - State loan<br><code>3</code>
+            - Financial grant<br><code>4</code> - In-kind grant<br><code>5</code>
+            - Production subsidy<br><code>6</code> - Interest payment subsidy<br><code>7</code>
+            - Loan guarantee<br><code>8</code> - Tax or social insurance relief<br><code>9</code>
+            - Competitive devaluation<br><code>10</code> - Repatriation & surrender
+            requirements<br><code>11</code> - Controls on commercial transactions
+            and investment instruments<br><code>12</code> - Controls on credit operations<br><code>13</code>
+            - Control on personal transactions<br><code>14</code> - Consumption subsidy<br><code>15</code>
+            - Tax-based export incentive<br><code>16</code> - Export subsidy<br><code>17</code>
+            - Other export incentive<br><code>18</code> - Export tax<br><code>19</code>
+            - Export ban<br><code>20</code> - Export tariff quota<br><code>21</code>
+            - Export quota<br><code>22</code> - Import ban<br><code>23</code> - Import
+            incentive<br><code>24</code> - Intellectual property protection<br><code>25</code>
+            - FDI: Entry and ownership rule<br><code>26</code> - FDI: Treatment and
+            operations, nes<br><code>27</code> - FDI: Financial incentive<br><code>28</code>
+            - Local content requirement<br><code>29</code> - Local operations requirement<br><code>30</code>
+            - Local labour requirement<br><code>31</code> - Labour market access<br><code>32</code>
+            - Post-migration treatment<br><code>33</code> - Trade payment measure<br><code>34</code>
+            - Trade balancing measure<br><code>35</code> - Export licensing requirement<br><code>36</code>
+            - Import licensing requirement<br><code>37</code> - Export-related non-tariff
+            measure, nes<br><code>38</code> - Import-related non-tariff measure, nes<br><code>39</code>
+            - Foreign customer limit<br><code>40</code> - Public procurement preference
+            margin<br><code>41</code> - Public procurement localisation<br><code>42</code>
+            - Public procurement access<br><code>43</code> - Public procurement, nes<br><code>44</code>
+            - Import tariff quota<br><code>45</code> - Import quota<br><code>46</code>
+            - Sanitary and phytosanitary measure<br><code>47</code> - Import tariff<br><code>48</code>
+            - Internal taxation of imports<br><code>49</code> - Technical barrier
+            to trade<br><code>50</code> - Import monitoring<br><code>51</code> - Anti-dumping<br><code>52</code>
+            - Safeguard<br><code>53</code> - Anti-subsidy<br><code>54</code> - Trade
+            finance<br><code>55</code> - Financial assistance in foreign market<br><code>56</code>
+            - Anti-circumvention<br><code>57</code> - Local content incentive<br><code>58</code>
+            - Special safeguard<br><code>59</code> - State aid, nes<br><code>60</code>
+            - Instrument unclear<br><code>61</code> - Price stabilisation<br><code>62</code>
+            - State aid, unspecified<br><code>63</code> - Local supply requirement
+            for exports<br><code>64</code> - Local value added requirement<br><code>65</code>
+            - Local value added incentive<br><code>66</code> - Local operations incentive<br><code>67</code>
+            - Local labour incentive<br><code>68</code> - Localisation, nes<br></details>'
+        mast_chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/MastChaptersEnum'
+          description: '<details><summary>Filters by a list of MAST chapters, multiple
+            possible.</summary><code>1</code> - A: Sanitary and phytosanitary measure<br><code>2</code>
+            - B: Technical barriers to trade<br><code>3</code> - Capital control measures<br><code>4</code>
+            - D: Contingent trade-protective measures<br><code>5</code> - E: Non-automatic
+            licensing, quotas etc.<br><code>6</code> - F: Price-control measures,
+            including additional taxes and charges<br><code>7</code> - FDI measures<br><code>8</code>
+            - G: Finance measures<br><code>9</code> - I: Trade-related investment
+            measures<br><code>10</code> - L: Subsidies (excl. export subsidies)<br><code>11</code>
+            - M: Government procurement restrictions<br><code>12</code> - Migration
+            measures<br><code>13</code> - N: Intellectual Property<br><code>14</code>
+            - P: Export-related measures (incl. subsidies)<br><code>15</code> - Tariff
+            measures<br><code>16</code> - Instrument unclear<br><code>17</code> -
+            C: Pre-shipment inspection and other formalities<br></details>'
+        implementation_level:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementationLevelEnum'
+          description: <details><summary>Filters by a list of implementation levels,
+            multiple possible.</summary><code>1</code> - Supranational<br><code>2</code>
+            - National<br><code>3</code> - Subnational<br><code>4</code> - SEZ<br><code>5</code>
+            - IFI<br><code>6</code> - NFI<br></details>
+        eligible_firms:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibleFirmsEnum'
+          description: <details><summary>Filters by a list of eligible firm types,
+            multiple possible.</summary><code>1</code> - all<br><code>2</code> - SMEs<br><code>3</code>
+            - firm-specific<br><code>4</code> - state-controlled<br><code>5</code>
+            - state trading enterprise<br><code>6</code> - sector-specific<br><code>7</code>
+            - location-specific<br><code>8</code> - processing trade<br></details>
+    InterventionTickerPublicSerializerV2:
+      type: object
+      description: |-
+        Serializer for /ticker endpoint output - description-centric format.
+        Primary focus: InterventionDescription with nested intervention data.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        intervention_id:
+          type: integer
+          readOnly: true
+        update_id:
+          type: integer
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        intervention:
+          type: string
+          readOnly: true
+      required:
+      - description
+      - id
+      - intervention
+      - intervention_id
+      - modified
+      - status
+      - update_id
+    InterventionTickerRequestBody:
+      type: object
+      description: Reusable serializer for intervention API request body
+      properties:
+        limit:
+          type: integer
+          default: 10
+          description: Set the size of the result set here. Accepted is any number
+            between 0 and 1000.
+        offset:
+          type: integer
+          default: 0
+          description: Use this parameter to paginate through the output, it accepts
+            any number.
+        sorting:
+          type: array
+          items:
+            type: string
+          default:
+          - -datetime_modified
+          description: Define the parameters you would like to sort the output by,
+            accepted are `datetime_modified`, `intervention_id`, `date_announced`.
+            Combine multiple order clauses together in the same string by separating
+            them via a comma, e.g. `datetime_modified`. Reverse the order by adding
+            a `-` in front of the order clause you want to reverse, e.g. `-datetime_modified`.
+        request_data:
+          allOf:
+          - $ref: '#/components/schemas/InterventionRequestDataFilters'
+          description: This parameter accepts an object containing the key-value pairs
+            used as filters.
+      required:
+      - request_data
+    InterventionTypesEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+      - 32
+      - 33
+      - 34
+      - 35
+      - 36
+      - 37
+      - 38
+      - 39
+      - 40
+      - 41
+      - 42
+      - 43
+      - 44
+      - 45
+      - 46
+      - 47
+      - 48
+      - 49
+      - 50
+      - 51
+      - 52
+      - 53
+      - 54
+      - 55
+      - 56
+      - 57
+      - 58
+      - 59
+      - 60
+      - 61
+      - 62
+      - 63
+      - 64
+      - 65
+      - 66
+      - 67
+      - 68
+      type: integer
+      description: |-
+        * `1` - Capital injection and equity stakes (including bailouts)
+        * `2` - State loan
+        * `3` - Financial grant
+        * `4` - In-kind grant
+        * `5` - Production subsidy
+        * `6` - Interest payment subsidy
+        * `7` - Loan guarantee
+        * `8` - Tax or social insurance relief
+        * `9` - Competitive devaluation
+        * `10` - Repatriation & surrender requirements
+        * `11` - Controls on commercial transactions and investment instruments
+        * `12` - Controls on credit operations
+        * `13` - Control on personal transactions
+        * `14` - Consumption subsidy
+        * `15` - Tax-based export incentive
+        * `16` - Export subsidy
+        * `17` - Other export incentive
+        * `18` - Export tax
+        * `19` - Export ban
+        * `20` - Export tariff quota
+        * `21` - Export quota
+        * `22` - Import ban
+        * `23` - Import incentive
+        * `24` - Intellectual property protection
+        * `25` - FDI: Entry and ownership rule
+        * `26` - FDI: Treatment and operations, nes
+        * `27` - FDI: Financial incentive
+        * `28` - Local content requirement
+        * `29` - Local operations requirement
+        * `30` - Local labour requirement
+        * `31` - Labour market access
+        * `32` - Post-migration treatment
+        * `33` - Trade payment measure
+        * `34` - Trade balancing measure
+        * `35` - Export licensing requirement
+        * `36` - Import licensing requirement
+        * `37` - Export-related non-tariff measure, nes
+        * `38` - Import-related non-tariff measure, nes
+        * `39` - Foreign customer limit
+        * `40` - Public procurement preference margin
+        * `41` - Public procurement localisation
+        * `42` - Public procurement access
+        * `43` - Public procurement, nes
+        * `44` - Import tariff quota
+        * `45` - Import quota
+        * `46` - Sanitary and phytosanitary measure
+        * `47` - Import tariff
+        * `48` - Internal taxation of imports
+        * `49` - Technical barrier to trade
+        * `50` - Import monitoring
+        * `51` - Anti-dumping
+        * `52` - Safeguard
+        * `53` - Anti-subsidy
+        * `54` - Trade finance
+        * `55` - Financial assistance in foreign market
+        * `56` - Anti-circumvention
+        * `57` - Local content incentive
+        * `58` - Special safeguard
+        * `59` - State aid, nes
+        * `60` - Instrument unclear
+        * `61` - Price stabilisation
+        * `62` - State aid, unspecified
+        * `63` - Local supply requirement for exports
+        * `64` - Local value added requirement
+        * `65` - Local value added incentive
+        * `66` - Local operations incentive
+        * `67` - Local labour incentive
+        * `68` - Localisation, nes
+    MastChaptersEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      type: integer
+      description: |-
+        * `1` - A: Sanitary and phytosanitary measure
+        * `2` - B: Technical barriers to trade
+        * `3` - Capital control measures
+        * `4` - D: Contingent trade-protective measures
+        * `5` - E: Non-automatic licensing, quotas etc.
+        * `6` - F: Price-control measures, including additional taxes and charges
+        * `7` - FDI measures
+        * `8` - G: Finance measures
+        * `9` - I: Trade-related investment measures
+        * `10` - L: Subsidies (excl. export subsidies)
+        * `11` - M: Government procurement restrictions
+        * `12` - Migration measures
+        * `13` - N: Intellectual Property
+        * `14` - P: Export-related measures (incl. subsidies)
+        * `15` - Tariff measures
+        * `16` - Instrument unclear
+        * `17` - C: Pre-shipment inspection and other formalities
+    PaginatedEventListPublicAPIList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventListPublicAPI'
+    PaginatedImpactChainProductListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpactChainProductList'
+    PaginatedImpactChainSectorListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpactChainSectorList'
+    PaginatedInterventionFullListPublicSerializerV2List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionFullListPublicSerializerV2'
+    PaginatedInterventionListPublicList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionListPublic'
+    PaginatedInterventionTickerPublicSerializerV2List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionTickerPublicSerializerV2'
+    PolicyAreaEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      type: integer
+      description: |-
+        * `1` - International trade
+        * `2` - Competition
+        * `3` - Content moderation
+        * `4` - Privacy and data protection
+        * `5` - Consumer protection
+        * `6` - Artificial intelligence
+        * `7` - Cybersecurity
+        * `8` - Digital taxation
+        * `9` - E-commerce
+        * `10` - State aid
+        * `11` - Digital strategy
+        * `12` - Social media
+        * `13` - Legal entity establishment
+        * `14` - Financial regulation
+        * `15` - Intellectual property protection
+        * `16` - Design and testing standards
+        * `17` - Regulatory Compliance and Transparency
+    StateActSource:
+      type: object
+      properties:
+        status:
+          type: string
+          readOnly: true
+        order_nr:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        modified:
+          type: string
+          readOnly: true
+        text:
+          type: string
+          readOnly: true
+      required:
+      - modified
+      - status
+      - text
+  securitySchemes:
+    APIKey:
+      type: apiKey
+      in: header
+      name: APIKey
+      description: 'API Key authentication. Use the format: <code>APIKey [YOUR_API_KEY]</code>.'
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: GTA Data V2
+  description: |2+
+
+
+    ### Access
+    The GTA data endpoint can be accessed via the following request:
+
+    ```http
+    POST https://api.globaltradealert.org/api/v2/gta/data/
+    Content-Type: application/json
+    Authorization: APIKey [YOUR_API_KEY]
+    ```
+    ### Older versions
+    For information on the first version of the GTA data endpoint please check out chapter "GTA Data V1 (Deprecated)" in the documentation.
+
+    ### Pagination
+    The GTA data endpoint allows to return a maximum of 1000 entries per request. Use the `limit` and `offset` parameters to paginate through the output.
+
+    I.e. to get the first 1000 entries, set the `limit` to 1000 and the `offset` to 0. To get the next 1000 entries, set the `limit` to 1000 and the `offset` to 1000, and so forth.
+
+    No entries are returned if the offset is higher than the total number of entries matching the request filters.
+
+    ### Full access format
+    For users with full access rights, additional fields are being outputted by the endpoint:
+
+    - `affected_products`: This field now outputs prior and new levels, as well as the unit of those levels if applicable.
+    - `intervention_description`: Intervention description as can be found on our website.
+    - `state_act_source`: Source information as can be found on our website.
+    - `is_official_source`: Boolean indicator whether this state act is based on an official source or not.
+
+- name: GTA Ticker
+  description: |2+
+
+
+    GTA Ticker allows to extract updates to existing policies. Instead of returning a list of interventions, it returns a list of text updates to those interventions. Only the updated text part is shown per entry, together with the associated policy information.
+
+    ### Access
+    The GTA data endpoint can be accessed via the following request:
+
+    ```http
+    POST https://api.globaltradealert.org/api/v1/gta/ticker/
+    Content-Type: application/json
+    Authorization: APIKey [YOUR_API_KEY]
+    ```
+
+    ### Pagination
+    The GTA data endpoint allows to return a maximum of 1000 entries per request. Use the `limit` and `offset` parameters to paginate through the output.
+
+    I.e. to get the first 1000 entries, set the `limit` to 1000 and the `offset` to 0. To get the next 1000 entries, set the `limit` to 1000 and the `offset` to 1000, and so forth.
+
+    No entries are returned if the offset is higher than the total number of entries matching the request filters.
+
+- name: GTA Impact Chains
+  description: |2+
+
+
+    GTA Impact Chains allows to extract impact chains implementing_jurisdiction-product_id-affected_jurisdiction tuples. The GTA data endpoint aggregates this kind of data into a single entry, this data is aggregated into a single entry. The impact chain endpoints provide this data in a unaggregated format.
+
+    ### Access
+    The GTA impact chain endpoint can be accessed via the following request.
+
+    The impact chain endpoint exists for both product and sector. The request body is the same for both, the only difference is the endpoint URL.
+
+    ```http
+    POST https://api.globaltradealert.org/api/v1/gta/impact-chains/product/
+    Content-Type: application/json
+    Authorization: APIKey [YOUR_API_KEY]
+    ```
+
+    ```http
+    POST https://api.globaltradealert.org/api/v1/gta/impact-chains/sector/
+    Content-Type: application/json
+    Authorization: APIKey [YOUR_API_KEY]
+    ```
+
+    ### Pagination
+    The GTA data endpoint allows to return a maximum of 1000 entries per request. Use the `limit` and `offset` parameters to paginate through the output.
+
+    I.e. to get the first 1000 entries, set the `limit` to 1000 and the `offset` to 0. To get the next 1000 entries, set the `limit` to 1000 and the `offset` to 1000, and so forth.
+
+    No entries are returned if the offset is higher than the total number of entries matching the request filters.
+
+
+- name: DPA Data
+  description: "\n### Access\nThe DPA data endpoint can be accessed via the following\
+    \ request:\n\n```http\nPOST https://api.globaltradealert.org/api/v1/dpa/events/\n\
+    Content-Type: application/json\nAuthorization: APIKey [YOUR_API_KEY]\n```\n\n\
+    ### Pagination\nThe DPA data endpoint allows to return a maximum of 1000 entries\
+    \ per request. Use the `limit` and `offset` parameters to paginate through the\
+    \ output.\n\nI.e. to get the first 1000 entries, set the `limit` to 1000 and the\
+    \ `offset` to 0. To get the next 1000 entries, set the `limit` to 1000 and the\
+    \ `offset` to 1000, and so forth.\n\nNo entries are returned if the offset is\
+    \ higher than the total number of entries matching the request filters.\n\t\t\t\
+    \t"
+- name: GTA Data V1 (Deprecated)
+  description: "\n                \n### Access\nThe GTA data (V1) endpoint can be\
+    \ accessed via the following request:\n\n```http\nPOST https://api.globaltradealert.org/api/v1/data/\n\
+    Content-Type: application/json\nAuthorization: APIKey [YOUR_API_KEY]\n```\n\n\
+    ### Pagination\nThe GTA data endpoint allows to return a maximum of 1000 entries\
+    \ per request. Use the `limit` and `offset` parameters to paginate through the\
+    \ output.\n\nI.e. to get the first 1000 entries, set the `limit` to 1000 and the\
+    \ `offset` to 0. To get the next 1000 entries, set the `limit` to 1000 and the\
+    \ `offset` to 1000, and so forth.\n\nNo entries are returned if the offset is\
+    \ higher than the total number of entries matching the request filters.\n\n###\
+    \ Full access format\nFor users with full access rights, additional fields are\
+    \ being outputted by the endpoint. **Please note, that the format of the following\
+    \ fields changes when access rights change**:\n\n- `affected_products`: This field\
+    \ now outputs an array of objects each including the product id, prior and new\
+    \ levels, as well as the unit of those levels if applicable.\nAdditionally, the\
+    \ following fields are added as well:\n\n- `intervention_description`: Intervention\
+    \ description as can be found on our website.\n- `state_act_source`: Source information\
+    \ as can be found on our website.\n- `is_official_source`: Boolean indicator whether\
+    \ this state act is based on an official source or not.\n\n                "
