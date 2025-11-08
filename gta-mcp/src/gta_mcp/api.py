@@ -462,6 +462,10 @@ def build_filters(params: Dict[str, Any]) -> Dict[str, Any]:
         filters['in_force_on_date'] = date.today().isoformat()
         filters['keep_in_force_on_date'] = params['is_in_force']
 
+    # Query parameter - text search (pass through as-is)
+    if params.get('query'):
+        filters['query'] = params['query']
+
     # Date modified (for ticker)
     if params.get('date_modified_gte'):
         # This is used by ticker endpoint, not main data endpoint
