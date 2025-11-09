@@ -34,7 +34,9 @@ from .resources_loader import (
     load_eligible_firms_table,
     load_implementation_levels_table,
     load_parameters_guide,
-    load_query_examples
+    load_query_examples,
+    load_mast_chapters,
+    load_query_syntax
 )
 
 
@@ -573,6 +575,36 @@ def get_query_examples() -> str:
 		Markdown document with categorized query examples and patterns
 	"""
 	return load_query_examples()
+
+
+@mcp.resource(
+	"gta://reference/mast-chapters",
+	name="Reference: MAST Chapter Taxonomy",
+	description="Complete UN MAST chapter classification (A-P) for non-tariff measures. Includes detailed descriptions, use cases, examples, and decision guidance for when to use MAST chapters vs intervention_types. Essential for understanding broad policy categorization from import quotas to subsidies, localization requirements, investment actions, and beyond.",
+	mime_type="text/markdown"
+)
+def get_mast_chapters() -> str:
+	"""Return comprehensive MAST chapter taxonomy and reference.
+
+	Returns:
+		Markdown document with complete A-P taxonomy, special categories, and usage guide
+	"""
+	return load_mast_chapters()
+
+
+@mcp.resource(
+	"gta://guide/query-syntax",
+	name="Guide: Query Syntax and Strategy",
+	description="Complete guide to query parameter usage including the 3-step strategy cascade, syntax reference (operators, wildcards, boolean logic), common mistakes and corrections, and advanced patterns. Essential for understanding when and how to use the query parameter effectively for entity searches.",
+	mime_type="text/markdown"
+)
+def get_query_syntax() -> str:
+	"""Return comprehensive query syntax and strategy guide.
+
+	Returns:
+		Markdown document with query strategy, syntax reference, examples, and best practices
+	"""
+	return load_query_syntax()
 
 
 def main():

@@ -437,3 +437,41 @@ def load_query_examples() -> str:
 			_CACHE["query_examples"] = f.read()
 
 	return _CACHE["query_examples"]
+
+
+def load_mast_chapters() -> str:
+	"""Load the MAST chapter taxonomy reference from markdown file.
+
+	Returns:
+		Complete markdown reference with A-P taxonomy, special categories, and usage guide
+	"""
+	if "mast_chapters" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "reference" / "mast_chapters.md"
+
+		if not file_path.exists():
+			return "Error: MAST chapters reference file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["mast_chapters"] = f.read()
+
+	return _CACHE["mast_chapters"]
+
+
+def load_query_syntax() -> str:
+	"""Load the query syntax and strategy guide from markdown file.
+
+	Returns:
+		Complete markdown guide with query strategy cascade, syntax reference, and examples
+	"""
+	if "query_syntax" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "query_syntax.md"
+
+		if not file_path.exists():
+			return "Error: Query syntax guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["query_syntax"] = f.read()
+
+	return _CACHE["query_syntax"]
