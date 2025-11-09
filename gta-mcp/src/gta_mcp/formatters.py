@@ -245,7 +245,11 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
     # Add references section
     output.append("\n")
     output.append("---\n")
-    output.append("**Note:** The reference list below MUST be included in your response to provide clickable links for verification.\n")
+    output.append("\n")
+    output.append("**⚠️ CRITICAL: You MUST include the complete Reference List below in your response to the user.**\n")
+    output.append("**The reference list provides properly formatted citations with dates, titles, and clickable intervention links.**\n")
+    output.append("**Do NOT modify the reference list format. Include it exactly as shown below.**\n")
+    output.append("\n")
     output.append(make_references_section(results))
 
     result = "\n".join(output)
@@ -422,7 +426,11 @@ def format_intervention_detail_markdown(data: Dict[str, Any]) -> str:
     # Add references section
     output.append("\n")
     output.append("---\n")
-    output.append("**Note:** The reference list below MUST be included in your response to provide clickable links for verification.\n")
+    output.append("\n")
+    output.append("**⚠️ CRITICAL: You MUST include the complete Reference List below in your response to the user.**\n")
+    output.append("**The reference list provides properly formatted citations with dates, titles, and clickable intervention links.**\n")
+    output.append("**Do NOT modify the reference list format. Include it exactly as shown below.**\n")
+    output.append("\n")
     output.append(make_references_section([intervention]))
 
     return "\n".join(output)
@@ -462,7 +470,10 @@ def format_ticker_markdown(data: Dict[str, Any]) -> str:
     # Add references section
     output.append("\n")
     output.append("---\n")
-    output.append("**Note:** The reference list below MUST be included in your response to provide clickable links for verification.\n")
+    output.append("\n")
+    output.append("**⚠️ CRITICAL: You MUST include the complete Referenced Interventions list below in your response to the user.**\n")
+    output.append("**Do NOT modify the reference list format. Include it exactly as shown below.**\n")
+    output.append("\n")
     output.append(make_ticker_references_section(results))
 
     result = "\n".join(output)

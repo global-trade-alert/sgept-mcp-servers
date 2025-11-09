@@ -331,13 +331,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InterventionRequestBody'
+              $ref: '#/components/schemas/InterventionRequestBodyV2'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/InterventionRequestBody'
+              $ref: '#/components/schemas/InterventionRequestBodyV2'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/InterventionRequestBody'
+              $ref: '#/components/schemas/InterventionRequestBodyV2'
         required: true
       security:
       - APIKey: []
@@ -2153,8 +2153,8 @@ components:
           - -intervention_id
           description: Define the parameters you would like to sort the output by,
             accepted are `date_announced`, `date_published`, `date_implemented`, `date_removed`,
-            `intervention_id`. Combine multiple order clauses together in the same
-            string by separating them via a comma, e.g. `date_announced,date_implemented`.
+            `intervention_id`, `last_updated`. Combine multiple order clauses together
+            in the same string by separating them via a comma, e.g. `date_announced,date_implemented`.
             Reverse the order by adding a `-` in front of the order clause you want
             to reverse, e.g. `-date_announced`.
         show_full_names:
@@ -2166,6 +2166,45 @@ components:
         request_data:
           allOf:
           - $ref: '#/components/schemas/InterventionRequestDataFilters'
+          description: This parameter accepts an object containing the key-value pairs
+            used as filters.
+      required:
+      - request_data
+    InterventionRequestBodyV2:
+      type: object
+      description: Reusable serializer for intervention API request body
+      properties:
+        limit:
+          type: integer
+          default: 10
+          description: Set the size of the result set here. Accepted is any number
+            between 0 and 1000.
+        offset:
+          type: integer
+          default: 0
+          description: Use this parameter to paginate through the output, it accepts
+            any number.
+        sorting:
+          type: array
+          items:
+            type: string
+          default:
+          - -intervention_id
+          description: Define the parameters you would like to sort the output by,
+            accepted are `date_announced`, `date_published`, `date_implemented`, `date_removed`,
+            `intervention_id`, `last_updated``. Combine multiple order clauses together
+            in the same string by separating them via a comma, e.g. `date_announced,date_implemented`.
+            Reverse the order by adding a `-` in front of the order clause you want
+            to reverse, e.g. `-date_announced`.
+        show_full_names:
+          type: boolean
+          default: false
+          description: Boolean filter defining if product and sector names should
+            be outputted in full. Per default these values are truncated to 20 characters,
+            in order to reduce the result size.
+        request_data:
+          allOf:
+          - $ref: '#/components/schemas/InterventionRequestDataFiltersV2'
           description: This parameter accepts an object containing the key-value pairs
             used as filters.
       required:
@@ -2265,6 +2304,18 @@ components:
           description: Daterange filter defining in which range the intervention was
             published. `None` values are treated as unfiltered (=any date into the
             past or future).
+        update_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            last updated. If no update has been added to an intervention yet, the
+            last update date is equal to the publishing date. None values are treated
+            as unfiltered (=any date into the past or future).
         in_force_on_date:
           type: string
           format: date
@@ -2327,6 +2378,487 @@ components:
           description: Datestring that filters interventions based on a lag date.
             Interventions with publishing date after the yearly lag date are excluded.
             The year component of this datevalue is ignored.
+        gta_evaluation:
+          type: array
+          items:
+            $ref: '#/components/schemas/GtaEvaluationEnum'
+          description: <details><summary>Filters by evaluation value, multiple possible.
+            Values 4 and 5 are conceptual groupings that map to base values 1-3.</summary><code>1</code>
+            - Red - Harmful to trade<br><code>2</code> - Amber - Murky/unclear impact<br><code>3</code>
+            - Green - Liberalizing to trade<br><code>4</code> - Harmful - Includes
+            both Red and Amber interventions<br><code>5</code> - Liberalizing - Equivalent
+            to Green interventions<br></details>
+        affected_flow:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffectedFlowEnum'
+          description: <details><summary>Filters by affected flow value, multiple
+            possible. Affected flows determine the trade flow, that an intervention
+            affects.</summary><code>1</code> - Inward<br><code>2</code> - Outward<br><code>3</code>
+            - Outward subsidy<br></details>
+        affected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementerEnum'
+          description: <details><summary>Filters by jurisdictions, accepted values
+            are UN country codes, multiple possible.</summary><code>4</code> - Afghanistan<br><code>8</code>
+            - Albania<br><code>12</code> - Algeria<br><code>16</code> - American Samoa<br><code>20</code>
+            - Andorra<br><code>24</code> - Angola<br><code>28</code> - Antigua & Barbuda<br><code>31</code>
+            - Azerbaijan<br><code>32</code> - Argentina<br><code>36</code> - Australia<br><code>40</code>
+            - Austria<br><code>44</code> - Bahamas<br><code>48</code> - Bahrain<br><code>50</code>
+            - Bangladesh<br><code>51</code> - Armenia<br><code>52</code> - Barbados<br><code>56</code>
+            - Belgium<br><code>60</code> - Bermuda<br><code>64</code> - Bhutan<br><code>68</code>
+            - Bolivia<br><code>70</code> - Bosnia & Herzegovina<br><code>72</code>
+            - Botswana<br><code>76</code> - Brazil<br><code>84</code> - Belize<br><code>90</code>
+            - Solomon Islands<br><code>92</code> - British Virgin Islands<br><code>96</code>
+            - Brunei Darussalam<br><code>100</code> - Bulgaria<br><code>104</code>
+            - Myanmar<br><code>108</code> - Burundi<br><code>112</code> - Belarus<br><code>116</code>
+            - Cambodia<br><code>120</code> - Cameroon<br><code>124</code> - Canada<br><code>132</code>
+            - Cape Verde<br><code>136</code> - Cayman Islands<br><code>140</code>
+            - Central African Republic<br><code>144</code> - Sri Lanka<br><code>148</code>
+            - Chad<br><code>152</code> - Chile<br><code>156</code> - China<br><code>158</code>
+            - Chinese Taipei<br><code>170</code> - Colombia<br><code>174</code> -
+            Comoros<br><code>175</code> - Mayotte<br><code>178</code> - Congo<br><code>180</code>
+            - DR Congo<br><code>184</code> - Cook Islands<br><code>188</code> - Costa
+            Rica<br><code>191</code> - Croatia<br><code>192</code> - Cuba<br><code>196</code>
+            - Cyprus<br><code>203</code> - Czechia<br><code>204</code> - Benin<br><code>208</code>
+            - Denmark<br><code>212</code> - Dominica<br><code>214</code> - Dominican
+            Republic<br><code>218</code> - Ecuador<br><code>222</code> - El Salvador<br><code>226</code>
+            - Equatorial Guinea<br><code>231</code> - Ethiopia<br><code>232</code>
+            - Eritrea<br><code>233</code> - Estonia<br><code>234</code> - Faeroe Islands<br><code>238</code>
+            - Falkland Islands<br><code>242</code> - Fiji<br><code>246</code> - Finland<br><code>251</code>
+            - France<br><code>254</code> - French Guiana<br><code>258</code> - French
+            Polynesia<br><code>262</code> - Djibouti<br><code>266</code> - Gabon<br><code>268</code>
+            - Georgia<br><code>270</code> - Gambia<br><code>275</code> - State of
+            Palestine<br><code>276</code> - Germany<br><code>288</code> - Ghana<br><code>296</code>
+            - Kiribati<br><code>300</code> - Greece<br><code>304</code> - Greenland<br><code>308</code>
+            - Grenada<br><code>312</code> - Guadeloupe<br><code>316</code> - Guam<br><code>320</code>
+            - Guatemala<br><code>324</code> - Guinea<br><code>328</code> - Guyana<br><code>332</code>
+            - Haiti<br><code>336</code> - Vatican<br><code>340</code> - Honduras<br><code>344</code>
+            - Hong Kong<br><code>348</code> - Hungary<br><code>352</code> - Iceland<br><code>360</code>
+            - Indonesia<br><code>364</code> - Iran<br><code>368</code> - Iraq<br><code>372</code>
+            - Ireland<br><code>376</code> - Israel<br><code>381</code> - Italy<br><code>384</code>
+            - Ivory Coast<br><code>388</code> - Jamaica<br><code>392</code> - Japan<br><code>398</code>
+            - Kazakhstan<br><code>400</code> - Jordan<br><code>404</code> - Kenya<br><code>408</code>
+            - DPR Korea<br><code>410</code> - Republic of Korea<br><code>414</code>
+            - Kuwait<br><code>417</code> - Kyrgyzstan<br><code>418</code> - Lao<br><code>422</code>
+            - Lebanon<br><code>426</code> - Lesotho<br><code>428</code> - Latvia<br><code>430</code>
+            - Liberia<br><code>434</code> - Libya<br><code>438</code> - Liechtenstein<br><code>440</code>
+            - Lithuania<br><code>442</code> - Luxembourg<br><code>446</code> - Macao<br><code>450</code>
+            - Madagascar<br><code>454</code> - Malawi<br><code>458</code> - Malaysia<br><code>462</code>
+            - Maldives<br><code>466</code> - Mali<br><code>470</code> - Malta<br><code>474</code>
+            - Martinique<br><code>478</code> - Mauritania<br><code>480</code> - Mauritius<br><code>484</code>
+            - Mexico<br><code>492</code> - Monaco<br><code>496</code> - Mongolia<br><code>498</code>
+            - Republic of Moldova<br><code>499</code> - Montenegro<br><code>500</code>
+            - Montserrat<br><code>504</code> - Morocco<br><code>508</code> - Mozambique<br><code>512</code>
+            - Oman<br><code>516</code> - Namibia<br><code>520</code> - Nauru<br><code>524</code>
+            - Nepal<br><code>528</code> - Netherlands<br><code>532</code> - Netherlands
+            Antilles<br><code>533</code> - Aruba<br><code>540</code> - New Caledonia<br><code>548</code>
+            - Vanuatu<br><code>554</code> - New Zealand<br><code>558</code> - Nicaragua<br><code>562</code>
+            - Niger<br><code>566</code> - Nigeria<br><code>570</code> - Niue<br><code>574</code>
+            - Norfolk Island<br><code>578</code> - Norway<br><code>580</code> - Northern
+            Mariana Islands<br><code>583</code> - Micronesia<br><code>584</code> -
+            Marshall Islands<br><code>585</code> - Palau<br><code>586</code> - Pakistan<br><code>591</code>
+            - Panama<br><code>598</code> - Papua New Guinea<br><code>600</code> -
+            Paraguay<br><code>604</code> - Peru<br><code>608</code> - Philippines<br><code>612</code>
+            - Pitcairn<br><code>616</code> - Poland<br><code>620</code> - Portugal<br><code>624</code>
+            - Guinea-Bissau<br><code>626</code> - Timor-Leste<br><code>630</code>
+            - Puerto Rico<br><code>634</code> - Qatar<br><code>638</code> - Réunion<br><code>642</code>
+            - Romania<br><code>643</code> - Russia<br><code>646</code> - Rwanda<br><code>652</code>
+            - Saint-Barthélemy<br><code>654</code> - Saint Helena<br><code>659</code>
+            - Saint Kitts & Nevis<br><code>660</code> - Anguilla<br><code>662</code>
+            - Saint Lucia<br><code>663</code> - Saint-Martin<br><code>666</code> -
+            Saint Pierre & Miquelon<br><code>670</code> - Saint Vincent & the Grenadines<br><code>674</code>
+            - San Marino<br><code>678</code> - Sao Tome & Principe<br><code>682</code>
+            - Saudi Arabia<br><code>686</code> - Senegal<br><code>688</code> - Serbia<br><code>690</code>
+            - Seychelles<br><code>694</code> - Sierra Leone<br><code>699</code> -
+            India<br><code>702</code> - Singapore<br><code>703</code> - Slovakia<br><code>704</code>
+            - Vietnam<br><code>705</code> - Slovenia<br><code>706</code> - Somalia<br><code>710</code>
+            - South Africa<br><code>716</code> - Zimbabwe<br><code>724</code> - Spain<br><code>728</code>
+            - South Sudan<br><code>729</code> - Republic of the Sudan<br><code>732</code>
+            - Western Sahara<br><code>740</code> - Suriname<br><code>744</code> -
+            Svalbard & Jan Mayen Islands<br><code>748</code> - Eswatini<br><code>752</code>
+            - Sweden<br><code>756</code> - Switzerland<br><code>760</code> - Syria<br><code>762</code>
+            - Tajikistan<br><code>764</code> - Thailand<br><code>768</code> - Togo<br><code>772</code>
+            - Tokelau<br><code>776</code> - Tonga<br><code>780</code> - Trinidad &
+            Tobago<br><code>784</code> - United Arab Emirates<br><code>788</code>
+            - Tunisia<br><code>792</code> - Turkiye<br><code>795</code> - Turkmenistan<br><code>796</code>
+            - Turks & Caicos Islands<br><code>798</code> - Tuvalu<br><code>800</code>
+            - Uganda<br><code>804</code> - Ukraine<br><code>807</code> - Macedonia<br><code>818</code>
+            - Egypt<br><code>826</code> - United Kingdom<br><code>834</code> - Tanzania<br><code>840</code>
+            - United States of America<br><code>850</code> - US Virgin Islands<br><code>854</code>
+            - Burkina Faso<br><code>858</code> - Uruguay<br><code>860</code> - Uzbekistan<br><code>862</code>
+            - Venezuela<br><code>876</code> - Wallis & Futuna Islands<br><code>882</code>
+            - Samoa<br><code>887</code> - Yemen<br><code>894</code> - Zambia<br><code>999</code>
+            - Republic of Kosovo<br></details>
+        implementer:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementerEnum'
+          description: <details><summary>Filters by jurisdictions, accepted values
+            are UN country codes, multiple possible.</summary><code>4</code> - Afghanistan<br><code>8</code>
+            - Albania<br><code>12</code> - Algeria<br><code>16</code> - American Samoa<br><code>20</code>
+            - Andorra<br><code>24</code> - Angola<br><code>28</code> - Antigua & Barbuda<br><code>31</code>
+            - Azerbaijan<br><code>32</code> - Argentina<br><code>36</code> - Australia<br><code>40</code>
+            - Austria<br><code>44</code> - Bahamas<br><code>48</code> - Bahrain<br><code>50</code>
+            - Bangladesh<br><code>51</code> - Armenia<br><code>52</code> - Barbados<br><code>56</code>
+            - Belgium<br><code>60</code> - Bermuda<br><code>64</code> - Bhutan<br><code>68</code>
+            - Bolivia<br><code>70</code> - Bosnia & Herzegovina<br><code>72</code>
+            - Botswana<br><code>76</code> - Brazil<br><code>84</code> - Belize<br><code>90</code>
+            - Solomon Islands<br><code>92</code> - British Virgin Islands<br><code>96</code>
+            - Brunei Darussalam<br><code>100</code> - Bulgaria<br><code>104</code>
+            - Myanmar<br><code>108</code> - Burundi<br><code>112</code> - Belarus<br><code>116</code>
+            - Cambodia<br><code>120</code> - Cameroon<br><code>124</code> - Canada<br><code>132</code>
+            - Cape Verde<br><code>136</code> - Cayman Islands<br><code>140</code>
+            - Central African Republic<br><code>144</code> - Sri Lanka<br><code>148</code>
+            - Chad<br><code>152</code> - Chile<br><code>156</code> - China<br><code>158</code>
+            - Chinese Taipei<br><code>170</code> - Colombia<br><code>174</code> -
+            Comoros<br><code>175</code> - Mayotte<br><code>178</code> - Congo<br><code>180</code>
+            - DR Congo<br><code>184</code> - Cook Islands<br><code>188</code> - Costa
+            Rica<br><code>191</code> - Croatia<br><code>192</code> - Cuba<br><code>196</code>
+            - Cyprus<br><code>203</code> - Czechia<br><code>204</code> - Benin<br><code>208</code>
+            - Denmark<br><code>212</code> - Dominica<br><code>214</code> - Dominican
+            Republic<br><code>218</code> - Ecuador<br><code>222</code> - El Salvador<br><code>226</code>
+            - Equatorial Guinea<br><code>231</code> - Ethiopia<br><code>232</code>
+            - Eritrea<br><code>233</code> - Estonia<br><code>234</code> - Faeroe Islands<br><code>238</code>
+            - Falkland Islands<br><code>242</code> - Fiji<br><code>246</code> - Finland<br><code>251</code>
+            - France<br><code>254</code> - French Guiana<br><code>258</code> - French
+            Polynesia<br><code>262</code> - Djibouti<br><code>266</code> - Gabon<br><code>268</code>
+            - Georgia<br><code>270</code> - Gambia<br><code>275</code> - State of
+            Palestine<br><code>276</code> - Germany<br><code>288</code> - Ghana<br><code>296</code>
+            - Kiribati<br><code>300</code> - Greece<br><code>304</code> - Greenland<br><code>308</code>
+            - Grenada<br><code>312</code> - Guadeloupe<br><code>316</code> - Guam<br><code>320</code>
+            - Guatemala<br><code>324</code> - Guinea<br><code>328</code> - Guyana<br><code>332</code>
+            - Haiti<br><code>336</code> - Vatican<br><code>340</code> - Honduras<br><code>344</code>
+            - Hong Kong<br><code>348</code> - Hungary<br><code>352</code> - Iceland<br><code>360</code>
+            - Indonesia<br><code>364</code> - Iran<br><code>368</code> - Iraq<br><code>372</code>
+            - Ireland<br><code>376</code> - Israel<br><code>381</code> - Italy<br><code>384</code>
+            - Ivory Coast<br><code>388</code> - Jamaica<br><code>392</code> - Japan<br><code>398</code>
+            - Kazakhstan<br><code>400</code> - Jordan<br><code>404</code> - Kenya<br><code>408</code>
+            - DPR Korea<br><code>410</code> - Republic of Korea<br><code>414</code>
+            - Kuwait<br><code>417</code> - Kyrgyzstan<br><code>418</code> - Lao<br><code>422</code>
+            - Lebanon<br><code>426</code> - Lesotho<br><code>428</code> - Latvia<br><code>430</code>
+            - Liberia<br><code>434</code> - Libya<br><code>438</code> - Liechtenstein<br><code>440</code>
+            - Lithuania<br><code>442</code> - Luxembourg<br><code>446</code> - Macao<br><code>450</code>
+            - Madagascar<br><code>454</code> - Malawi<br><code>458</code> - Malaysia<br><code>462</code>
+            - Maldives<br><code>466</code> - Mali<br><code>470</code> - Malta<br><code>474</code>
+            - Martinique<br><code>478</code> - Mauritania<br><code>480</code> - Mauritius<br><code>484</code>
+            - Mexico<br><code>492</code> - Monaco<br><code>496</code> - Mongolia<br><code>498</code>
+            - Republic of Moldova<br><code>499</code> - Montenegro<br><code>500</code>
+            - Montserrat<br><code>504</code> - Morocco<br><code>508</code> - Mozambique<br><code>512</code>
+            - Oman<br><code>516</code> - Namibia<br><code>520</code> - Nauru<br><code>524</code>
+            - Nepal<br><code>528</code> - Netherlands<br><code>532</code> - Netherlands
+            Antilles<br><code>533</code> - Aruba<br><code>540</code> - New Caledonia<br><code>548</code>
+            - Vanuatu<br><code>554</code> - New Zealand<br><code>558</code> - Nicaragua<br><code>562</code>
+            - Niger<br><code>566</code> - Nigeria<br><code>570</code> - Niue<br><code>574</code>
+            - Norfolk Island<br><code>578</code> - Norway<br><code>580</code> - Northern
+            Mariana Islands<br><code>583</code> - Micronesia<br><code>584</code> -
+            Marshall Islands<br><code>585</code> - Palau<br><code>586</code> - Pakistan<br><code>591</code>
+            - Panama<br><code>598</code> - Papua New Guinea<br><code>600</code> -
+            Paraguay<br><code>604</code> - Peru<br><code>608</code> - Philippines<br><code>612</code>
+            - Pitcairn<br><code>616</code> - Poland<br><code>620</code> - Portugal<br><code>624</code>
+            - Guinea-Bissau<br><code>626</code> - Timor-Leste<br><code>630</code>
+            - Puerto Rico<br><code>634</code> - Qatar<br><code>638</code> - Réunion<br><code>642</code>
+            - Romania<br><code>643</code> - Russia<br><code>646</code> - Rwanda<br><code>652</code>
+            - Saint-Barthélemy<br><code>654</code> - Saint Helena<br><code>659</code>
+            - Saint Kitts & Nevis<br><code>660</code> - Anguilla<br><code>662</code>
+            - Saint Lucia<br><code>663</code> - Saint-Martin<br><code>666</code> -
+            Saint Pierre & Miquelon<br><code>670</code> - Saint Vincent & the Grenadines<br><code>674</code>
+            - San Marino<br><code>678</code> - Sao Tome & Principe<br><code>682</code>
+            - Saudi Arabia<br><code>686</code> - Senegal<br><code>688</code> - Serbia<br><code>690</code>
+            - Seychelles<br><code>694</code> - Sierra Leone<br><code>699</code> -
+            India<br><code>702</code> - Singapore<br><code>703</code> - Slovakia<br><code>704</code>
+            - Vietnam<br><code>705</code> - Slovenia<br><code>706</code> - Somalia<br><code>710</code>
+            - South Africa<br><code>716</code> - Zimbabwe<br><code>724</code> - Spain<br><code>728</code>
+            - South Sudan<br><code>729</code> - Republic of the Sudan<br><code>732</code>
+            - Western Sahara<br><code>740</code> - Suriname<br><code>744</code> -
+            Svalbard & Jan Mayen Islands<br><code>748</code> - Eswatini<br><code>752</code>
+            - Sweden<br><code>756</code> - Switzerland<br><code>760</code> - Syria<br><code>762</code>
+            - Tajikistan<br><code>764</code> - Thailand<br><code>768</code> - Togo<br><code>772</code>
+            - Tokelau<br><code>776</code> - Tonga<br><code>780</code> - Trinidad &
+            Tobago<br><code>784</code> - United Arab Emirates<br><code>788</code>
+            - Tunisia<br><code>792</code> - Turkiye<br><code>795</code> - Turkmenistan<br><code>796</code>
+            - Turks & Caicos Islands<br><code>798</code> - Tuvalu<br><code>800</code>
+            - Uganda<br><code>804</code> - Ukraine<br><code>807</code> - Macedonia<br><code>818</code>
+            - Egypt<br><code>826</code> - United Kingdom<br><code>834</code> - Tanzania<br><code>840</code>
+            - United States of America<br><code>850</code> - US Virgin Islands<br><code>854</code>
+            - Burkina Faso<br><code>858</code> - Uruguay<br><code>860</code> - Uzbekistan<br><code>862</code>
+            - Venezuela<br><code>876</code> - Wallis & Futuna Islands<br><code>882</code>
+            - Samoa<br><code>887</code> - Yemen<br><code>894</code> - Zambia<br><code>999</code>
+            - Republic of Kosovo<br></details>
+        intervention_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterventionTypesEnum'
+          description: '<details><summary>Filters by a list of intervention types
+            directly, multiple possible.</summary><code>1</code> - Capital injection
+            and equity stakes (including bailouts)<br><code>2</code> - State loan<br><code>3</code>
+            - Financial grant<br><code>4</code> - In-kind grant<br><code>5</code>
+            - Production subsidy<br><code>6</code> - Interest payment subsidy<br><code>7</code>
+            - Loan guarantee<br><code>8</code> - Tax or social insurance relief<br><code>9</code>
+            - Competitive devaluation<br><code>10</code> - Repatriation & surrender
+            requirements<br><code>11</code> - Controls on commercial transactions
+            and investment instruments<br><code>12</code> - Controls on credit operations<br><code>13</code>
+            - Control on personal transactions<br><code>14</code> - Consumption subsidy<br><code>15</code>
+            - Tax-based export incentive<br><code>16</code> - Export subsidy<br><code>17</code>
+            - Other export incentive<br><code>18</code> - Export tax<br><code>19</code>
+            - Export ban<br><code>20</code> - Export tariff quota<br><code>21</code>
+            - Export quota<br><code>22</code> - Import ban<br><code>23</code> - Import
+            incentive<br><code>24</code> - Intellectual property protection<br><code>25</code>
+            - FDI: Entry and ownership rule<br><code>26</code> - FDI: Treatment and
+            operations, nes<br><code>27</code> - FDI: Financial incentive<br><code>28</code>
+            - Local content requirement<br><code>29</code> - Local operations requirement<br><code>30</code>
+            - Local labour requirement<br><code>31</code> - Labour market access<br><code>32</code>
+            - Post-migration treatment<br><code>33</code> - Trade payment measure<br><code>34</code>
+            - Trade balancing measure<br><code>35</code> - Export licensing requirement<br><code>36</code>
+            - Import licensing requirement<br><code>37</code> - Export-related non-tariff
+            measure, nes<br><code>38</code> - Import-related non-tariff measure, nes<br><code>39</code>
+            - Foreign customer limit<br><code>40</code> - Public procurement preference
+            margin<br><code>41</code> - Public procurement localisation<br><code>42</code>
+            - Public procurement access<br><code>43</code> - Public procurement, nes<br><code>44</code>
+            - Import tariff quota<br><code>45</code> - Import quota<br><code>46</code>
+            - Sanitary and phytosanitary measure<br><code>47</code> - Import tariff<br><code>48</code>
+            - Internal taxation of imports<br><code>49</code> - Technical barrier
+            to trade<br><code>50</code> - Import monitoring<br><code>51</code> - Anti-dumping<br><code>52</code>
+            - Safeguard<br><code>53</code> - Anti-subsidy<br><code>54</code> - Trade
+            finance<br><code>55</code> - Financial assistance in foreign market<br><code>56</code>
+            - Anti-circumvention<br><code>57</code> - Local content incentive<br><code>58</code>
+            - Special safeguard<br><code>59</code> - State aid, nes<br><code>60</code>
+            - Instrument unclear<br><code>61</code> - Price stabilisation<br><code>62</code>
+            - State aid, unspecified<br><code>63</code> - Local supply requirement
+            for exports<br><code>64</code> - Local value added requirement<br><code>65</code>
+            - Local value added incentive<br><code>66</code> - Local operations incentive<br><code>67</code>
+            - Local labour incentive<br><code>68</code> - Localisation, nes<br></details>'
+        mast_chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/MastChaptersEnum'
+          description: '<details><summary>Filters by a list of MAST chapters, multiple
+            possible.</summary><code>1</code> - A: Sanitary and phytosanitary measure<br><code>2</code>
+            - B: Technical barriers to trade<br><code>3</code> - Capital control measures<br><code>4</code>
+            - D: Contingent trade-protective measures<br><code>5</code> - E: Non-automatic
+            licensing, quotas etc.<br><code>6</code> - F: Price-control measures,
+            including additional taxes and charges<br><code>7</code> - FDI measures<br><code>8</code>
+            - G: Finance measures<br><code>9</code> - I: Trade-related investment
+            measures<br><code>10</code> - L: Subsidies (excl. export subsidies)<br><code>11</code>
+            - M: Government procurement restrictions<br><code>12</code> - Migration
+            measures<br><code>13</code> - N: Intellectual Property<br><code>14</code>
+            - P: Export-related measures (incl. subsidies)<br><code>15</code> - Tariff
+            measures<br><code>16</code> - Instrument unclear<br><code>17</code> -
+            C: Pre-shipment inspection and other formalities<br></details>'
+        implementation_level:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementationLevelEnum'
+          description: <details><summary>Filters by a list of implementation levels,
+            multiple possible.</summary><code>1</code> - Supranational<br><code>2</code>
+            - National<br><code>3</code> - Subnational<br><code>4</code> - SEZ<br><code>5</code>
+            - IFI<br><code>6</code> - NFI<br></details>
+        eligible_firms:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibleFirmsEnum'
+          description: <details><summary>Filters by a list of eligible firm types,
+            multiple possible.</summary><code>1</code> - all<br><code>2</code> - SMEs<br><code>3</code>
+            - firm-specific<br><code>4</code> - state-controlled<br><code>5</code>
+            - state trading enterprise<br><code>6</code> - sector-specific<br><code>7</code>
+            - location-specific<br><code>8</code> - processing trade<br></details>
+    InterventionRequestDataFiltersV2:
+      type: object
+      description: |-
+        Serializer for intervention request data filters
+
+        To customize which choice fields to include, override selected_fields:
+            class CustomSerializer(InterventionRequestDataFiltersV2Serializer):
+                selected_fields = ['gta_evaluation', 'affected_flow']
+
+        By default, includes all GTA choice fields.
+      properties:
+        keep_affected:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen commercial flow values should
+            be in- or excluded
+        keep_implementer:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen implementing jurisdiction
+            values should be in- or excluded
+        keep_intervention_types:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen intervention types should
+            be in- or excluded
+        keep_mast_chapters:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen mast chapter values should
+            be in- or excluded
+        keep_implementation_level:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen implementation levels values
+            should be in- or excluded
+        keep_eligible_firms:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen eligible firms values should
+            be in- or excluded
+        announcement_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            announced. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        implementation_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            implemented. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        keep_implementation_period_na:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions with no implementation
+            date should be in- or excluded
+        revocation_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            revoked. `None` values are treated as unfiltered (=any date into the past
+            or future).
+        keep_revocation_na:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions with no revocation
+            date should be in- or excluded
+        submission_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            published. `None` values are treated as unfiltered (=any date into the
+            past or future).
+        update_period:
+          type: array
+          items:
+            type: string
+            format: date
+          example:
+          - '2020-01-01'
+          - '2024-12-31'
+          description: Daterange filter defining in which range the intervention was
+            last updated. If no update has been added to an intervention yet, the
+            last update date is equal to the publishing date. None values are treated
+            as unfiltered (=any date into the past or future).
+        in_force_on_date:
+          type: string
+          format: date
+          example: '2024-12-31'
+          description: A single datestring value defining a date on which the intervention
+            was in force.
+        keep_in_force_on_date:
+          type: boolean
+          default: true
+          description: Boolean filter defining if interventions that were in force
+            on that date should be in- or excluded
+        affected_sectors:
+          type: array
+          items:
+            type: integer
+          example:
+          - 341
+          - 352
+          - 379
+          description: Filters by a list of CPC sector codes, accepted values are
+            CPC sector codes, multiple possible
+        keep_affected_sectors:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen CPC sectors should be in-
+            or excluded
+        affected_products:
+          type: array
+          items:
+            type: integer
+          example:
+          - 292149
+          - 292229
+          - 292429
+          description: Filters by a list of HS codes, accepted values are HS product
+            codes, multiple possible
+        keep_affected_products:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen hs codes should be in- or
+            excluded
+        intervention_id:
+          type: array
+          items:
+            type: integer
+          example:
+          - 138295
+          - 138296
+          - 138297
+          description: Filters by a list of intervention_ids directly, multiple possible
+        keep_intervention_id:
+          type: boolean
+          default: true
+          description: Boolean filter defining if chosen intervention ids should be
+            in- or excluded
+        lag_adjustment:
+          type: string
+          format: date
+          example: '2024-12-31'
+          description: Datestring that filters interventions based on a lag date.
+            Interventions with publishing date after the yearly lag date are excluded.
+            The year component of this datevalue is ignored.
+        query:
+          type: string
+          description: 'Search for a single word: <br><br>**Exact match**: searching
+            for a single word, the feature matches the word as it is, the result will
+            show you all provisions including the exact word. For example, searching
+            for “WTO”, the result will show provisions containing “WTO”.<br>**Use
+            ''#'' for various spelling and space**: You can use ''#'' to enable different
+            spelling variations and spaces. For example, "utili#ation" will show results
+            for either "utilization" or "utilisation." Other symbols in the searched
+            single word will be ignored. For example, searching for “non-tariff”,
+            or “non+tariff”, or “non*tariff”, the result will be the same as searching
+            for “non#tariff”.<br><br>Search for a word combination, such as a phrase:<br><br>**Exact
+            match**: The feature matches the whole phrase as it is. For example, searching
+            for "electronic commerce" will show the all the provisions containing
+            “electronic commerce” (exact match).<br>**Exact and partial match**: You
+            can use ''#'' to enable different spelling variations and spaces. For
+            example, "utili#ation" will show results for either "utilization" or "utilisation."<br>**Use
+            ''|'' for "or" logic**: You can use ''|'' to match either of the provided
+            options. For example, "goods | services" will match with either "goods"
+            or "services"<br>**Use ''&'' for "and" logic**: You can use ''&'' to match
+            sentences that include both sets of options. For example, "technologies
+            & sustainable development" will match all provisions that contain "technologies"
+            and "sustainable development".<br>**Use ''(...)'' for "condition hierarchy"
+            logic**: You can use ''()'' to define a hierarchy in case of multiple
+            or/and conditions. For example, "(goods | services) & (technologies |
+            sustainable development)" will match all provisions that contain "goods"
+            or "service", and "technologies" or "sustainable development".<br>'
         gta_evaluation:
           type: array
           items:
@@ -2675,7 +3207,7 @@ components:
             a `-` in front of the order clause you want to reverse, e.g. `-datetime_modified`.
         request_data:
           allOf:
-          - $ref: '#/components/schemas/InterventionRequestDataFilters'
+          - $ref: '#/components/schemas/InterventionRequestDataFiltersV2'
           description: This parameter accepts an object containing the key-value pairs
             used as filters.
       required:

@@ -76,6 +76,31 @@ Prioritize interventions still in force.
 - Extracts patterns across countries
 - Provides comparative analysis with source links
 
+### Financial Services Restrictions Analysis
+
+**Your workflow**: Bank association requests analysis of financial service barriers implemented by major economies.
+
+**Query to Claude:**
+```
+Using GTA tools, search for all interventions affecting financial services sectors
+implemented by USA, EU, UK, and China from 2020 onwards.
+
+NOTE: Financial services are NOT in HS codes - they require CPC sector classification.
+
+Provide:
+- Breakdown by implementing country
+- Types of restrictions (licensing, local operations, etc.)
+- Current status (in force vs removed)
+- Cross-border service implications
+```
+
+**What happens:**
+- Claude recognizes this is a SERVICE query and uses CPC sectors (not HS codes)
+- Searches with `affected_sectors: ["Financial services"]` (ID 711-717)
+- Filters by implementing jurisdictions and date range
+- Uses `gta_get_intervention` for detailed analysis of key measures
+- Synthesizes insights on regulatory barriers to cross-border financial services
+
 ### Industry Association Outreach
 
 **Your workflow**: VDMA asks about recent trade measures affecting machinery exports to China.
@@ -242,6 +267,40 @@ Track evolution of Chinese export controls over the last 3 years:
 }
 ```
 
+### CPC Sector - Services
+```python
+{
+  "affected_sectors": ["Financial services", "Legal services"],  # Services (ID >= 500)
+  "implementing_jurisdictions": ["USA", "CHN"],
+  "date_announced_gte": "2020-01-01",
+  "response_format": "markdown"
+}
+```
+
+### CPC Sector - Broad Product Categories
+```python
+{
+  "affected_sectors": [11, 12, 13],  # Cereals, Vegetables, Fruits
+  "intervention_types": ["Import tariff", "Import quota"],
+  "mast_chapters": ["E", "F"],  # Non-automatic licensing + price controls
+  "date_announced_gte": "2023-01-01"
+}
+```
+
+### CPC Sector - Mixed Services and Goods
+```python
+{
+  "affected_sectors": [
+    841,  # Telecommunications services
+    452,  # Computing machinery
+    471   # Electronics
+  ],
+  "affected_jurisdictions": ["CHN", "RUS"],
+  "gta_evaluation": ["Red"],
+  "response_format": "json"
+}
+```
+
 ### Update Monitoring
 ```python
 {
@@ -325,6 +384,206 @@ Create a 2-page briefing with:
 - Common justifications (from descriptions)
 - How long measures typically lasted
 - Include all source links"
+```
+
+## Negative Query Patterns (Exclusion-Based Filtering)
+
+The GTA API supports powerful exclusion queries using "keep" parameters. When `keep=False`, the specified values are EXCLUDED, showing everything else. This enables queries like "everything except..." which are often more efficient than listing all included values.
+
+### Global Analysis (Excluding Major Economies)
+
+**Your workflow**: Analyze trade policy trends in developing economies by excluding major developed countries.
+
+**Query to Claude:**
+```
+Search GTA for all trade interventions EXCEPT those implemented by G7 and major EU economies:
+
+implementing_jurisdictions: ['USA', 'CAN', 'GBR', 'FRA', 'DEU', 'ITA', 'JPN', 'EU']
+keep_implementer: False
+date_announced_gte: '2023-01-01'
+gta_evaluation: ['Red']
+
+Show top 50 by implementing country, highlighting patterns in Global South protectionism.
+```
+
+**What happens:**
+- API excludes specified developed economies
+- Returns interventions from all other ~190 jurisdictions
+- Claude aggregates by region and intervention type
+- Identifies emerging policy patterns outside major economies
+
+### Non-Tariff Barriers Analysis
+
+**Your workflow**: Industry association wants comprehensive non-tariff measures, explicitly excluding tariffs.
+
+**Query to Claude:**
+```
+Find all trade barriers EXCEPT tariffs affecting automotive sector:
+
+intervention_types: ['Import tariff', 'Export tariff', 'Customs tariff', 'Tariff-rate quota']
+keep_intervention_types: False
+affected_products: [870110, 870120, 870210, 870310, 870320]  # Vehicles
+date_announced_gte: '2022-01-01'
+gta_evaluation: ['Red', 'Amber']
+
+Group by implementing jurisdiction and NTB type.
+```
+
+**What happens:**
+- Excludes all tariff-related measures
+- Shows only non-tariff barriers (quotas, licensing, standards, bans, etc.)
+- Claude categorizes remaining intervention types
+- Provides NTB landscape for automotive sector
+
+### Sector-Wide Analysis (Excluding Agriculture)
+
+**Your workflow**: Research on industrial policy, explicitly excluding agricultural subsidies.
+
+**Query to Claude:**
+```
+Analyze state aid measures globally EXCEPT agricultural subsidies:
+
+intervention_types: ['State aid', 'State loan', 'Financial grant']
+affected_sectors: [11, 12, 13, 21, 22, 23, 24, 25]  # All agriculture CPC sectors
+keep_affected_sectors: False
+date_announced_gte: '2020-01-01'
+implementing_jurisdictions: ['USA', 'CHN', 'EU', 'JPN', 'KOR', 'IND']
+
+Show total subsidy counts by country and primary affected sectors (non-ag).
+```
+
+**What happens:**
+- Excludes all agricultural CPC sectors (IDs 11-25)
+- Returns industrial, service, and technology subsidies
+- Claude aggregates by implementing country
+- Identifies priority sectors for industrial policy
+
+### Clean Data Analysis (Excluding Missing Dates)
+
+**Your workflow**: Econometric analysis requires complete temporal data, excluding interventions without dates.
+
+**Query to Claude:**
+```
+Get all Chinese export controls with complete date coverage for regression analysis:
+
+implementing_jurisdictions: ['CHN']
+intervention_types: ['Export ban', 'Export restriction', 'Export quota', 'Export licensing requirement']
+keep_implementation_period_na: False
+keep_revocation_na: False
+date_announced_gte: '2018-01-01'
+response_format: 'json'
+
+Return intervention_id, announcement date, implementation date, removal date, affected products.
+Only include interventions with all three dates populated.
+```
+
+**What happens:**
+- Excludes interventions missing implementation dates (keep_implementation_period_na=False)
+- Excludes interventions missing revocation dates (keep_revocation_na=False)
+- Returns only interventions with complete temporal coverage
+- Suitable for time-series econometric analysis
+
+### Product Exclusion (Analyzing Broad Trends)
+
+**Your workflow**: Semiconductor-focused competitor analysis, excluding to avoid noise from unrelated products.
+
+**Query to Claude:**
+```
+Find all Chinese tech export controls EXCEPT semiconductors and rare earths:
+
+implementing_jurisdictions: ['CHN']
+intervention_types: ['Export ban', 'Export restriction', 'Export licensing requirement']
+affected_products: [854110, 854121, 854129, 280530, 280519, 250400]  # Semis + rare earths
+keep_affected_products: False
+affected_sectors: [471, 452, 841]  # Electronics, computing, telecom
+date_announced_gte: '2023-01-01'
+
+Focus on other technology categories under export control.
+```
+
+**What happens:**
+- Excludes semiconductor and rare earth HS codes
+- Still filters to electronics/computing/telecom sectors (CPC level)
+- Returns other tech products under export control (e.g., quantum, AI hardware)
+- Claude identifies emerging export control priorities beyond semis
+
+### Combining Multiple Exclusions
+
+**Your workflow**: Complex analytical requirement with multiple exclusion criteria.
+
+**Query to Claude:**
+```
+Find non-tariff trade barriers implemented globally EXCEPT:
+- By major developed economies (G7 + EU)
+- Affecting agricultural products
+- Missing implementation dates
+
+Parameters:
+implementing_jurisdictions: ['USA', 'CAN', 'GBR', 'FRA', 'DEU', 'ITA', 'JPN', 'EU']
+keep_implementer: False
+
+intervention_types: ['Import tariff', 'Export tariff']
+keep_intervention_types: False
+
+affected_sectors: [11, 12, 13, 21, 22, 23, 24, 25]
+keep_affected_sectors: False
+
+keep_implementation_period_na: False
+
+date_announced_gte: '2022-01-01'
+gta_evaluation: ['Red']
+
+Analyze by implementing region and affected products/sectors.
+```
+
+**What happens:**
+- API applies all three exclusions simultaneously
+- Returns NTBs from developing/emerging economies
+- Excludes agricultural sector
+- Only includes measures with known implementation dates
+- Claude synthesizes multi-dimensional analysis
+
+## Best Practices for Negative Queries
+
+### 1. Use Exclusion When Included Set is Larger
+```
+❌ BAD: List 185 countries to exclude China and USA
+implementing_jurisdictions: [AFG, ALB, DZA, ...]  # 185 countries!
+
+✅ GOOD: Exclude the 2 countries directly
+implementing_jurisdictions: ['CHN', 'USA']
+keep_implementer: False
+```
+
+### 2. Combine Inclusion + Exclusion Strategically
+```
+Query: "Show Chinese measures affecting technology sectors except semiconductors"
+
+✅ CORRECT:
+implementing_jurisdictions: ['CHN']  # Inclusion
+affected_sectors: [471, 452, 841]  # Technology sectors (inclusion)
+affected_products: [854110, 854121, 854129]  # Semiconductor HS codes (exclusion)
+keep_affected_products: False
+```
+
+### 3. Use NA Exclusion for Data Quality
+```
+Research requiring complete temporal data:
+
+keep_implementation_period_na: False  # Exclude measures without implementation dates
+keep_revocation_na: False  # Exclude measures without removal dates
+
+This ensures clean datasets for econometric/time-series analysis.
+```
+
+### 4. Informational Messages Guide Users
+```
+When you use keep=False, the server returns informational messages:
+
+⚠️ Excluding specified implementing jurisdictions (showing everything else)
+⚠️ Excluding specified intervention types (showing everything else)
+
+These confirm your exclusion logic is working as expected.
 ```
 
 ---

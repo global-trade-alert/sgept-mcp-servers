@@ -23,99 +23,50 @@ class GTASearchInput(BaseModel):
     implementing_jurisdictions: Optional[List[str]] = Field(
         default=None,
         description="List of implementing jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU']). "
-                   "Filter interventions by countries that implemented the measure."
+                   "Filter interventions by countries that implemented the measure. "
+                   "See gta://reference/jurisdictions for complete list."
     )
-    
+
     affected_jurisdictions: Optional[List[str]] = Field(
         default=None,
         description="List of affected jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU']). "
-                   "Filter interventions by countries affected by the measure."
+                   "Filter interventions by countries affected by the measure. "
+                   "See gta://reference/jurisdictions for complete list."
     )
     
     affected_products: Optional[List[int]] = Field(
         default=None,
         description="List of HS product codes (6-digit integers, e.g., [292149, 292229]). "
-                   "Filter interventions affecting specific products."
+                   "Filter interventions affecting specific products. "
+                   "Note: HS codes only cover goods, not services. Use affected_sectors for services."
     )
-    
+
+    affected_sectors: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "Filter by CPC sector codes or names for broader product coverage including services. "
+            "Use for services queries (ID >= 500) or broad categories. "
+            "Accepts IDs ([711]), names (['Financial services']), or mixed with fuzzy matching. "
+            "See gta://guide/cpc-vs-hs for guidance and gta://reference/sectors-list for all sectors."
+        )
+    )
+
     intervention_types: Optional[List[str]] = Field(
         default=None,
         description="List of intervention types (e.g., ['Import tariff', 'Export subsidy', 'State aid']). "
-                   "Filter by type of trade measure."
+                   "Filter by type of trade measure. "
+                   "See gta://reference/intervention-types for complete list."
     )
 
     mast_chapters: Optional[List[str]] = Field(
         default=None,
         description=(
-            "Filter by UN MAST (Multi-Agency Support Team) chapter classifications.\n\n"
-            "📊 WHEN TO USE:\n"
-            "• Use mast_chapters for BROAD categorization (e.g., 'all subsidies', 'all import measures')\n"
-            "• Use intervention_types for SPECIFIC measures (e.g., 'Import tariff', 'State aid')\n"
-            "• For generic questions, MAST chapters provide more comprehensive coverage\n\n"
-            "🔤 MAST CHAPTERS (A-P):\n\n"
-            "TECHNICAL MEASURES:\n"
-            "• A: Sanitary and phytosanitary measures (SPS)\n"
-            "  - Food safety, animal/plant health standards, testing requirements\n"
-            "  - Use for: health regulations, agricultural standards, biosecurity\n\n"
-            "• B: Technical barriers to trade (TBT)\n"
-            "  - Product standards, labeling, testing, certification requirements\n"
-            "  - Use for: technical regulations, conformity assessments, quality standards\n\n"
-            "• C: Pre-shipment inspection and other formalities\n"
-            "  - Quality/quantity verification before shipment, customs formalities\n"
-            "  - Use for: inspection requirements, customs procedures\n\n"
-            "NON-TECHNICAL MEASURES:\n"
-            "• D: Contingent trade-protective measures\n"
-            "  - Anti-dumping, countervailing duties, safeguards\n"
-            "  - Use for: trade defense instruments, emergency measures\n\n"
-            "• E: Non-automatic licensing, quotas, prohibitions\n"
-            "  - Import/export licenses, quantitative restrictions, bans\n"
-            "  - Use for: licensing requirements, quotas, prohibitions\n\n"
-            "• F: Price-control measures\n"
-            "  - Minimum import prices, reference prices, variable charges\n"
-            "  - Use for: price interventions, administrative pricing\n\n"
-            "• G: Finance measures\n"
-            "  - Payment terms, credit restrictions, advance payments\n"
-            "  - Use for: financial conditions of trade\n\n"
-            "• H: Anti-competitive measures\n"
-            "  - State trading, monopolies, exclusive rights\n"
-            "  - Use for: competition restrictions, state monopolies\n\n"
-            "• I: Trade-related investment measures\n"
-            "  - Local content requirements, trade balancing, foreign exchange\n"
-            "  - Use for: investment conditions affecting trade\n\n"
-            "• J: Distribution restrictions\n"
-            "  - Geographic restrictions, authorized agents, resale limitations\n"
-            "  - Use for: distribution controls, retail restrictions\n\n"
-            "• K: Restrictions on post-sales services\n"
-            "  - Warranty, repair, maintenance requirements\n"
-            "  - Use for: after-sales service conditions\n\n"
-            "• L: Subsidies and other forms of support\n"
-            "  - Export subsidies, domestic support, state aid, grants, tax breaks\n"
-            "  - Use for: ANY subsidy-related queries (most comprehensive)\n\n"
-            "• M: Government procurement restrictions\n"
-            "  - Local preferences, closed tenders, discriminatory bidding\n"
-            "  - Use for: public procurement, Buy National policies\n\n"
-            "• N: Intellectual property\n"
-            "  - IP protection requirements, technology transfer rules\n"
-            "  - Use for: patents, trademarks, copyrights, trade secrets\n\n"
-            "• O: Rules of origin\n"
-            "  - Criteria for determining product nationality\n"
-            "  - Use for: origin requirements, local content rules\n\n"
-            "• P: Export-related measures\n"
-            "  - Export taxes, restrictions, licensing, prohibitions\n"
-            "  - Use for: export controls, export duties\n\n"
-            "💡 EXAMPLES:\n"
-            "• Broad subsidy search: mast_chapters=['L']\n"
-            "• Specific subsidy: intervention_types=['State aid']\n"
-            "• All import barriers: mast_chapters=['E', 'F']\n"
-            "• Specific tariff: intervention_types=['Import tariff']\n"
-            "• Trade defense: mast_chapters=['D']\n"
-            "• FDI measures: mast_chapters=['FDI measures']\n"
-            "• Capital controls: mast_chapters=['Capital control measures']\n\n"
-            "📋 ACCEPTED FORMATS:\n"
-            "• Letters: ['A', 'B', 'L'] (recommended for standard chapters)\n"
-            "• Integer IDs: ['1', '2', '10'] or [1, 2, 10] (API IDs 1-20)\n"
-            "• Special categories: ['Capital control measures', 'FDI measures', 'Migration measures', 'Tariff measures']\n\n"
-            "Note: Letters A-P map to specific IDs (e.g., A=1, L=10, C=17). See mast_chapters.md for full mapping."
+            "Filter by UN MAST chapter classifications (A-P) - broad categories of non-tariff measures "
+            "from import quotas to subsidies, localization requirements, investment actions, and beyond. "
+            "Use mast_chapters for generic queries (e.g., 'all subsidies' → ['L']), "
+            "intervention_types for specific measures. "
+            "Accepts letters (A-P), IDs (1-20), or special categories. "
+            "See gta://reference/mast-chapters for complete taxonomy and usage guide."
         )
     )
 
@@ -124,7 +75,25 @@ class GTASearchInput(BaseModel):
         description="GTA evaluation colors: 'Red' (harmful), 'Amber' (mixed), or 'Green' (liberalizing). "
                    "Filter by impact assessment."
     )
-    
+
+    eligible_firms: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "Filter by firm types eligible for the intervention (all, SMEs, firm-specific, state-controlled, sector-specific, location-specific). "
+            "Use to find targeted vs universal policies or company-specific incentives. "
+            "See gta://reference/eligible-firms for descriptions and examples."
+        )
+    )
+
+    implementation_levels: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "Filter by government level implementing the intervention (Supranational, National, Subnational, SEZ, IFI, NFI). "
+            "Use for distinguishing central vs regional policies or financial institution programs. "
+            "See gta://reference/implementation-levels for hierarchy and examples."
+        )
+    )
+
     date_announced_gte: Optional[str] = Field(
         default=None,
         description="Filter interventions announced on or after this date (ISO format: YYYY-MM-DD, e.g., '2024-01-01')"
@@ -153,69 +122,13 @@ class GTASearchInput(BaseModel):
     query: Optional[str] = Field(
         default=None,
         description=(
-            "Full-text search for ENTITY NAMES and SPECIFIC PRODUCTS only.\n\n"
-            "⚠️ CRITICAL: Use query ONLY after exhausting structured filters!\n\n"
-            "QUERY STRATEGY (FOLLOW THIS CASCADE):\n"
-            "1. START with structured filters:\n"
-            "   • intervention_types - For policy types (tariffs, subsidies, bans, etc.)\n"
-            "   • implementing_jurisdictions/affected_jurisdictions - For countries\n"
-            "   • affected_products - For HS product codes when known\n"
-            "   • gta_evaluation - For impact assessment (Red/Amber/Green)\n"
-            "   • date filters - For time periods\n\n"
-            "2. THEN add query ONLY for:\n"
-            "   • Company names: 'Tesla', 'Huawei', 'BYD', 'TSMC'\n"
-            "   • Program names: 'Made in China 2025', 'Inflation Reduction Act'\n"
-            "   • Technology/product names not in HS codes: 'ChatGPT', '5G', 'CRISPR'\n"
-            "   • Specific named entities that cannot be filtered otherwise\n\n"
-            "3. DO NOT use query for:\n"
-            "   ✗ Intervention types (use intervention_types parameter)\n"
-            "   ✗ Generic policy terms ('subsidy', 'tariff', 'ban')\n"
-            "   ✗ Country names (use jurisdiction parameters)\n"
-            "   ✗ Concepts already covered by structured filters\n\n"
-            "✅ CORRECT EXAMPLES:\n"
-            "• Tesla subsidies:\n"
-            "  query='Tesla'\n"
-            "  intervention_types=['State aid', 'Financial grant']\n"
-            "  implementing_jurisdictions=['USA']\n\n"
-            "• AI export controls:\n"
-            "  query='artificial intelligence | AI'\n"
-            "  intervention_types=['Export ban', 'Export licensing requirement']\n"
-            "  date_announced_gte='2023-01-01'\n\n"
-            "• Electric vehicle subsidies:\n"
-            "  query='electric | EV'\n"
-            "  intervention_types=['Subsidy', 'State aid', 'Tax-based export incentive']\n"
-            "  affected_products=[870310, 870320, 870380]  # Car HS codes\n\n"
-            "• Huawei sanctions:\n"
-            "  query='Huawei'\n"
-            "  intervention_types=['Import ban', 'Export ban']\n"
-            "  affected_jurisdictions=['CHN']\n\n"
-            "❌ INCORRECT (too much in query):\n"
-            "✗ query='(AI | artificial intelligence) & export control'\n"
-            "  → Use intervention_types=['Export ban', 'Export licensing requirement'] instead!\n\n"
-            "✗ query='electric vehicles & subsid#'\n"
-            "  → Use intervention_types for subsidies, query only for 'electric | EV'!\n\n"
-            "✗ query='semiconductor & tariff'\n"
-            "  → Use intervention_types=['Import tariff'], affected_products=[HS codes]!\n\n"
-            "QUERY SYNTAX REFERENCE:\n"
-            "When searching for entities, you can use these operators:\n\n"
-            "SINGLE WORD SEARCHES:\n"
-            "• Exact match: 'WTO' finds interventions containing 'WTO'\n"
-            "• Spelling variations: Use '#' for variants\n"
-            "  - 'utili#ation' matches both 'utilization' and 'utilisation'\n"
-            "  - 'subsidi#' matches 'subsidy', 'subsidies', 'subsidize', 'subsidise'\n"
-            "• Symbol handling: 'non-tariff', 'non+tariff', 'non*tariff' all treated as 'non#tariff'\n\n"
-            "PHRASE & COMPLEX SEARCHES:\n"
-            "• Exact phrase: 'electronic commerce' matches the complete phrase\n"
-            "• OR logic: Use '|' to match either term\n"
-            "  - 'Tesla | BYD | Volkswagen' - Match any company\n"
-            "  - 'artificial intelligence | AI | machine learning'\n"
-            "• AND logic: Use '&' to require both terms (use sparingly for entities)\n"
-            "  - 'Made in China & 2025' - Both terms required\n"
-            "  - '5G & Huawei'\n"
-            "• Parentheses: Use '()' for complex logic\n"
-            "  - '(Tesla | SpaceX) & Musk' - Complex hierarchy\n"
-            "  - '(5G | sixth generation) & (Huawei | ZTE)'\n\n"
-            "REMEMBER: Query searches intervention title, description, and sources. Keep it focused on entities!"
+            "Full-text search for entity names and specific products ONLY. "
+            "⚠️ CRITICAL: Use structured filters FIRST (intervention_types, jurisdictions, products, dates), "
+            "then add query ONLY for named entities not captured by filters (companies: 'Tesla', 'Huawei'; "
+            "programs: 'Made in China 2025'; technologies: 'AI', '5G'). "
+            "DO NOT use for policy types, countries, or concepts covered by structured filters. "
+            "Supports operators: | (OR), & (AND), # (wildcard). "
+            "See gta://guide/query-syntax for complete syntax reference and strategy guide."
         )
     )
 
@@ -235,13 +148,110 @@ class GTASearchInput(BaseModel):
     sorting: Optional[str] = Field(
         default="-date_announced",
         description=(
-            "Sort order for results. Common values:\n"
-            "- '-date_announced': Newest interventions first (RECOMMENDED for finding recent data)\n"
-            "- 'date_announced': Oldest interventions first\n"
-            "- '-intervention_id': Highest intervention ID first\n"
-            "- 'intervention_id': Lowest intervention ID first\n"
-            "Valid sort fields: date_announced, date_published, date_implemented, date_removed, intervention_id\n"
-            "Use '-' prefix for descending order. Can combine multiple fields with commas."
+            "Sort order for results. Use '-' prefix for descending. "
+            "Common: '-date_announced' (newest first, recommended), 'date_announced' (oldest first). "
+            "Valid fields: date_announced, date_published, date_implemented, date_removed, intervention_id. "
+            "Can combine with commas."
+        )
+    )
+
+    # Exclusion/inclusion controls (keep parameters)
+    keep_affected: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified affected jurisdictions. "
+            "Example: keep_affected=False excludes listed countries. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_implementer: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified implementing jurisdictions. "
+            "Example: keep_implementer=False excludes G7 countries. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_intervention_types: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified intervention types. "
+            "Example: keep_intervention_types=False for non-tariff measures. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_mast_chapters: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified MAST chapters. "
+            "Example: keep_mast_chapters=False excludes subsidies. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_implementation_level: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified implementation levels. "
+            "Example: keep_implementation_level=False for subnational only. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_eligible_firms: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified firm types. "
+            "Example: keep_eligible_firms=False for universal policies. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_affected_sectors: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified CPC sectors. "
+            "Example: keep_affected_sectors=False excludes agriculture. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_affected_products: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified HS products. "
+            "Example: keep_affected_products=False excludes semiconductors. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_implementation_period_na: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) interventions with NO implementation date. "
+            "Set False to require known implementation dates. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_revocation_na: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) interventions with NO revocation date. "
+            "Set False to show only revoked measures with known dates. "
+            "See gta://guide/exclusion-filters for complete guide."
+        )
+    )
+
+    keep_intervention_id: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Include (True, default) or exclude (False) specified intervention IDs. "
+            "Example: keep_intervention_id=False excludes specific interventions. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 

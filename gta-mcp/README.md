@@ -4,7 +4,9 @@ Model Context Protocol server providing access to the Global Trade Alert (GTA) d
 
 ## Version
 
-**Current Version:** 1.2 (Released: November 9, 2025)
+**Current Version:** 0.3.0 (November 9, 2025)
+
+⚠️ **Experimental Release** - This server is under active development. Feedback and feature requests welcome.
 
 See [Version History & Changelog](#version-history--changelog) below for details.
 
@@ -494,15 +496,36 @@ API access requires valid credentials from SGEPT.
 
 ## Version History & Changelog
 
-### Version 1.2 (November 9, 2025)
+### Version 0.3.0 (November 9, 2025)
+
+**Added: Expanded Resource Support**
+- Complete MAST chapter taxonomy reference with A-P classifications for non-tariff measures
+- Query syntax and strategy guide with 3-step cascade approach
+- CPC sectors vs HS codes decision guide
+- Comprehensive exclusion filters guide for keep_* parameters
+- Parameter selection and combination reference
+- Query examples library with 35+ categorized patterns
 
 **Added: MAST Chapter Support**
+- Broader taxonomic querying for general policy categories (e.g., "all subsidies", "trade defense measures")
+- Supports letters (A-P), integer IDs (1-20), and special categories (FDI, Capital controls)
+- Full taxonomy resource at `gta://reference/mast-chapters`
 
-Allows the server to query at a broader taxonomic level when users express general intent. When you mention "anti-dumping," the system can retrieve the entire trade defense toolkit (including safeguards, countervailing duties).
+**Added: Advanced Filter Parameters**
+- CPC sector filtering for services and broader product categories
+- Eligible firms filtering (SMEs, firm-specific, state-controlled, etc.)
+- Implementation level filtering (National, Subnational, IFI, NFI, etc.)
+- Inclusion/exclusion logic via keep_* parameters for "everything EXCEPT" queries
+
+**Performance Optimizations**
+- Reduced schema documentation overhead by 72% (~2,200 tokens saved per conversation)
+- Field descriptions streamlined from 2,297 to 640 words while maintaining full functionality
+- Documentation moved to on-demand resources for efficient context usage
+- All parameter descriptions now <60 words with comprehensive resource references
 
 ---
 
-### Version 1.1 (November 8, 2025)
+### Version 0.2.0 (November 8, 2025)
 
 **Added: Text Search**
 
@@ -510,7 +533,7 @@ MCP can now search intervention descriptions and titles using keywords. Used for
 
 ---
 
-### Version 1.0 (Initial Release)
+### Version 0.1.0 (Initial Release)
 
 **Core Features:**
 - Comprehensive intervention search with field-based filtering
@@ -518,6 +541,10 @@ MCP can now search intervention descriptions and titles using keywords. Used for
 - Intervention type flexible matching
 - Reference resources for jurisdictions and intervention types
 - Search guidance documentation
+
+---
+
+**Note:** Pre-1.0 versions indicate experimental status. We welcome feedback and feature requests to improve the server.
 
 ## Support
 

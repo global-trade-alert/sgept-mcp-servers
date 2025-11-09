@@ -28,7 +28,16 @@ from .resources_loader import (
     parse_intervention_type,
     list_available_intervention_types,
     load_search_guide,
-    load_date_fields_guide
+    load_date_fields_guide,
+    load_sectors_table,
+    load_cpc_vs_hs_guide,
+    load_eligible_firms_table,
+    load_implementation_levels_table,
+    load_parameters_guide,
+    load_query_examples,
+    load_mast_chapters,
+    load_query_syntax,
+    load_exclusion_filters
 )
 
 
@@ -60,80 +69,50 @@ def get_api_client() -> GTAAPIClient:
 async def gta_search_interventions(params: GTASearchInput) -> str:
     """Search and filter trade policy interventions from the Global Trade Alert database.
 
-    This tool allows comprehensive searching of government trade interventions with filtering
-    by countries, products, intervention types, dates, and evaluation status. Use structured
-    filters FIRST, then add the 'query' parameter ONLY for entity names (companies, programs)
-    that cannot be captured by standard filters. Always returns intervention ID, title,
-    description, and sources as specified.
+    This tool allows comprehensive searching of government trade interventions. Use structured
+    filters FIRST (countries, products, intervention types, dates), then add 'query' parameter
+    ONLY for entity names (companies, programs) not captured by standard filters.
 
     Use this tool to:
-    - Find trade barriers and restrictions implemented by specific countries
+    - Find trade barriers and restrictions by specific countries
     - Analyze interventions affecting particular products or sectors
     - Track policy changes over time periods
-    - Identify liberalizing vs. harmful measures by GTA evaluation
-    - Search for specific companies or programs by name (use query with appropriate filters)
+    - Identify liberalizing vs. harmful measures
+    - Search for specific companies or programs by name
 
-    Args:
-        params (GTASearchInput): Search parameters including:
-            - implementing_jurisdictions: Countries implementing the measure (ISO codes)
-            - affected_jurisdictions: Countries affected by the measure (ISO codes)
-            - affected_products: HS product codes (6-digit integers)
-            - intervention_types: Types like 'Import tariff', 'Export subsidy', 'State aid'
-            - mast_chapters: UN MAST chapters A-P for broad categorization (use instead of intervention_types for generic queries)
-            - gta_evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)
-            - query: Entity/product names ONLY (use AFTER setting other filters)
-            - date_announced_gte/lte: Filter by announcement date
-            - date_implemented_gte/lte: Filter by implementation date
-            - is_in_force: Whether intervention is currently active
-            - limit: Max results to return (1-1000, default 50)
-            - offset: Pagination offset (default 0)
-            - sorting: Sort order (default "-date_announced")
-            - response_format: 'markdown' (default) or 'json'
+    Key parameters: implementing_jurisdictions, intervention_types, affected_products,
+    date_announced_gte, query (entity names only). See parameter descriptions for full details.
 
-    Returns:
-        str: Formatted intervention data including ID, title, description, sources,
-             implementing/affected jurisdictions, products, dates, and URLs.
+    Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
+    and dates.
 
-             IMPORTANT: The response includes a "Reference List (in reverse chronological order)"
-             section at the end with clickable links to all interventions. You MUST include this
-             complete reference list in your response to the user. DO NOT omit or summarize it.
-             Format determined by response_format parameter.
+    ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)" section
+    at the end. You MUST include this complete reference list in your response to the user EXACTLY
+    as formatted. The reference list format is:
+    - {date}: {title} [ID [{intervention_id}](url)].
+    Do NOT modify or reformat the reference list. It provides essential clickable citations.
 
-    Examples:
-        - US tariffs on Chinese products in 2024:
+    Common examples:
+        - US tariffs on China in 2024:
           implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
 
-        - All subsidies from any country (BROAD - use MAST):
+        - All subsidies (broad search):
           mast_chapters=['L']
 
-        - EU subsidies of all types (BROAD - use MAST):
-          implementing_jurisdictions=['EU'], mast_chapters=['L']
-
-        - Specific German state aid only (NARROW - use intervention_types):
-          implementing_jurisdictions=['DEU'], intervention_types=['State aid']
-
-        - All import restrictions affecting US (BROAD - use MAST):
-          mast_chapters=['E', 'F'], affected_jurisdictions=['USA']
-
-        - Trade defense measures since 2020 (BROAD - use MAST):
-          mast_chapters=['D'], date_announced_gte='2020-01-01'
-
-        - Tesla-related subsidies (entity search with MAST):
+        - Tesla-specific subsidies:
           query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
 
-        - AI export controls (entity + specific types):
-          query='artificial intelligence | AI', intervention_types=['Export ban',
-          'Export licensing requirement'], date_announced_gte='2023-01-01'
-
-        - SPS/TBT measures affecting rice (technical measures):
-          mast_chapters=['A', 'B'], affected_products=[100630]
+    For parameter reference: gta://guide/parameters
+    For comprehensive examples: gta://guide/query-examples
+    For query syntax: gta://guide/query-syntax
+    For MAST chapters: gta://reference/mast-chapters
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
 
         # Make API request
         results = await client.search_interventions(
@@ -153,9 +132,18 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
         # Format response
         if params.response_format == ResponseFormat.MARKDOWN:
-            return format_interventions_markdown(data)
+            formatted_response = format_interventions_markdown(data)
+            # Prepend filter messages if any
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
         else:
-            return format_interventions_json(data)
+            response_json = format_interventions_json(data)
+            # Add filter messages to JSON response
+            if filter_messages:
+                response_json["filter_messages"] = filter_messages
+            return response_json
             
     except ValueError as e:
         return f"❌ Configuration Error: {str(e)}\n\nPlease ensure GTA_API_KEY is set in your environment."
@@ -203,9 +191,11 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
         str: Complete intervention details with all metadata, formatted per response_format.
              Includes full description, all sources, jurisdictions, products, and timeline.
 
-             IMPORTANT: The response includes a "Reference List (in reverse chronological order)"
-             section at the end with a clickable link to the intervention. You MUST include this
-             reference list in your response to the user.
+             ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)"
+             section at the end. You MUST include this complete reference list in your response to
+             the user EXACTLY as formatted. The reference list format is:
+             - {date}: {title} [ID [{intervention_id}](url)].
+             Do NOT modify or reformat the reference list. It provides essential clickable citations.
 
     Examples:
         - Get full details for intervention 138295 (EU tariff changes)
@@ -267,9 +257,10 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
     Returns:
         str: List of ticker updates with modification dates, intervention IDs, and update text.
 
-             IMPORTANT: The response includes a "Referenced Interventions" section at the end
-             with clickable links to all mentioned interventions. You MUST include this complete
-             reference section in your response to the user. DO NOT omit it.
+             ⚠️ CRITICAL: The response includes a "Referenced Interventions" section at the end.
+             You MUST include this complete reference list in your response to the user EXACTLY
+             as formatted. Do NOT modify or reformat the reference list. It provides essential
+             clickable links to all mentioned interventions.
 
     Examples:
         - Get updates from the last week
@@ -277,9 +268,9 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(params.model_dump(exclude={'limit', 'offset', 'response_format'}))
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'response_format'}))
 
         # Make API request
         results = await client.get_ticker_updates(
@@ -302,7 +293,12 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
 
         # Format response
         if params.response_format == ResponseFormat.MARKDOWN:
-            return format_ticker_markdown(data)
+            formatted_response = format_ticker_markdown(data)
+            # Prepend filter messages if any
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
         else:
             return json.dumps(data, indent=2, ensure_ascii=False)
             
@@ -349,12 +345,12 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(
             params.model_dump(exclude={'granularity', 'limit', 'offset', 'response_format'})
         )
-        
+
         # Make API request
         data = await client.get_impact_chains(
             granularity=params.granularity,
@@ -362,7 +358,11 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
             limit=params.limit,
             offset=params.offset
         )
-        
+
+        # Add filter messages to response if any
+        if filter_messages:
+            data["filter_messages"] = filter_messages
+
         # Format response (JSON is most useful for impact chains)
         return json.dumps(data, indent=2, ensure_ascii=False)
         
@@ -494,6 +494,141 @@ def get_date_fields_guide() -> str:
 		Markdown document explaining GTA date fields
 	"""
 	return load_date_fields_guide()
+
+
+@mcp.resource(
+    "gta://reference/sectors-list",
+    name="Reference: CPC Sector Classification List",
+    description="Complete list of all CPC (Central Product Classification) sectors with IDs and names. Includes goods (ID < 500) and services (ID >= 500). Use this to find sector codes for filtering interventions by broad product categories or services. Supports fuzzy name matching when used in queries.",
+    mime_type="text/markdown"
+)
+def get_sectors_list() -> str:
+	"""Return complete list of CPC sectors.
+
+	Returns:
+		Markdown table with all CPC sectors, IDs, and categories
+	"""
+	return load_sectors_table()
+
+
+@mcp.resource(
+    "gta://guide/cpc-vs-hs",
+    name="Guide: CPC Sectors vs HS Codes - When to Use Which",
+    description="Comprehensive guide explaining the difference between CPC sectors and HS codes, when to use each classification system, and practical examples. Essential for understanding how to query services (which REQUIRE CPC sectors) and when to use broad sector categories vs specific HS product codes.",
+    mime_type="text/markdown"
+)
+def get_cpc_vs_hs_guide() -> str:
+	"""Return guide comparing CPC sectors and HS codes.
+
+	Returns:
+		Markdown document explaining CPC vs HS classification
+	"""
+	return load_cpc_vs_hs_guide()
+
+
+@mcp.resource(
+    "gta://reference/eligible-firms",
+    name="Reference: Eligible Firms Types",
+    description="Complete list of eligible firm classifications with IDs and descriptions. Use this to filter interventions by target firms (all, SMEs, firm-specific, state-controlled, sector-specific, location-specific, processing trade). Essential for understanding policy scope and identifying SME-specific programs or company-targeted incentives.",
+    mime_type="text/markdown"
+)
+def get_eligible_firms_list() -> str:
+	"""Return complete list of eligible firm types.
+
+	Returns:
+		Markdown table with all eligible firm types, IDs, and descriptions
+	"""
+	return load_eligible_firms_table()
+
+
+@mcp.resource(
+    "gta://reference/implementation-levels",
+    name="Reference: Implementation Levels",
+    description="Complete list of implementation level classifications with IDs and descriptions. Use this to filter interventions by governmental authority level (Supranational, National, Subnational, SEZ, IFI, NFI). Essential for distinguishing EU-wide measures from national policies, or identifying development bank programs vs central government actions.",
+    mime_type="text/markdown"
+)
+def get_implementation_levels_list() -> str:
+	"""Return complete list of implementation levels.
+
+	Returns:
+		Markdown table with all implementation levels, IDs, and descriptions
+	"""
+	return load_implementation_levels_table()
+
+
+@mcp.resource(
+    "gta://guide/parameters",
+    name="Guide: Search Parameters Reference",
+    description="Comprehensive reference for all gta_search_interventions parameters. Explains each parameter's purpose, when to use it, format, and provides examples. Includes parameter selection strategy and common combinations. Essential for understanding filter options and constructing effective queries.",
+    mime_type="text/markdown"
+)
+def get_parameters_guide() -> str:
+	"""Return comprehensive parameters reference guide.
+
+	Returns:
+		Markdown document with all parameter descriptions and usage guidance
+	"""
+	return load_parameters_guide()
+
+
+@mcp.resource(
+    "gta://guide/query-examples",
+    name="Guide: Query Examples Library",
+    description="Comprehensive collection of 35+ real-world query examples organized by category (basic filtering, MAST chapters, entity searches, CPC sectors, firm targeting, negative queries, advanced combinations). Each example includes use case, explanation, and when to use it. Essential for learning query patterns and constructing effective searches.",
+    mime_type="text/markdown"
+)
+def get_query_examples() -> str:
+	"""Return comprehensive query examples library.
+
+	Returns:
+		Markdown document with categorized query examples and patterns
+	"""
+	return load_query_examples()
+
+
+@mcp.resource(
+	"gta://reference/mast-chapters",
+	name="Reference: MAST Chapter Taxonomy",
+	description="Complete UN MAST chapter classification (A-P) for non-tariff measures. Includes detailed descriptions, use cases, examples, and decision guidance for when to use MAST chapters vs intervention_types. Essential for understanding broad policy categorization from import quotas to subsidies, localization requirements, investment actions, and beyond.",
+	mime_type="text/markdown"
+)
+def get_mast_chapters() -> str:
+	"""Return comprehensive MAST chapter taxonomy and reference.
+
+	Returns:
+		Markdown document with complete A-P taxonomy, special categories, and usage guide
+	"""
+	return load_mast_chapters()
+
+
+@mcp.resource(
+	"gta://guide/query-syntax",
+	name="Guide: Query Syntax and Strategy",
+	description="Complete guide to query parameter usage including the 3-step strategy cascade, syntax reference (operators, wildcards, boolean logic), common mistakes and corrections, and advanced patterns. Essential for understanding when and how to use the query parameter effectively for entity searches.",
+	mime_type="text/markdown"
+)
+def get_query_syntax() -> str:
+	"""Return comprehensive query syntax and strategy guide.
+
+	Returns:
+		Markdown document with query strategy, syntax reference, examples, and best practices
+	"""
+	return load_query_syntax()
+
+
+@mcp.resource(
+	"gta://guide/exclusion-filters",
+	name="Guide: Exclusion Filters (keep_* parameters)",
+	description="Complete guide to GTA's inclusion/exclusion filter logic using keep_* parameters. Covers all 11 keep parameters, how True/False logic works, common patterns (exclude G7, non-tariff measures, universal policies), and troubleshooting. Essential for 'everything EXCEPT' queries.",
+	mime_type="text/markdown"
+)
+def get_exclusion_filters() -> str:
+	"""Return comprehensive exclusion filters guide.
+
+	Returns:
+		Markdown document with keep_* parameter reference, patterns, and examples
+	"""
+	return load_exclusion_filters()
 
 
 def main():
