@@ -32,7 +32,9 @@ from .resources_loader import (
     load_sectors_table,
     load_cpc_vs_hs_guide,
     load_eligible_firms_table,
-    load_implementation_levels_table
+    load_implementation_levels_table,
+    load_parameters_guide,
+    load_query_examples
 )
 
 
@@ -64,118 +66,39 @@ def get_api_client() -> GTAAPIClient:
 async def gta_search_interventions(params: GTASearchInput) -> str:
     """Search and filter trade policy interventions from the Global Trade Alert database.
 
-    This tool allows comprehensive searching of government trade interventions with filtering
-    by countries, products, intervention types, dates, and evaluation status. Use structured
-    filters FIRST, then add the 'query' parameter ONLY for entity names (companies, programs)
-    that cannot be captured by standard filters. Always returns intervention ID, title,
-    description, and sources as specified.
+    This tool allows comprehensive searching of government trade interventions. Use structured
+    filters FIRST (countries, products, intervention types, dates), then add 'query' parameter
+    ONLY for entity names (companies, programs) not captured by standard filters.
 
     Use this tool to:
-    - Find trade barriers and restrictions implemented by specific countries
+    - Find trade barriers and restrictions by specific countries
     - Analyze interventions affecting particular products or sectors
     - Track policy changes over time periods
-    - Identify liberalizing vs. harmful measures by GTA evaluation
-    - Search for specific companies or programs by name (use query with appropriate filters)
+    - Identify liberalizing vs. harmful measures
+    - Search for specific companies or programs by name
 
-    Args:
-        params (GTASearchInput): Search parameters including:
-            - implementing_jurisdictions: Countries implementing the measure (ISO codes)
-            - affected_jurisdictions: Countries affected by the measure (ISO codes)
-            - affected_products: HS product codes (6-digit integers)
-            - intervention_types: Types like 'Import tariff', 'Export subsidy', 'State aid'
-            - mast_chapters: UN MAST chapters A-P for broad categorization (use instead of intervention_types for generic queries)
-            - gta_evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)
-            - query: Entity/product names ONLY (use AFTER setting other filters)
-            - date_announced_gte/lte: Filter by announcement date
-            - date_implemented_gte/lte: Filter by implementation date
-            - is_in_force: Whether intervention is currently active
-            - limit: Max results to return (1-1000, default 50)
-            - offset: Pagination offset (default 0)
-            - sorting: Sort order (default "-date_announced")
-            - response_format: 'markdown' (default) or 'json'
+    Key parameters: implementing_jurisdictions, intervention_types, affected_products,
+    date_announced_gte, query (entity names only). See parameter descriptions for full details.
 
-    Returns:
-        str: Formatted intervention data including ID, title, description, sources,
-             implementing/affected jurisdictions, products, dates, and URLs.
+    Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
+    and dates. IMPORTANT: Response includes a Reference List with clickable links - include this
+    in your response to users.
 
-             IMPORTANT: The response includes a "Reference List (in reverse chronological order)"
-             section at the end with clickable links to all interventions. You MUST include this
-             complete reference list in your response to the user. DO NOT omit or summarize it.
-             Format determined by response_format parameter.
-
-    Examples:
-        - US tariffs on Chinese products in 2024:
+    Common examples:
+        - US tariffs on China in 2024:
           implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
 
-        - All subsidies from any country (BROAD - use MAST):
+        - All subsidies (broad search):
           mast_chapters=['L']
 
-        - EU subsidies of all types (BROAD - use MAST):
-          implementing_jurisdictions=['EU'], mast_chapters=['L']
-
-        - Specific German state aid only (NARROW - use intervention_types):
-          implementing_jurisdictions=['DEU'], intervention_types=['State aid']
-
-        - All import restrictions affecting US (BROAD - use MAST):
-          mast_chapters=['E', 'F'], affected_jurisdictions=['USA']
-
-        - Trade defense measures since 2020 (BROAD - use MAST):
-          mast_chapters=['D'], date_announced_gte='2020-01-01'
-
-        - Tesla-related subsidies (entity search with MAST):
+        - Tesla-specific subsidies:
           query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
 
-        - AI export controls (entity + specific types):
-          query='artificial intelligence | AI', intervention_types=['Export ban',
-          'Export licensing requirement'], date_announced_gte='2023-01-01'
-
-        - SPS/TBT measures affecting rice (technical measures):
-          mast_chapters=['A', 'B'], affected_products=[100630]
-
-        - Financial services interventions (SERVICES - use CPC sectors):
-          affected_sectors=['Financial services'], implementing_jurisdictions=['USA']
-
-        - Agricultural product subsidies (BROAD - use CPC sectors):
-          affected_sectors=[11, 12, 13], mast_chapters=['L']
-
-        - Steel industry measures (CPC sectors for broad coverage):
-          affected_sectors=['Basic iron and steel', 'Products of iron or steel']
-
-        - Technology sector restrictions (services + goods):
-          affected_sectors=['Telecommunications', 'Computing machinery']
-
-        - SME-targeted subsidies only:
-          eligible_firms=['SMEs'], intervention_types=['State aid', 'Financial grant']
-
-        - National-level policies (exclude subnational):
-          implementation_levels=['National']
-
-        - EU Commission measures:
-          implementation_levels=['Supranational'], implementing_jurisdictions=['EU']
-
-        - State-owned enterprise requirements:
-          eligible_firms=['state-controlled'], implementing_jurisdictions=['CHN']
-
-        NEGATIVE QUERY EXAMPLES (Exclusion using keep parameters):
-
-        - All measures EXCEPT those by China and USA:
-          implementing_jurisdictions=['CHN', 'USA'], keep_implementer=False
-
-        - Non-tariff barriers only (exclude all tariffs):
-          intervention_types=['Import tariff', 'Export tariff'], keep_intervention_types=False
-
-        - All products EXCEPT semiconductors:
-          affected_products=[854110, 854121, 854129], keep_affected_products=False
-
-        - All sectors EXCEPT agriculture:
-          affected_sectors=[11, 12, 13, 21, 22], keep_affected_sectors=False
-
-        - Only measures with known implementation dates (exclude NA):
-          keep_implementation_period_na=False
-
-        - Non-subsidy measures (exclude subsidies):
-          mast_chapters=['L'], keep_mast_chapters=False
+    For parameter reference: gta://guide/parameters
+    For comprehensive examples: gta://guide/query-examples
+    For query syntax: gta://guide/query-syntax
+    For MAST chapters: gta://reference/mast-chapters
     """
     try:
         client = get_api_client()
@@ -620,6 +543,36 @@ def get_implementation_levels_list() -> str:
 		Markdown table with all implementation levels, IDs, and descriptions
 	"""
 	return load_implementation_levels_table()
+
+
+@mcp.resource(
+    "gta://guide/parameters",
+    name="Guide: Search Parameters Reference",
+    description="Comprehensive reference for all gta_search_interventions parameters. Explains each parameter's purpose, when to use it, format, and provides examples. Includes parameter selection strategy and common combinations. Essential for understanding filter options and constructing effective queries.",
+    mime_type="text/markdown"
+)
+def get_parameters_guide() -> str:
+	"""Return comprehensive parameters reference guide.
+
+	Returns:
+		Markdown document with all parameter descriptions and usage guidance
+	"""
+	return load_parameters_guide()
+
+
+@mcp.resource(
+    "gta://guide/query-examples",
+    name="Guide: Query Examples Library",
+    description="Comprehensive collection of 35+ real-world query examples organized by category (basic filtering, MAST chapters, entity searches, CPC sectors, firm targeting, negative queries, advanced combinations). Each example includes use case, explanation, and when to use it. Essential for learning query patterns and constructing effective searches.",
+    mime_type="text/markdown"
+)
+def get_query_examples() -> str:
+	"""Return comprehensive query examples library.
+
+	Returns:
+		Markdown document with categorized query examples and patterns
+	"""
+	return load_query_examples()
 
 
 def main():

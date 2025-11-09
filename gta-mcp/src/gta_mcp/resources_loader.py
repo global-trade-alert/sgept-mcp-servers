@@ -399,3 +399,41 @@ The "implementation level" parameter identifies which level of government or age
 		_CACHE["implementation_levels_table"] = header + content
 
 	return _CACHE["implementation_levels_table"]
+
+
+def load_parameters_guide() -> str:
+	"""Load the comprehensive parameters guide from markdown file.
+
+	Returns:
+		Complete markdown guide with parameter descriptions and usage guidance
+	"""
+	if "parameters_guide" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "parameters.md"
+
+		if not file_path.exists():
+			return "Error: Parameters guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["parameters_guide"] = f.read()
+
+	return _CACHE["parameters_guide"]
+
+
+def load_query_examples() -> str:
+	"""Load the comprehensive query examples library from markdown file.
+
+	Returns:
+		Complete markdown guide with categorized query examples
+	"""
+	if "query_examples" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "query_examples.md"
+
+		if not file_path.exists():
+			return "Error: Query examples guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["query_examples"] = f.read()
+
+	return _CACHE["query_examples"]
