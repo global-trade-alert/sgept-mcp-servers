@@ -156,6 +156,26 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
         - State-owned enterprise requirements:
           eligible_firms=['state-controlled'], implementing_jurisdictions=['CHN']
+
+        NEGATIVE QUERY EXAMPLES (Exclusion using keep parameters):
+
+        - All measures EXCEPT those by China and USA:
+          implementing_jurisdictions=['CHN', 'USA'], keep_implementer=False
+
+        - Non-tariff barriers only (exclude all tariffs):
+          intervention_types=['Import tariff', 'Export tariff'], keep_intervention_types=False
+
+        - All products EXCEPT semiconductors:
+          affected_products=[854110, 854121, 854129], keep_affected_products=False
+
+        - All sectors EXCEPT agriculture:
+          affected_sectors=[11, 12, 13, 21, 22], keep_affected_sectors=False
+
+        - Only measures with known implementation dates (exclude NA):
+          keep_implementation_period_na=False
+
+        - Non-subsidy measures (exclude subsidies):
+          mast_chapters=['L'], keep_mast_chapters=False
     """
     try:
         client = get_api_client()

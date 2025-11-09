@@ -1344,4 +1344,28 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
         # This is used by ticker endpoint, not main data endpoint
         pass
 
+    # Keep parameters - control inclusion/exclusion of specified values
+    # When keep=False, the specified values are EXCLUDED (everything else is included)
+    keep_params = {
+        'keep_affected': 'affected jurisdictions',
+        'keep_implementer': 'implementing jurisdictions',
+        'keep_intervention_types': 'intervention types',
+        'keep_mast_chapters': 'MAST chapters',
+        'keep_implementation_level': 'implementation levels',
+        'keep_eligible_firms': 'eligible firm types',
+        'keep_affected_sectors': 'CPC sectors',
+        'keep_affected_products': 'HS product codes',
+        'keep_implementation_period_na': 'interventions without implementation dates',
+        'keep_revocation_na': 'interventions without revocation dates',
+        'keep_intervention_id': 'intervention IDs'
+    }
+
+    for keep_param, label in keep_params.items():
+        if params.get(keep_param) is not None:
+            filters[keep_param] = params[keep_param]
+
+            # Add informational message when excluding (keep=False)
+            if params[keep_param] is False:
+                messages.append(f"⚠️ Excluding specified {label} (showing everything else)")
+
     return filters, messages
