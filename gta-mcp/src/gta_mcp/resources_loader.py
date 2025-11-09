@@ -475,3 +475,22 @@ def load_query_syntax() -> str:
 			_CACHE["query_syntax"] = f.read()
 
 	return _CACHE["query_syntax"]
+
+
+def load_exclusion_filters() -> str:
+	"""Load the exclusion filters guide from markdown file.
+
+	Returns:
+		Complete markdown guide with keep_* parameter reference, patterns, and troubleshooting
+	"""
+	if "exclusion_filters" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "exclusion_filters.md"
+
+		if not file_path.exists():
+			return "Error: Exclusion filters guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["exclusion_filters"] = f.read()
+
+	return _CACHE["exclusion_filters"]

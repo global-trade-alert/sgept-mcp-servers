@@ -23,13 +23,15 @@ class GTASearchInput(BaseModel):
     implementing_jurisdictions: Optional[List[str]] = Field(
         default=None,
         description="List of implementing jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU']). "
-                   "Filter interventions by countries that implemented the measure."
+                   "Filter interventions by countries that implemented the measure. "
+                   "See gta://reference/jurisdictions for complete list."
     )
-    
+
     affected_jurisdictions: Optional[List[str]] = Field(
         default=None,
         description="List of affected jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU']). "
-                   "Filter interventions by countries affected by the measure."
+                   "Filter interventions by countries affected by the measure. "
+                   "See gta://reference/jurisdictions for complete list."
     )
     
     affected_products: Optional[List[int]] = Field(
@@ -52,7 +54,8 @@ class GTASearchInput(BaseModel):
     intervention_types: Optional[List[str]] = Field(
         default=None,
         description="List of intervention types (e.g., ['Import tariff', 'Export subsidy', 'State aid']). "
-                   "Filter by type of trade measure."
+                   "Filter by type of trade measure. "
+                   "See gta://reference/intervention-types for complete list."
     )
 
     mast_chapters: Optional[List[str]] = Field(
@@ -145,13 +148,10 @@ class GTASearchInput(BaseModel):
     sorting: Optional[str] = Field(
         default="-date_announced",
         description=(
-            "Sort order for results. Common values:\n"
-            "- '-date_announced': Newest interventions first (RECOMMENDED for finding recent data)\n"
-            "- 'date_announced': Oldest interventions first\n"
-            "- '-intervention_id': Highest intervention ID first\n"
-            "- 'intervention_id': Lowest intervention ID first\n"
-            "Valid sort fields: date_announced, date_published, date_implemented, date_removed, intervention_id\n"
-            "Use '-' prefix for descending order. Can combine multiple fields with commas."
+            "Sort order for results. Use '-' prefix for descending. "
+            "Common: '-date_announced' (newest first, recommended), 'date_announced' (oldest first). "
+            "Valid fields: date_announced, date_published, date_implemented, date_removed, intervention_id. "
+            "Can combine with commas."
         )
     )
 
@@ -159,123 +159,99 @@ class GTASearchInput(BaseModel):
     keep_affected: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified affected jurisdictions are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified affected jurisdictions\n"
-            "• False: EXCLUDE specified jurisdictions, show everything else\n\n"
-            "Example - Everything EXCEPT measures affecting China:\n"
-            "  affected_jurisdictions=['CHN'], keep_affected=False"
+            "Include (True, default) or exclude (False) specified affected jurisdictions. "
+            "Example: keep_affected=False excludes listed countries. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_implementer: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified implementing jurisdictions are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified implementing jurisdictions\n"
-            "• False: EXCLUDE specified jurisdictions, show everything else\n\n"
-            "Example - All measures EXCEPT those by G7 countries:\n"
-            "  implementing_jurisdictions=['USA', 'CAN', 'GBR', 'FRA', 'DEU', 'ITA', 'JPN'], keep_implementer=False"
+            "Include (True, default) or exclude (False) specified implementing jurisdictions. "
+            "Example: keep_implementer=False excludes G7 countries. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_intervention_types: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified intervention types are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified intervention types\n"
-            "• False: EXCLUDE specified types, show all other types\n\n"
-            "Example - All non-tariff measures (exclude tariffs):\n"
-            "  intervention_types=['Import tariff', 'Export tariff'], keep_intervention_types=False"
+            "Include (True, default) or exclude (False) specified intervention types. "
+            "Example: keep_intervention_types=False for non-tariff measures. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_mast_chapters: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified MAST chapters are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified MAST chapters\n"
-            "• False: EXCLUDE specified chapters, show all others\n\n"
-            "Example - All measures EXCEPT subsidies:\n"
-            "  mast_chapters=['L'], keep_mast_chapters=False"
+            "Include (True, default) or exclude (False) specified MAST chapters. "
+            "Example: keep_mast_chapters=False excludes subsidies. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_implementation_level: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified implementation levels are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified implementation levels\n"
-            "• False: EXCLUDE specified levels, show all others\n\n"
-            "Example - Only subnational measures (exclude national):\n"
-            "  implementation_levels=['National', 'Supranational'], keep_implementation_level=False"
+            "Include (True, default) or exclude (False) specified implementation levels. "
+            "Example: keep_implementation_level=False for subnational only. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_eligible_firms: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified eligible firm types are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified firm types\n"
-            "• False: EXCLUDE specified types, show all others\n\n"
-            "Example - Universal policies only (exclude firm-specific):\n"
-            "  eligible_firms=['firm-specific', 'SMEs'], keep_eligible_firms=False"
+            "Include (True, default) or exclude (False) specified firm types. "
+            "Example: keep_eligible_firms=False for universal policies. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_affected_sectors: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified CPC sectors are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified sectors\n"
-            "• False: EXCLUDE specified sectors, show all others\n\n"
-            "Example - All sectors EXCEPT agriculture:\n"
-            "  affected_sectors=[11, 12, 13, 21, 22], keep_affected_sectors=False"
+            "Include (True, default) or exclude (False) specified CPC sectors. "
+            "Example: keep_affected_sectors=False excludes agriculture. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_affected_products: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified HS product codes are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified products\n"
-            "• False: EXCLUDE specified products, show all others\n\n"
-            "Example - All products EXCEPT semiconductors:\n"
-            "  affected_products=[854110, 854121, 854129], keep_affected_products=False"
+            "Include (True, default) or exclude (False) specified HS products. "
+            "Example: keep_affected_products=False excludes semiconductors. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_implementation_period_na: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether interventions with NO implementation date are included.\n\n"
-            "• True (default): Include interventions with NULL/NA implementation dates\n"
-            "• False: EXCLUDE interventions without implementation dates (show only dated measures)\n\n"
-            "Example - Only interventions with known implementation dates:\n"
-            "  keep_implementation_period_na=False\n\n"
-            "Note: Works independently of implementation_period date range filter"
+            "Include (True, default) or exclude (False) interventions with NO implementation date. "
+            "Set False to require known implementation dates. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_revocation_na: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether interventions with NO revocation date are included.\n\n"
-            "• True (default): Include interventions with NULL/NA revocation dates\n"
-            "• False: EXCLUDE interventions without revocation dates (show only revoked measures)\n\n"
-            "Example - Only revoked measures with known revocation dates:\n"
-            "  keep_revocation_na=False\n\n"
-            "Note: Works independently of revocation_period date range filter"
+            "Include (True, default) or exclude (False) interventions with NO revocation date. "
+            "Set False to show only revoked measures with known dates. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 
     keep_intervention_id: Optional[bool] = Field(
         default=None,
         description=(
-            "Control whether specified intervention IDs are INCLUDED or EXCLUDED.\n\n"
-            "• True (default): Include only specified intervention IDs\n"
-            "• False: EXCLUDE specified IDs, show all others\n\n"
-            "Example - Exclude specific interventions from results:\n"
-            "  intervention_id=[138295, 137842, 139103], keep_intervention_id=False"
+            "Include (True, default) or exclude (False) specified intervention IDs. "
+            "Example: keep_intervention_id=False excludes specific interventions. "
+            "See gta://guide/exclusion-filters for complete guide."
         )
     )
 

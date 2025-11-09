@@ -36,7 +36,8 @@ from .resources_loader import (
     load_parameters_guide,
     load_query_examples,
     load_mast_chapters,
-    load_query_syntax
+    load_query_syntax,
+    load_exclusion_filters
 )
 
 
@@ -605,6 +606,21 @@ def get_query_syntax() -> str:
 		Markdown document with query strategy, syntax reference, examples, and best practices
 	"""
 	return load_query_syntax()
+
+
+@mcp.resource(
+	"gta://guide/exclusion-filters",
+	name="Guide: Exclusion Filters (keep_* parameters)",
+	description="Complete guide to GTA's inclusion/exclusion filter logic using keep_* parameters. Covers all 11 keep parameters, how True/False logic works, common patterns (exclude G7, non-tariff measures, universal policies), and troubleshooting. Essential for 'everything EXCEPT' queries.",
+	mime_type="text/markdown"
+)
+def get_exclusion_filters() -> str:
+	"""Return comprehensive exclusion filters guide.
+
+	Returns:
+		Markdown document with keep_* parameter reference, patterns, and examples
+	"""
+	return load_exclusion_filters()
 
 
 def main():
