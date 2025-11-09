@@ -79,6 +79,7 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             - affected_jurisdictions: Countries affected by the measure (ISO codes)
             - affected_products: HS product codes (6-digit integers)
             - intervention_types: Types like 'Import tariff', 'Export subsidy', 'State aid'
+            - mast_chapters: UN MAST chapters A-P for broad categorization (use instead of intervention_types for generic queries)
             - gta_evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)
             - query: Entity/product names ONLY (use AFTER setting other filters)
             - date_announced_gte/lte: Filter by announcement date
@@ -103,21 +104,30 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
           implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
 
-        - EU subsidies (all types):
-          implementing_jurisdictions=['EU'], intervention_types=['State aid', 'Financial grant',
-          'Subsidy', 'Tax-based export incentive']
+        - All subsidies from any country (BROAD - use MAST):
+          mast_chapters=['L']
 
-        - Tesla-related subsidies (entity search):
-          query='Tesla', intervention_types=['State aid', 'Financial grant'],
-          implementing_jurisdictions=['USA']
+        - EU subsidies of all types (BROAD - use MAST):
+          implementing_jurisdictions=['EU'], mast_chapters=['L']
 
-        - AI export controls (entity + filters):
+        - Specific German state aid only (NARROW - use intervention_types):
+          implementing_jurisdictions=['DEU'], intervention_types=['State aid']
+
+        - All import restrictions affecting US (BROAD - use MAST):
+          mast_chapters=['E', 'F'], affected_jurisdictions=['USA']
+
+        - Trade defense measures since 2020 (BROAD - use MAST):
+          mast_chapters=['D'], date_announced_gte='2020-01-01'
+
+        - Tesla-related subsidies (entity search with MAST):
+          query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
+
+        - AI export controls (entity + specific types):
           query='artificial intelligence | AI', intervention_types=['Export ban',
           'Export licensing requirement'], date_announced_gte='2023-01-01'
 
-        - Electric vehicle subsidies with HS codes:
-          query='electric | EV', intervention_types=['Subsidy', 'State aid'],
-          affected_products=[870310, 870320, 870380]
+        - SPS/TBT measures affecting rice (technical measures):
+          mast_chapters=['A', 'B'], affected_products=[100630]
     """
     try:
         client = get_api_client()
