@@ -308,3 +308,94 @@ def load_cpc_vs_hs_guide() -> str:
 			_CACHE["cpc_vs_hs_guide"] = f.read()
 
 	return _CACHE["cpc_vs_hs_guide"]
+
+
+def load_eligible_firms_table() -> str:
+	"""Load and format the eligible firms reference table.
+
+	Returns:
+		Markdown-formatted table of eligible firm types with IDs and descriptions
+	"""
+	if "eligible_firms_table" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "api_eligible_firm_list.md"
+
+		if not file_path.exists():
+			return "Error: Eligible firms list resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			content = f.read()
+
+		# Add helpful header information
+		header = """# Eligible Firms Classification
+
+## Overview
+The "eligible firms" parameter identifies which types of businesses are targeted or affected by a policy intervention.
+
+### Key Information:
+- Determines the scope and scale of policy impact
+- Distinguishes universal policies from targeted interventions
+- Essential for assessing market access implications
+
+### Common Use Cases:
+- **all**: General policies affecting all companies
+- **SMEs**: Programs specifically for small/medium enterprises
+- **firm-specific**: Company-specific incentives (e.g., Tesla subsidies)
+- **state-controlled**: Policies targeting state-owned enterprises
+- **location-specific**: Regional development programs
+
+---
+
+"""
+		_CACHE["eligible_firms_table"] = header + content
+
+	return _CACHE["eligible_firms_table"]
+
+
+def load_implementation_levels_table() -> str:
+	"""Load and format the implementation levels reference table.
+
+	Returns:
+		Markdown-formatted table of implementation levels with IDs and descriptions
+	"""
+	if "implementation_levels_table" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "api_implementation_level_list.md"
+
+		if not file_path.exists():
+			return "Error: Implementation levels list resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			content = f.read()
+
+		# Add helpful header information
+		header = """# Implementation Level Classification
+
+## Overview
+The "implementation level" parameter identifies which level of government or agency is implementing the policy intervention.
+
+### Key Information:
+- Identifies the governmental authority implementing the measure
+- Ranges from supranational (EU Commission) to subnational (state/provincial)
+- Includes financial institutions (IFI, NFI)
+
+### Implementation Hierarchy:
+1. **Supranational**: Regional bodies with binding authority (e.g., EU Commission)
+2. **National**: Central government and central banks
+3. **Subnational**: Regional, state, provincial, municipal governments
+4. **SEZ**: Special economic zones
+5. **IFI**: International financial institutions (multi-country)
+6. **NFI**: National financial institutions (Export-Import banks, development banks)
+
+### Important Notes:
+- GTA always reports the final governmental implementer
+- Example: If Ministry announces loan scheme via National Development Bank → NFI
+- Central bank announcements are classified as National level
+- Aliases supported: IFI, NFI, SEZ work alongside full names
+
+---
+
+"""
+		_CACHE["implementation_levels_table"] = header + content
+
+	return _CACHE["implementation_levels_table"]

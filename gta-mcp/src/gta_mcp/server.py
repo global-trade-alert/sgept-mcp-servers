@@ -30,7 +30,9 @@ from .resources_loader import (
     load_search_guide,
     load_date_fields_guide,
     load_sectors_table,
-    load_cpc_vs_hs_guide
+    load_cpc_vs_hs_guide,
+    load_eligible_firms_table,
+    load_implementation_levels_table
 )
 
 
@@ -142,6 +144,18 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
         - Technology sector restrictions (services + goods):
           affected_sectors=['Telecommunications', 'Computing machinery']
+
+        - SME-targeted subsidies only:
+          eligible_firms=['SMEs'], intervention_types=['State aid', 'Financial grant']
+
+        - National-level policies (exclude subnational):
+          implementation_levels=['National']
+
+        - EU Commission measures:
+          implementation_levels=['Supranational'], implementing_jurisdictions=['EU']
+
+        - State-owned enterprise requirements:
+          eligible_firms=['state-controlled'], implementing_jurisdictions=['CHN']
     """
     try:
         client = get_api_client()
@@ -556,6 +570,36 @@ def get_cpc_vs_hs_guide() -> str:
 		Markdown document explaining CPC vs HS classification
 	"""
 	return load_cpc_vs_hs_guide()
+
+
+@mcp.resource(
+    "gta://reference/eligible-firms",
+    name="Reference: Eligible Firms Types",
+    description="Complete list of eligible firm classifications with IDs and descriptions. Use this to filter interventions by target firms (all, SMEs, firm-specific, state-controlled, sector-specific, location-specific, processing trade). Essential for understanding policy scope and identifying SME-specific programs or company-targeted incentives.",
+    mime_type="text/markdown"
+)
+def get_eligible_firms_list() -> str:
+	"""Return complete list of eligible firm types.
+
+	Returns:
+		Markdown table with all eligible firm types, IDs, and descriptions
+	"""
+	return load_eligible_firms_table()
+
+
+@mcp.resource(
+    "gta://reference/implementation-levels",
+    name="Reference: Implementation Levels",
+    description="Complete list of implementation level classifications with IDs and descriptions. Use this to filter interventions by governmental authority level (Supranational, National, Subnational, SEZ, IFI, NFI). Essential for distinguishing EU-wide measures from national policies, or identifying development bank programs vs central government actions.",
+    mime_type="text/markdown"
+)
+def get_implementation_levels_list() -> str:
+	"""Return complete list of implementation levels.
+
+	Returns:
+		Markdown table with all implementation levels, IDs, and descriptions
+	"""
+	return load_implementation_levels_table()
 
 
 def main():

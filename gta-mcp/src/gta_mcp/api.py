@@ -454,6 +454,46 @@ SECTOR_NAME_TO_ID = {
 # Reverse mapping for formatting
 SECTOR_ID_TO_NAME = {v: k for k, v in SECTOR_NAME_TO_ID.items()}
 
+# Eligible firms mapping
+# Based on api_eligible_firm_list.md
+ELIGIBLE_FIRM_TO_ID = {
+	"all": 1,
+	"SMEs": 2,
+	"firm-specific": 3,
+	"state-controlled": 4,
+	"state trading enterprise": 5,
+	"sector-specific": 6,
+	"location-specific": 7,
+	"processing trade": 8,
+}
+
+# Reverse mapping for formatting
+ELIGIBLE_FIRM_ID_TO_NAME = {v: k for k, v in ELIGIBLE_FIRM_TO_ID.items()}
+
+# Implementation level mapping
+# Based on api_implementation_level_list.md
+IMPLEMENTATION_LEVEL_TO_ID = {
+	"Supranational": 1,
+	"National": 2,
+	"Subnational": 3,
+	"SEZ": 4,
+	"Special economic zone": 4,  # Alias
+	"IFI": 5,
+	"International financial institution": 5,  # Alias
+	"NFI": 6,
+	"National financial institution": 6,  # Alias
+}
+
+# Reverse mapping for formatting
+IMPLEMENTATION_LEVEL_ID_TO_NAME = {
+	1: "Supranational",
+	2: "National",
+	3: "Subnational",
+	4: "SEZ",
+	5: "IFI",
+	6: "NFI",
+}
+
 # Hierarchical sector level2 groupings
 SECTOR_LEVEL2_GROUPS = {
 	1: list(range(11, 20)),  # Crops
@@ -1065,6 +1105,128 @@ def convert_sectors(sector_inputs: List[Any]) -> Tuple[List[int], List[str]]:
 	return unique_sector_ids, messages
 
 
+def convert_eligible_firms(firm_inputs: List[Any]) -> List[int]:
+	"""Convert eligible firm names to IDs.
+
+	Supports:
+	- Integer IDs (passed through if valid)
+	- Exact firm type name matches (case-insensitive)
+
+	Args:
+		firm_inputs: List of eligible firm types (names or IDs)
+
+	Returns:
+		List of eligible firm IDs (integers)
+
+	Raises:
+		ValueError: If a firm type cannot be matched
+	"""
+	firm_ids = []
+
+	for firm_input in firm_inputs:
+		# If already an integer, validate and pass through
+		if isinstance(firm_input, int):
+			if firm_input in ELIGIBLE_FIRM_ID_TO_NAME:
+				firm_ids.append(firm_input)
+			else:
+				raise ValueError(
+					f"Unknown eligible firm ID: {firm_input}. "
+					f"Valid IDs: 1-8. Use gta://reference/eligible-firms resource for details."
+				)
+			continue
+
+		# Handle string input (case-insensitive)
+		firm_str = str(firm_input).strip()
+
+		# Try exact match (case-insensitive)
+		matched = False
+		for name, fid in ELIGIBLE_FIRM_TO_ID.items():
+			if name.lower() == firm_str.lower():
+				firm_ids.append(fid)
+				matched = True
+				break
+
+		if not matched:
+			# Try parsing as integer string
+			try:
+				firm_id = int(firm_str)
+				if firm_id in ELIGIBLE_FIRM_ID_TO_NAME:
+					firm_ids.append(firm_id)
+					continue
+			except ValueError:
+				pass
+
+			raise ValueError(
+				f"Unknown eligible firm type: '{firm_str}'. "
+				f"Valid types: all, SMEs, firm-specific, state-controlled, "
+				f"state trading enterprise, sector-specific, location-specific, processing trade. "
+				f"Use gta://reference/eligible-firms resource for details."
+			)
+
+	return firm_ids
+
+
+def convert_implementation_levels(level_inputs: List[Any]) -> List[int]:
+	"""Convert implementation level names to IDs.
+
+	Supports:
+	- Integer IDs (passed through if valid)
+	- Exact level name matches (case-insensitive)
+	- Common aliases (e.g., "SEZ", "IFI", "NFI")
+
+	Args:
+		level_inputs: List of implementation levels (names or IDs)
+
+	Returns:
+		List of implementation level IDs (integers)
+
+	Raises:
+		ValueError: If an implementation level cannot be matched
+	"""
+	level_ids = []
+
+	for level_input in level_inputs:
+		# If already an integer, validate and pass through
+		if isinstance(level_input, int):
+			if level_input in IMPLEMENTATION_LEVEL_ID_TO_NAME:
+				level_ids.append(level_input)
+			else:
+				raise ValueError(
+					f"Unknown implementation level ID: {level_input}. "
+					f"Valid IDs: 1-6. Use gta://reference/implementation-levels resource for details."
+				)
+			continue
+
+		# Handle string input (case-insensitive)
+		level_str = str(level_input).strip()
+
+		# Try exact match (case-insensitive)
+		matched = False
+		for name, lid in IMPLEMENTATION_LEVEL_TO_ID.items():
+			if name.lower() == level_str.lower():
+				level_ids.append(lid)
+				matched = True
+				break
+
+		if not matched:
+			# Try parsing as integer string
+			try:
+				level_id = int(level_str)
+				if level_id in IMPLEMENTATION_LEVEL_ID_TO_NAME:
+					level_ids.append(level_id)
+					continue
+			except ValueError:
+				pass
+
+			raise ValueError(
+				f"Unknown implementation level: '{level_str}'. "
+				f"Valid levels: Supranational, National, Subnational, SEZ, IFI, NFI. "
+				f"Use gta://reference/implementation-levels resource for details."
+			)
+
+	return level_ids
+
+
 def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
     """Build API filter dictionary from input parameters.
 
@@ -1168,6 +1330,14 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
     # MAST chapters - convert letters to IDs
     if params.get('mast_chapters'):
         filters['mast_chapters'] = convert_mast_chapters(params['mast_chapters'])
+
+    # Eligible firms - convert names to IDs
+    if params.get('eligible_firms'):
+        filters['eligible_firms'] = convert_eligible_firms(params['eligible_firms'])
+
+    # Implementation levels - convert names to IDs
+    if params.get('implementation_levels'):
+        filters['implementation_levels'] = convert_implementation_levels(params['implementation_levels'])
 
     # Date modified (for ticker)
     if params.get('date_modified_gte'):

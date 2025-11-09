@@ -157,7 +157,48 @@ class GTASearchInput(BaseModel):
         description="GTA evaluation colors: 'Red' (harmful), 'Amber' (mixed), or 'Green' (liberalizing). "
                    "Filter by impact assessment."
     )
-    
+
+    eligible_firms: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "Filter by types of firms eligible/targeted by the intervention.\n\n"
+            "Valid types:\n"
+            "• 'all' (ID: 1): Policy applies to all types of companies\n"
+            "• 'SMEs' (ID: 2): Small and medium enterprises, entrepreneurs, start-ups\n"
+            "• 'firm-specific' (ID: 3): Targeting a specific company or specific project\n"
+            "• 'state-controlled' (ID: 4): Companies with >50% public ownership stake\n"
+            "• 'state trading enterprise' (ID: 5): Majority publicly owned with monopoly privileges\n"
+            "• 'sector-specific' (ID: 6): Firms in enumerated economic activity different from target\n"
+            "• 'location-specific' (ID: 7): Firms in specific sub-national location\n"
+            "• 'processing trade' (ID: 8): Firms that import, process, and export\n\n"
+            "Examples:\n"
+            "• SME-targeted subsidies: eligible_firms=['SMEs']\n"
+            "• Tesla-specific incentives: eligible_firms=['firm-specific']\n"
+            "• State enterprise requirements: eligible_firms=['state-controlled']\n"
+            "• Regional development zones: eligible_firms=['location-specific']"
+        )
+    )
+
+    implementation_levels: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "Filter by government level implementing the intervention.\n\n"
+            "Valid levels:\n"
+            "• 'Supranational' (ID: 1): Supranational bodies (e.g., European Commission)\n"
+            "• 'National' (ID: 2): Central government agencies, including central banks\n"
+            "• 'Subnational' (ID: 3): Regional, state, provincial, or municipal governments\n"
+            "• 'SEZ' (ID: 4): Special economic zones\n"
+            "• 'IFI' (ID: 5): International financial institutions (multi-country ownership)\n"
+            "• 'NFI' (ID: 6): National financial institutions (e.g., Export-Import banks)\n\n"
+            "Examples:\n"
+            "• EU-wide measures: implementation_levels=['Supranational']\n"
+            "• National policies only: implementation_levels=['National']\n"
+            "• State/provincial actions: implementation_levels=['Subnational']\n"
+            "• Development bank programs: implementation_levels=['NFI']\n\n"
+            "Note: Aliases supported - 'IFI', 'NFI', 'SEZ' match full names"
+        )
+    )
+
     date_announced_gte: Optional[str] = Field(
         default=None,
         description="Filter interventions announced on or after this date (ISO format: YYYY-MM-DD, e.g., '2024-01-01')"
