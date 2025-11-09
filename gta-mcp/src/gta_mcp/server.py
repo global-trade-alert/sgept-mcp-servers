@@ -84,8 +84,13 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     date_announced_gte, query (entity names only). See parameter descriptions for full details.
 
     Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
-    and dates. IMPORTANT: Response includes a Reference List with clickable links - include this
-    in your response to users.
+    and dates.
+
+    ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)" section
+    at the end. You MUST include this complete reference list in your response to the user EXACTLY
+    as formatted. The reference list format is:
+    - {date}: {title} [ID [{intervention_id}](url)].
+    Do NOT modify or reformat the reference list. It provides essential clickable citations.
 
     Common examples:
         - US tariffs on China in 2024:
@@ -186,9 +191,11 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
         str: Complete intervention details with all metadata, formatted per response_format.
              Includes full description, all sources, jurisdictions, products, and timeline.
 
-             IMPORTANT: The response includes a "Reference List (in reverse chronological order)"
-             section at the end with a clickable link to the intervention. You MUST include this
-             reference list in your response to the user.
+             ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)"
+             section at the end. You MUST include this complete reference list in your response to
+             the user EXACTLY as formatted. The reference list format is:
+             - {date}: {title} [ID [{intervention_id}](url)].
+             Do NOT modify or reformat the reference list. It provides essential clickable citations.
 
     Examples:
         - Get full details for intervention 138295 (EU tariff changes)
@@ -250,9 +257,10 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
     Returns:
         str: List of ticker updates with modification dates, intervention IDs, and update text.
 
-             IMPORTANT: The response includes a "Referenced Interventions" section at the end
-             with clickable links to all mentioned interventions. You MUST include this complete
-             reference section in your response to the user. DO NOT omit it.
+             ⚠️ CRITICAL: The response includes a "Referenced Interventions" section at the end.
+             You MUST include this complete reference list in your response to the user EXACTLY
+             as formatted. Do NOT modify or reformat the reference list. It provides essential
+             clickable links to all mentioned interventions.
 
     Examples:
         - Get updates from the last week
