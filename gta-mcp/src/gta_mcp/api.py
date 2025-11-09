@@ -4,6 +4,35 @@ import json
 from typing import Dict, Any, Optional, List
 import httpx
 
+# MAST chapter letter to API ID mapping
+# Based on API schema MastChaptersEnum
+MAST_CHAPTER_TO_ID = {
+	"A": 1,   # Sanitary and phytosanitary measure
+	"B": 2,   # Technical barriers to trade
+	"C": 17,  # Pre-shipment inspection and other formalities
+	"D": 4,   # Contingent trade-protective measures
+	"E": 5,   # Non-automatic licensing, quotas etc.
+	"F": 6,   # Price-control measures, including additional taxes and charges
+	"G": 8,   # Finance measures
+	"H": 18,  # Measures affecting competition
+	"I": 9,   # Trade-related investment measures
+	"J": 19,  # Distribution restrictions
+	"K": 20,  # Restrictions on post-sales services
+	"L": 10,  # Subsidies (excl. export subsidies)
+	"M": 11,  # Government procurement restrictions
+	"N": 13,  # Intellectual Property
+	"P": 14,  # Export-related measures (incl. subsidies)
+}
+
+# Additional non-letter MAST categories from API
+MAST_SPECIAL_CATEGORIES = {
+	"Capital control measures": 3,
+	"FDI measures": 7,
+	"Migration measures": 12,
+	"Tariff measures": 15,
+	"Instrument unclear": 16,
+}
+
 # ISO to UN country code mapping
 # Intervention type name to ID mapping
 # Based on gta_intervention_type_list.md
@@ -399,6 +428,60 @@ def convert_iso_to_un_codes(iso_codes: List[str]) -> List[int]:
     return un_codes
 
 
+def convert_mast_chapters(mast_input: List[str]) -> List[int]:
+    """Convert MAST chapter identifiers to API integer IDs.
+
+    Accepts either:
+    - Single letters A-P (converted to IDs)
+    - Integer IDs 1-20 (passed through)
+    - Special category names (e.g., "Capital control measures")
+
+    Args:
+        mast_input: List of MAST chapters (letters, IDs, or names)
+
+    Returns:
+        List of MAST chapter IDs (integers 1-20)
+
+    Raises:
+        ValueError: If a MAST chapter identifier is not recognized
+    """
+    mast_ids = []
+    for item in mast_input:
+        # Handle string input
+        if isinstance(item, str):
+            item_upper = item.upper().strip()
+
+            # Try letter mapping (A-P)
+            if item_upper in MAST_CHAPTER_TO_ID:
+                mast_ids.append(MAST_CHAPTER_TO_ID[item_upper])
+            # Try special category names
+            elif item in MAST_SPECIAL_CATEGORIES:
+                mast_ids.append(MAST_SPECIAL_CATEGORIES[item])
+            # Try parsing as integer
+            else:
+                try:
+                    mast_id = int(item)
+                    if 1 <= mast_id <= 20:
+                        mast_ids.append(mast_id)
+                    else:
+                        raise ValueError(f"MAST chapter ID must be between 1-20, got {mast_id}")
+                except ValueError:
+                    raise ValueError(
+                        f"Unknown MAST chapter: '{item}'. "
+                        f"Use letters A-P, IDs 1-20, or special categories like 'Capital control measures'."
+                    )
+        # Handle integer input
+        elif isinstance(item, int):
+            if 1 <= item <= 20:
+                mast_ids.append(item)
+            else:
+                raise ValueError(f"MAST chapter ID must be between 1-20, got {item}")
+        else:
+            raise ValueError(f"Invalid MAST chapter type: {type(item)}")
+
+    return mast_ids
+
+
 def build_filters(params: Dict[str, Any]) -> Dict[str, Any]:
     """Build API filter dictionary from input parameters.
 
@@ -461,6 +544,14 @@ def build_filters(params: Dict[str, Any]) -> Dict[str, Any]:
         from datetime import date
         filters['in_force_on_date'] = date.today().isoformat()
         filters['keep_in_force_on_date'] = params['is_in_force']
+
+    # Query parameter - text search (pass through as-is)
+    if params.get('query'):
+        filters['query'] = params['query']
+
+    # MAST chapters - convert letters to IDs
+    if params.get('mast_chapters'):
+        filters['mast_chapters'] = convert_mast_chapters(params['mast_chapters'])
 
     # Date modified (for ticker)
     if params.get('date_modified_gte'):

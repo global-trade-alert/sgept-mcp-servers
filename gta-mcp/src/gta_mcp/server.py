@@ -61,14 +61,17 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     """Search and filter trade policy interventions from the Global Trade Alert database.
 
     This tool allows comprehensive searching of government trade interventions with filtering
-    by countries, products, intervention types, dates, and evaluation status. Always returns
-    intervention ID, title, description, and sources as specified.
+    by countries, products, intervention types, dates, and evaluation status. Use structured
+    filters FIRST, then add the 'query' parameter ONLY for entity names (companies, programs)
+    that cannot be captured by standard filters. Always returns intervention ID, title,
+    description, and sources as specified.
 
     Use this tool to:
     - Find trade barriers and restrictions implemented by specific countries
     - Analyze interventions affecting particular products or sectors
     - Track policy changes over time periods
     - Identify liberalizing vs. harmful measures by GTA evaluation
+    - Search for specific companies or programs by name (use query with appropriate filters)
 
     Args:
         params (GTASearchInput): Search parameters including:
@@ -76,12 +79,15 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             - affected_jurisdictions: Countries affected by the measure (ISO codes)
             - affected_products: HS product codes (6-digit integers)
             - intervention_types: Types like 'Import tariff', 'Export subsidy', 'State aid'
+            - mast_chapters: UN MAST chapters A-P for broad categorization (use instead of intervention_types for generic queries)
             - gta_evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)
+            - query: Entity/product names ONLY (use AFTER setting other filters)
             - date_announced_gte/lte: Filter by announcement date
             - date_implemented_gte/lte: Filter by implementation date
             - is_in_force: Whether intervention is currently active
             - limit: Max results to return (1-1000, default 50)
             - offset: Pagination offset (default 0)
+            - sorting: Sort order (default "-date_announced")
             - response_format: 'markdown' (default) or 'json'
 
     Returns:
@@ -94,9 +100,34 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
              Format determined by response_format parameter.
 
     Examples:
-        - Search for US tariffs on Chinese products announced in 2024
-        - Find all subsidies implemented by EU countries
-        - Track recent harmful interventions affecting semiconductor products
+        - US tariffs on Chinese products in 2024:
+          implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
+          intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
+
+        - All subsidies from any country (BROAD - use MAST):
+          mast_chapters=['L']
+
+        - EU subsidies of all types (BROAD - use MAST):
+          implementing_jurisdictions=['EU'], mast_chapters=['L']
+
+        - Specific German state aid only (NARROW - use intervention_types):
+          implementing_jurisdictions=['DEU'], intervention_types=['State aid']
+
+        - All import restrictions affecting US (BROAD - use MAST):
+          mast_chapters=['E', 'F'], affected_jurisdictions=['USA']
+
+        - Trade defense measures since 2020 (BROAD - use MAST):
+          mast_chapters=['D'], date_announced_gte='2020-01-01'
+
+        - Tesla-related subsidies (entity search with MAST):
+          query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
+
+        - AI export controls (entity + specific types):
+          query='artificial intelligence | AI', intervention_types=['Export ban',
+          'Export licensing requirement'], date_announced_gte='2023-01-01'
+
+        - SPS/TBT measures affecting rice (technical measures):
+          mast_chapters=['A', 'B'], affected_products=[100630]
     """
     try:
         client = get_api_client()

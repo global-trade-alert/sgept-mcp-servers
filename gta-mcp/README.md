@@ -2,14 +2,26 @@
 
 Model Context Protocol server providing access to the Global Trade Alert (GTA) database. This server exposes trade policy interventions, enabling LLMs to search and analyze government trade measures worldwide.
 
-## Features
+## Version
 
-- **Comprehensive Search**: Filter interventions by countries, products, types, dates, and evaluation status
-- **Detailed Retrieval**: Get complete information for specific interventions including sources
-- **Ticker Updates**: Monitor recent changes to existing policy measures
-- **Impact Chains**: Analyze granular bilateral trade relationships at product or sector level
-- **Flexible Output**: Both human-readable markdown and machine-readable JSON formats
-- **Smart Pagination**: Handle large datasets with offset-based pagination (up to 1000 results per query)
+**Current Version:** 1.2 (Released: November 9, 2025)
+
+See [Version History & Changelog](#version-history--changelog) below for details.
+
+## Overview
+
+**Purpose:** This MCP server translates natural language queries into precise API requests for the Global Trade Alert database, enabling flexible interrogation of 75,000+ trade policy interventions worldwide. It handles the complex task of identifying and retrieving relevant intervention records with their complete GTA information.
+
+**How It Works:**
+1. The server converts your natural language request into optimized API calls with appropriate filters
+2. It retrieves relevant intervention IDs and their complete information from GTA (including full descriptions and sources if your API key permits)
+3. The LLM receives this raw data for analysis and interpretation
+
+**Important:** The MCP server's role ends at data retrieval. How the LLM interprets, summarizes, and analyzes the returned interventions depends entirely on your prompts (client-side instructions).
+
+**Best Practice for Detailed Queries:** For questions requiring careful analysis, explicitly instruct your LLM to examine the returned intervention set thoroughly and methodically. Think of it as giving instructions to a lawyerly specific about what aspects to analyze, what to compare, and what conclusions to draw.
+
+**Status:** Ongoing development to continuously improve query precision and result optimization. Send feedback or requests to Johannes Fritz.
 
 ## Installation
 
@@ -480,9 +492,36 @@ Full GTA API documentation: https://api.globaltradealert.org/api/doc/
 This MCP server implementation is provided for use with the Global Trade Alert database.
 API access requires valid credentials from SGEPT.
 
+## Version History & Changelog
+
+### Version 1.2 (November 9, 2025)
+
+**Added: MAST Chapter Support**
+
+Allows the server to query at a broader taxonomic level when users express general intent. When you mention "anti-dumping," the system can retrieve the entire trade defense toolkit (including safeguards, countervailing duties).
+
+---
+
+### Version 1.1 (November 8, 2025)
+
+**Added: Text Search**
+
+MCP can now search intervention descriptions and titles using keywords. Used for queries including company and entity names.
+
+---
+
+### Version 1.0 (Initial Release)
+
+**Core Features:**
+- Comprehensive intervention search with field-based filtering
+- Citation and reference management
+- Intervention type flexible matching
+- Reference resources for jurisdictions and intervention types
+- Search guidance documentation
+
 ## Support
 
 For issues with:
 - **This MCP server**: Contact Johannes Fritz at SGEPT
-- **GTA API access**: Contact SGEPT for API credentials
+- **GTA API access**: Contact SGEPT for API credentials: https://globaltradealert.org/api-access 
 - **MCP protocol**: See https://modelcontextprotocol.io/
