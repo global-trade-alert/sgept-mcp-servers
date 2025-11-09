@@ -4,7 +4,9 @@ Model Context Protocol server providing access to the Global Trade Alert (GTA) d
 
 ## Version
 
-**Current Version:** 1.2 (Released: November 9, 2025)
+**Current Version:** 0.3.0 (November 9, 2025)
+
+⚠️ **Experimental Release** - This server is under active development. Feedback and feature requests welcome.
 
 See [Version History & Changelog](#version-history--changelog) below for details.
 
@@ -494,7 +496,7 @@ API access requires valid credentials from SGEPT.
 
 ## Version History & Changelog
 
-### Version 1.2 (November 9, 2025)
+### Version 0.3.0 (November 9, 2025)
 
 **Added: MAST Chapter Support**
 
@@ -502,7 +504,7 @@ Allows the server to query at a broader taxonomic level when users express gener
 
 ---
 
-### Version 1.1 (November 8, 2025)
+### Version 0.2.0 (November 8, 2025)
 
 **Added: Text Search**
 
@@ -510,7 +512,7 @@ MCP can now search intervention descriptions and titles using keywords. Used for
 
 ---
 
-### Version 1.0 (Initial Release)
+### Version 0.1.0 (Initial Release)
 
 **Core Features:**
 - Comprehensive intervention search with field-based filtering
@@ -518,6 +520,10 @@ MCP can now search intervention descriptions and titles using keywords. Used for
 - Intervention type flexible matching
 - Reference resources for jurisdictions and intervention types
 - Search guidance documentation
+
+---
+
+**Note:** Pre-1.0 versions indicate experimental status. We welcome feedback and feature requests to improve the server.
 
 ## Support
 

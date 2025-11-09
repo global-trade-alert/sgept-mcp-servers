@@ -240,3 +240,71 @@ def load_date_fields_guide() -> str:
 			_CACHE["date_fields_guide"] = f.read()
 
 	return _CACHE["date_fields_guide"]
+
+
+def load_sectors_table() -> str:
+	"""Load and format the CPC sectors table.
+
+	Returns:
+		Markdown-formatted table of all CPC sectors with IDs, names, and categories
+	"""
+	if "sectors_table" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "api_sector_list.md"
+
+		if not file_path.exists():
+			return "Error: Sectors list resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			content = f.read()
+
+		# Add helpful header information
+		header = """# CPC Sector Classification
+
+## Overview
+Central Product Classification (CPC) sectors provide broader product coverage than HS codes.
+
+### Key Information:
+- **Services**: Sectors with ID >= 500 (e.g., 711-717 Financial services)
+- **Goods**: Sectors with ID < 500 (e.g., 11-49 Agricultural, 211-499 Manufactured goods)
+- **Usage**: Can filter by sector ID (integer) or sector name (string with fuzzy matching)
+
+### Categories:
+- **1-49**: Raw materials (agriculture, livestock, forestry, aquatic, mining)
+- **110-180**: Minerals, energy, water
+- **211-389**: Manufactured goods (food, textiles, chemicals, metals, machinery)
+- **391-399**: Wastes and scraps
+- **411-499**: Metals and transport equipment
+- **531-547**: Construction goods and services
+- **611-698**: Trade and distribution services
+- **711-733**: Financial and real estate services
+- **811-839**: Professional, technical, and business services
+- **841-889**: Telecommunications and support services
+- **911-980**: Public services (government, education, health, environment)
+- **990**: Extraterritorial services
+
+---
+
+"""
+		_CACHE["sectors_table"] = header + content
+
+	return _CACHE["sectors_table"]
+
+
+def load_cpc_vs_hs_guide() -> str:
+	"""Load the guide explaining when to use CPC sectors vs HS codes.
+
+	Returns:
+		Complete markdown content explaining the differences and usage
+	"""
+	if "cpc_vs_hs_guide" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "cpc_vs_hs_guide.md"
+
+		if not file_path.exists():
+			return "Error: CPC vs HS guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["cpc_vs_hs_guide"] = f.read()
+
+	return _CACHE["cpc_vs_hs_guide"]

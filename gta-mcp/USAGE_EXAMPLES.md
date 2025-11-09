@@ -76,6 +76,31 @@ Prioritize interventions still in force.
 - Extracts patterns across countries
 - Provides comparative analysis with source links
 
+### Financial Services Restrictions Analysis
+
+**Your workflow**: Bank association requests analysis of financial service barriers implemented by major economies.
+
+**Query to Claude:**
+```
+Using GTA tools, search for all interventions affecting financial services sectors
+implemented by USA, EU, UK, and China from 2020 onwards.
+
+NOTE: Financial services are NOT in HS codes - they require CPC sector classification.
+
+Provide:
+- Breakdown by implementing country
+- Types of restrictions (licensing, local operations, etc.)
+- Current status (in force vs removed)
+- Cross-border service implications
+```
+
+**What happens:**
+- Claude recognizes this is a SERVICE query and uses CPC sectors (not HS codes)
+- Searches with `affected_sectors: ["Financial services"]` (ID 711-717)
+- Filters by implementing jurisdictions and date range
+- Uses `gta_get_intervention` for detailed analysis of key measures
+- Synthesizes insights on regulatory barriers to cross-border financial services
+
 ### Industry Association Outreach
 
 **Your workflow**: VDMA asks about recent trade measures affecting machinery exports to China.
@@ -239,6 +264,40 @@ Track evolution of Chinese export controls over the last 3 years:
   "intervention_types": ["Import tariff"],
   "limit": 500,
   "offset": 0  # Paginate if needed
+}
+```
+
+### CPC Sector - Services
+```python
+{
+  "affected_sectors": ["Financial services", "Legal services"],  # Services (ID >= 500)
+  "implementing_jurisdictions": ["USA", "CHN"],
+  "date_announced_gte": "2020-01-01",
+  "response_format": "markdown"
+}
+```
+
+### CPC Sector - Broad Product Categories
+```python
+{
+  "affected_sectors": [11, 12, 13],  # Cereals, Vegetables, Fruits
+  "intervention_types": ["Import tariff", "Import quota"],
+  "mast_chapters": ["E", "F"],  # Non-automatic licensing + price controls
+  "date_announced_gte": "2023-01-01"
+}
+```
+
+### CPC Sector - Mixed Services and Goods
+```python
+{
+  "affected_sectors": [
+    841,  # Telecommunications services
+    452,  # Computing machinery
+    471   # Electronics
+  ],
+  "affected_jurisdictions": ["CHN", "RUS"],
+  "gta_evaluation": ["Red"],
+  "response_format": "json"
 }
 ```
 

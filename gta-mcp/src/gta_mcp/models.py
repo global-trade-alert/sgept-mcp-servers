@@ -35,9 +35,42 @@ class GTASearchInput(BaseModel):
     affected_products: Optional[List[int]] = Field(
         default=None,
         description="List of HS product codes (6-digit integers, e.g., [292149, 292229]). "
-                   "Filter interventions affecting specific products."
+                   "Filter interventions affecting specific products. "
+                   "Note: HS codes only cover goods, not services. Use affected_sectors for services."
     )
-    
+
+    affected_sectors: Optional[List[str | int]] = Field(
+        default=None,
+        description=(
+            "List of CPC (Central Product Classification) sector codes or names. "
+            "Provides broader product range coverage than HS codes.\n\n"
+            "🔑 KEY DIFFERENCES:\n"
+            "• CPC sectors: Broader categories, includes SERVICES (ID >= 500)\n"
+            "• HS codes: Specific goods only, more restrictive\n\n"
+            "⚠️ WHEN TO USE CPC SECTORS:\n"
+            "• Services queries (financial, legal, transport, etc.) - REQUIRED\n"
+            "• Broad product categories (e.g., 'cereals', 'textiles', 'machinery')\n"
+            "• When you need comprehensive coverage of a product range\n\n"
+            "💡 USAGE:\n"
+            "• By ID: [11, 21, 711] - Cereals, Live animals, Financial services\n"
+            "• By name: ['Cereals', 'Financial services', 'Textiles']\n"
+            "• Mixed: [11, 'Financial services', 412]\n"
+            "• Fuzzy matching supported (e.g., 'financial' matches 'Financial services')\n\n"
+            "📋 EXAMPLES:\n"
+            "Services (ID >= 500):\n"
+            "• 711-717: Financial services\n"
+            "• 721-722: Real estate\n"
+            "• 841-846: Telecommunications\n"
+            "• 921-929: Education\n\n"
+            "Goods (ID < 500):\n"
+            "• 11-19: Agricultural products\n"
+            "• 211-239: Food products\n"
+            "• 411-416: Metals\n"
+            "• 491-499: Transport equipment\n\n"
+            "Use gta://reference/sectors-list resource to see all available sectors."
+        )
+    )
+
     intervention_types: Optional[List[str]] = Field(
         default=None,
         description="List of intervention types (e.g., ['Import tariff', 'Export subsidy', 'State aid']). "

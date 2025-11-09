@@ -28,7 +28,9 @@ from .resources_loader import (
     parse_intervention_type,
     list_available_intervention_types,
     load_search_guide,
-    load_date_fields_guide
+    load_date_fields_guide,
+    load_sectors_table,
+    load_cpc_vs_hs_guide
 )
 
 
@@ -128,12 +130,24 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
         - SPS/TBT measures affecting rice (technical measures):
           mast_chapters=['A', 'B'], affected_products=[100630]
+
+        - Financial services interventions (SERVICES - use CPC sectors):
+          affected_sectors=['Financial services'], implementing_jurisdictions=['USA']
+
+        - Agricultural product subsidies (BROAD - use CPC sectors):
+          affected_sectors=[11, 12, 13], mast_chapters=['L']
+
+        - Steel industry measures (CPC sectors for broad coverage):
+          affected_sectors=['Basic iron and steel', 'Products of iron or steel']
+
+        - Technology sector restrictions (services + goods):
+          affected_sectors=['Telecommunications', 'Computing machinery']
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
 
         # Make API request
         results = await client.search_interventions(
@@ -153,9 +167,18 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
         # Format response
         if params.response_format == ResponseFormat.MARKDOWN:
-            return format_interventions_markdown(data)
+            formatted_response = format_interventions_markdown(data)
+            # Prepend filter messages if any
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
         else:
-            return format_interventions_json(data)
+            response_json = format_interventions_json(data)
+            # Add filter messages to JSON response
+            if filter_messages:
+                response_json["filter_messages"] = filter_messages
+            return response_json
             
     except ValueError as e:
         return f"❌ Configuration Error: {str(e)}\n\nPlease ensure GTA_API_KEY is set in your environment."
@@ -277,9 +300,9 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(params.model_dump(exclude={'limit', 'offset', 'response_format'}))
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'response_format'}))
 
         # Make API request
         results = await client.get_ticker_updates(
@@ -302,7 +325,12 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
 
         # Format response
         if params.response_format == ResponseFormat.MARKDOWN:
-            return format_ticker_markdown(data)
+            formatted_response = format_ticker_markdown(data)
+            # Prepend filter messages if any
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
         else:
             return json.dumps(data, indent=2, ensure_ascii=False)
             
@@ -349,12 +377,12 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
     """
     try:
         client = get_api_client()
-        
-        # Build filter dictionary
-        filters = build_filters(
+
+        # Build filter dictionary and get informational messages
+        filters, filter_messages = build_filters(
             params.model_dump(exclude={'granularity', 'limit', 'offset', 'response_format'})
         )
-        
+
         # Make API request
         data = await client.get_impact_chains(
             granularity=params.granularity,
@@ -362,7 +390,11 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
             limit=params.limit,
             offset=params.offset
         )
-        
+
+        # Add filter messages to response if any
+        if filter_messages:
+            data["filter_messages"] = filter_messages
+
         # Format response (JSON is most useful for impact chains)
         return json.dumps(data, indent=2, ensure_ascii=False)
         
@@ -494,6 +526,36 @@ def get_date_fields_guide() -> str:
 		Markdown document explaining GTA date fields
 	"""
 	return load_date_fields_guide()
+
+
+@mcp.resource(
+    "gta://reference/sectors-list",
+    name="Reference: CPC Sector Classification List",
+    description="Complete list of all CPC (Central Product Classification) sectors with IDs and names. Includes goods (ID < 500) and services (ID >= 500). Use this to find sector codes for filtering interventions by broad product categories or services. Supports fuzzy name matching when used in queries.",
+    mime_type="text/markdown"
+)
+def get_sectors_list() -> str:
+	"""Return complete list of CPC sectors.
+
+	Returns:
+		Markdown table with all CPC sectors, IDs, and categories
+	"""
+	return load_sectors_table()
+
+
+@mcp.resource(
+    "gta://guide/cpc-vs-hs",
+    name="Guide: CPC Sectors vs HS Codes - When to Use Which",
+    description="Comprehensive guide explaining the difference between CPC sectors and HS codes, when to use each classification system, and practical examples. Essential for understanding how to query services (which REQUIRE CPC sectors) and when to use broad sector categories vs specific HS product codes.",
+    mime_type="text/markdown"
+)
+def get_cpc_vs_hs_guide() -> str:
+	"""Return guide comparing CPC sectors and HS codes.
+
+	Returns:
+		Markdown document explaining CPC vs HS classification
+	"""
+	return load_cpc_vs_hs_guide()
 
 
 def main():
