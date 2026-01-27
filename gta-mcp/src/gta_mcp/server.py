@@ -11,14 +11,18 @@ from .models import (
     GTAGetInterventionInput,
     GTATickerInput,
     GTAImpactChainInput,
+    GTACountInput,
     ResponseFormat
 )
-from .api import GTAAPIClient, build_filters
+from .api import GTAAPIClient, build_filters, build_count_filters
+from .auth import JWTAuthManager
 from .formatters import (
     format_interventions_markdown,
     format_interventions_json,
     format_intervention_detail_markdown,
     format_ticker_markdown,
+    format_counts_markdown,
+    format_counts_json,
     CHARACTER_LIMIT
 )
 from .resources_loader import (
@@ -54,6 +58,30 @@ def get_api_client() -> GTAAPIClient:
             "Please set your API key: export GTA_API_KEY='your-key-here'"
         )
     return GTAAPIClient(api_key)
+
+
+# JWT auth manager for counts endpoint (lazy-initialized singleton)
+_auth_manager: Optional[JWTAuthManager] = None
+
+
+def get_auth_manager() -> JWTAuthManager:
+    """Get or create the JWT auth manager for the counts endpoint.
+
+    Raises:
+        ValueError: If GTA_AUTH_EMAIL or GTA_AUTH_PASSWORD not configured.
+    """
+    global _auth_manager
+    if _auth_manager is None:
+        email = os.getenv("GTA_AUTH_EMAIL")
+        password = os.getenv("GTA_AUTH_PASSWORD")
+        if not email or not password:
+            raise ValueError(
+                "GTA counts endpoint requires JWT authentication.\n"
+                "Set GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables.\n"
+                "The other GTA tools (search, get, ticker, impact chains) still work with API key only."
+            )
+        _auth_manager = JWTAuthManager(email=email, password=password)
+    return _auth_manager
 
 
 @mcp.tool(
@@ -377,6 +405,106 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
             )
         else:
             return f"❌ API Error: {error_msg}"
+
+
+@mcp.tool(
+    name="gta_count_interventions",
+    annotations={
+        "title": "Count/Aggregate GTA Trade Interventions",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def gta_count_interventions(params: GTACountInput) -> str:
+    """Count and aggregate trade policy interventions by one or more dimensions.
+
+    Use this tool for summary statistics and breakdowns such as:
+    - "Annual breakdown of harmful interventions by the US"
+    - "Count of subsidies by type and evaluation"
+    - "Number of interventions per MAST chapter"
+
+    This tool uses the GTA counts endpoint for server-side aggregation,
+    returning counts grouped by the specified dimensions.
+
+    Key parameters:
+    - count_by: Dimensions to group by (e.g., ['date_announced_year', 'gta_evaluation'])
+    - count_variable: What to count ('intervention_id' or 'state_act_id')
+    - All standard filter parameters (jurisdictions, dates, types, etc.)
+
+    Common count_by dimensions:
+    - date_announced_year / date_implemented_year: Annual trends
+    - gta_evaluation: Harmful vs liberalizing split
+    - intervention_type: By specific measure type
+    - implementer: By implementing country
+    - mast_chapter: By broad policy category
+    - affected: By affected country
+
+    Examples:
+        - US harmful interventions by year:
+          count_by=['date_announced_year'], implementing_jurisdictions=['USA'],
+          gta_evaluation=['Red']
+
+        - Cross-tab of year vs evaluation for all countries:
+          count_by=['date_announced_year', 'gta_evaluation']
+
+        - Subsidies by implementing country:
+          count_by=['implementer'], mast_chapters=['L']
+    """
+    try:
+        # Get API client (for base URL) and auth manager
+        client = get_api_client()
+        auth_mgr = get_auth_manager()
+
+        # Get JWT bearer token
+        bearer_token = await auth_mgr.get_token()
+
+        # Build count-specific filters
+        filter_params = params.model_dump(
+            exclude={'count_by', 'count_variable', 'response_format'}
+        )
+        filters, filter_messages = build_count_filters(filter_params)
+
+        # Make API request
+        data = await client.count_interventions(
+            bearer_token=bearer_token,
+            count_by=list(params.count_by),
+            count_variable=params.count_variable,
+            filters=filters,
+        )
+
+        # Format response
+        if params.response_format == ResponseFormat.MARKDOWN:
+            return format_counts_markdown(
+                data=data,
+                count_by=list(params.count_by),
+                count_variable=params.count_variable,
+                filter_messages=filter_messages,
+            )
+        else:
+            return format_counts_json(
+                data=data,
+                count_by=list(params.count_by),
+                count_variable=params.count_variable,
+            )
+
+    except ValueError as e:
+        return f"❌ Configuration Error: {str(e)}"
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "403" in error_msg:
+            return (
+                "❌ Authentication Error: JWT token invalid or expired.\n\n"
+                "Check GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables."
+            )
+        elif "timeout" in error_msg.lower():
+            return (
+                "❌ Request timeout: The counts query took too long.\n\n"
+                "Try adding more specific filters to reduce the data set."
+            )
+        else:
+            return f"❌ API Error: {error_msg}\n\nTry adjusting your count parameters or filters."
 
 
 # ============================================================================

@@ -1,8 +1,39 @@
 """Pydantic models for GTA MCP server input validation."""
 
 from enum import Enum
-from typing import Optional, List
+from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+
+# Valid count_by dimension values for the GTA counts endpoint
+CountByDimension = Literal[
+    "affected",
+    "affected_group",
+    "implementer",
+    "implementer_group",
+    "mast_chapter",
+    "intervention_type",
+    "implementation_level",
+    "eligible_firm",
+    "gta_evaluation",
+    "affected_flow",
+    "date_implemented_year",
+    "date_implemented_month",
+    "date_removed_year",
+    "date_removed_month",
+    "date_published_year",
+    "date_published_month",
+    "date_announced_year",
+    "date_announced_month",
+    "product",
+    "product_level2",
+    "product_group",
+    "sector",
+    "sector_level2",
+    "sector_group",
+    "intervention_id",
+    "state_act_id",
+]
 
 
 class ResponseFormat(str, Enum):
@@ -246,6 +277,15 @@ class GTASearchInput(BaseModel):
         )
     )
 
+    intervention_id: Optional[List[int]] = Field(
+        default=None,
+        description=(
+            "Filter by specific GTA intervention IDs (e.g., [138295, 138296, 138297]). "
+            "Use this to retrieve multiple specific interventions in a single query. "
+            "Combine with keep_intervention_id=False to exclude specific interventions instead."
+        )
+    )
+
     keep_intervention_id: Optional[bool] = Field(
         default=None,
         description=(
@@ -382,3 +422,150 @@ class GTAImpactChainInput(BaseModel):
         if v.lower() not in ['product', 'sector']:
             raise ValueError("Granularity must be either 'product' or 'sector'")
         return v.lower()
+
+
+class GTACountInput(BaseModel):
+    """Input model for counting/aggregating GTA interventions.
+
+    Use this to get summary statistics like annual breakdowns, counts by
+    intervention type, or cross-tabulations of evaluation by year.
+    """
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    count_by: List[CountByDimension] = Field(
+        ...,
+        description=(
+            "Dimensions to group/aggregate counts by (1-3 recommended). "
+            "Common dimensions: 'date_announced_year' (annual breakdown), "
+            "'gta_evaluation' (harmful/liberalizing split), 'intervention_type', "
+            "'implementer' (by country), 'mast_chapter' (by policy category). "
+            "Multiple dimensions produce cross-tabulations."
+        ),
+        min_length=1,
+    )
+
+    count_variable: Literal["intervention_id", "state_act_id"] = Field(
+        default="intervention_id",
+        description=(
+            "What to count: 'intervention_id' counts individual interventions (default), "
+            "'state_act_id' counts unique state acts (legal instruments, which may contain "
+            "multiple interventions)."
+        ),
+    )
+
+    # --- Filter parameters (same as GTASearchInput) ---
+
+    implementing_jurisdictions: Optional[List[str]] = Field(
+        default=None,
+        description="List of implementing jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU'])."
+    )
+
+    affected_jurisdictions: Optional[List[str]] = Field(
+        default=None,
+        description="List of affected jurisdiction ISO codes (e.g., ['USA', 'CHN', 'DEU'])."
+    )
+
+    affected_products: Optional[List[int]] = Field(
+        default=None,
+        description="List of HS product codes (6-digit integers). Only covers goods, not services."
+    )
+
+    affected_sectors: Optional[List[Union[str, int]]] = Field(
+        default=None,
+        description=(
+            "Filter by CPC sector codes or names. Use for services (ID >= 500) or broad categories. "
+            "Accepts IDs, names, or mixed with fuzzy matching."
+        )
+    )
+
+    intervention_types: Optional[List[str]] = Field(
+        default=None,
+        description="List of intervention types (e.g., ['Import tariff', 'Export subsidy'])."
+    )
+
+    mast_chapters: Optional[List[str]] = Field(
+        default=None,
+        description="Filter by UN MAST chapter classifications (A-P). Use for broad policy categories."
+    )
+
+    gta_evaluation: Optional[List[str]] = Field(
+        default=None,
+        description="GTA evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)."
+    )
+
+    eligible_firms: Optional[List[Union[str, int]]] = Field(
+        default=None,
+        description="Filter by eligible firm types (all, SMEs, firm-specific, state-controlled, etc.)."
+    )
+
+    implementation_levels: Optional[List[Union[str, int]]] = Field(
+        default=None,
+        description="Filter by government level (Supranational, National, Subnational, SEZ, IFI, NFI)."
+    )
+
+    date_announced_gte: Optional[str] = Field(
+        default=None,
+        description="Announced on or after this date (YYYY-MM-DD)."
+    )
+
+    date_announced_lte: Optional[str] = Field(
+        default=None,
+        description="Announced on or before this date (YYYY-MM-DD)."
+    )
+
+    date_implemented_gte: Optional[str] = Field(
+        default=None,
+        description="Implemented on or after this date (YYYY-MM-DD)."
+    )
+
+    date_implemented_lte: Optional[str] = Field(
+        default=None,
+        description="Implemented on or before this date (YYYY-MM-DD)."
+    )
+
+    is_in_force: Optional[bool] = Field(
+        default=None,
+        description="Filter by whether intervention is currently in force."
+    )
+
+    query: Optional[str] = Field(
+        default=None,
+        description="Full-text search for entity names only (companies, programs). Use structured filters first."
+    )
+
+    # Exclusion/inclusion controls
+    keep_affected: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified affected jurisdictions.")
+    keep_implementer: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified implementing jurisdictions.")
+    keep_intervention_types: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified intervention types.")
+    keep_mast_chapters: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified MAST chapters.")
+    keep_implementation_level: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified implementation levels.")
+    keep_eligible_firms: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified firm types.")
+    keep_affected_sectors: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified CPC sectors.")
+    keep_affected_products: Optional[bool] = Field(default=None, description="Include (True) or exclude (False) specified HS products.")
+
+    intervention_id: Optional[List[int]] = Field(
+        default=None,
+        description="Filter by specific GTA intervention IDs."
+    )
+    keep_intervention_id: Optional[bool] = Field(
+        default=None,
+        description="Include (True) or exclude (False) specified intervention IDs."
+    )
+
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable tables or 'json' for raw data."
+    )
+
+    @field_validator('implementing_jurisdictions', 'affected_jurisdictions')
+    @classmethod
+    def validate_count_iso_codes(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Ensure ISO codes are uppercase."""
+        if v is not None:
+            return [code.upper() for code in v]
+        return v

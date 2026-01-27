@@ -160,7 +160,7 @@ ISO_TO_UN_CODE = {
     "TZA": 834, "USA": 840, "VIR": 850, "BFA": 854, "URY": 858, "UZB": 860,
     "VEN": 862, "WLF": 876, "WSM": 882, "YEM": 887, "ZMB": 894, "XKX": 999,
     # Additional common codes
-    "EU": 1000  # European Union (custom)
+    "EU": 1049  # European Union (GTA internal jurisdiction group ID)
 }
 
 # CPC Sector name to ID mapping
@@ -709,6 +709,51 @@ class GTAAPIClient:
             response.raise_for_status()
             return response.json()
     
+    async def count_interventions(
+        self,
+        bearer_token: str,
+        count_by: List[str],
+        count_variable: str,
+        filters: Dict[str, Any],
+    ) -> Any:
+        """Call /v1/gta-counts/ with JWT Bearer auth for aggregation.
+
+        Args:
+            bearer_token: JWT access token for authentication.
+            count_by: List of dimensions to group by.
+            count_variable: What to count ('intervention_id' or 'state_act_id').
+            filters: Dictionary of filter parameters.
+
+        Returns:
+            API response (list of count records).
+
+        Raises:
+            httpx.HTTPStatusError: If API request fails.
+        """
+        endpoint = f"{self.BASE_URL}/v1/gta-counts/"
+        headers = {
+            "Authorization": f"Bearer {bearer_token}",
+            "Content-Type": "application/json",
+        }
+        # count_by and count_variable go inside request_data alongside filters
+        request_data = dict(filters)
+        request_data["count_by"] = count_by
+        request_data["count_variable"] = count_variable
+        payload: Dict[str, Any] = {
+            "request_data": request_data,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                endpoint,
+                json=payload,
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
+            # API returns {"count": N, "results": [...]}, extract results
+            return data.get("results", data)
+
     async def get_impact_chains(
         self,
         granularity: str,
@@ -1344,6 +1389,10 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
         # This is used by ticker endpoint, not main data endpoint
         pass
 
+    # Intervention ID filter - allows filtering by specific intervention IDs
+    if params.get('intervention_id'):
+        filters['intervention_id'] = params['intervention_id']
+
     # Keep parameters - control inclusion/exclusion of specified values
     # When keep=False, the specified values are EXCLUDED (everything else is included)
     keep_params = {
@@ -1367,5 +1416,137 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
             # Add informational message when excluding (keep=False)
             if params[keep_param] is False:
                 messages.append(f"⚠️ Excluding specified {label} (showing everything else)")
+
+    return filters, messages
+
+
+# GTA evaluation color to API ID mapping (for counts endpoint)
+GTA_EVALUATION_TO_ID = {
+    "Red": 1,
+    "red": 1,
+    "Amber": 2,
+    "amber": 2,
+    "Green": 3,
+    "green": 3,
+}
+
+
+def build_count_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
+    """Build API filter dictionary for the counts endpoint.
+
+    Similar to build_filters() but adapted for /v1/gta-counts/ which uses
+    a flat payload structure (no request_data wrapper) and requires
+    gta_evaluation as integer IDs rather than color strings.
+
+    Args:
+        params: Input parameters from GTACountInput model.
+
+    Returns:
+        Tuple of (filters dict for API payload, list of informational messages).
+    """
+    filters: Dict[str, Any] = {}
+    messages: List[str] = []
+
+    # Convert implementing jurisdictions (ISO -> UN codes)
+    if params.get('implementing_jurisdictions'):
+        filters['implementer'] = convert_iso_to_un_codes(params['implementing_jurisdictions'])
+
+    # Convert affected jurisdictions (ISO -> UN codes)
+    if params.get('affected_jurisdictions'):
+        filters['affected'] = convert_iso_to_un_codes(params['affected_jurisdictions'])
+
+    # Handle affected sectors (CPC classification) - convert names to IDs
+    if params.get('affected_sectors'):
+        sector_ids, sector_messages = convert_sectors(params['affected_sectors'])
+        filters['affected_sectors'] = sector_ids
+        messages.extend(sector_messages)
+
+    # Handle affected products (HS codes)
+    if params.get('affected_products'):
+        filters['affected_products'] = params['affected_products']
+
+    # Intervention types - convert names to IDs
+    if params.get('intervention_types'):
+        filters['intervention_types'] = convert_intervention_types(params['intervention_types'])
+
+    # GTA evaluation - convert color names to integer IDs
+    if params.get('gta_evaluation'):
+        eval_ids = []
+        for eval_color in params['gta_evaluation']:
+            if eval_color in GTA_EVALUATION_TO_ID:
+                eval_ids.append(GTA_EVALUATION_TO_ID[eval_color])
+            else:
+                # Try as integer
+                try:
+                    eval_ids.append(int(eval_color))
+                except (ValueError, TypeError):
+                    raise ValueError(
+                        f"Unknown GTA evaluation: '{eval_color}'. "
+                        f"Valid values: 'Red' (1, harmful), 'Amber' (2, mixed), 'Green' (3, liberalizing)."
+                    )
+        filters['gta_evaluation'] = eval_ids
+
+    # Handle announcement period dates
+    date_announced_gte = params.get('date_announced_gte')
+    date_announced_lte = params.get('date_announced_lte')
+    if date_announced_gte or date_announced_lte:
+        filters['announcement_period'] = [
+            date_announced_gte or "1900-01-01",
+            date_announced_lte or "2099-12-31",
+        ]
+
+    # Handle implementation period dates
+    date_implemented_gte = params.get('date_implemented_gte')
+    date_implemented_lte = params.get('date_implemented_lte')
+    if date_implemented_gte or date_implemented_lte:
+        filters['implementation_period'] = [
+            date_implemented_gte or "1900-01-01",
+            date_implemented_lte or "2099-12-31",
+        ]
+
+    # Is in force
+    if params.get('is_in_force') is not None:
+        from datetime import date
+        filters['in_force_on_date'] = date.today().isoformat()
+        filters['keep_in_force_on_date'] = params['is_in_force']
+
+    # Query parameter - text search
+    if params.get('query'):
+        filters['query'] = params['query']
+
+    # MAST chapters - convert letters to IDs
+    if params.get('mast_chapters'):
+        filters['mast_chapters'] = convert_mast_chapters(params['mast_chapters'])
+
+    # Eligible firms - convert names to IDs
+    if params.get('eligible_firms'):
+        filters['eligible_firms'] = convert_eligible_firms(params['eligible_firms'])
+
+    # Implementation levels - convert names to IDs
+    if params.get('implementation_levels'):
+        filters['implementation_levels'] = convert_implementation_levels(params['implementation_levels'])
+
+    # Intervention ID filter
+    if params.get('intervention_id'):
+        filters['intervention_id'] = params['intervention_id']
+
+    # Keep parameters
+    keep_params = {
+        'keep_affected': 'affected jurisdictions',
+        'keep_implementer': 'implementing jurisdictions',
+        'keep_intervention_types': 'intervention types',
+        'keep_mast_chapters': 'MAST chapters',
+        'keep_implementation_level': 'implementation levels',
+        'keep_eligible_firms': 'eligible firm types',
+        'keep_affected_sectors': 'CPC sectors',
+        'keep_affected_products': 'HS product codes',
+        'keep_intervention_id': 'intervention IDs',
+    }
+
+    for keep_param, label in keep_params.items():
+        if params.get(keep_param) is not None:
+            filters[keep_param] = params[keep_param]
+            if params[keep_param] is False:
+                messages.append(f"Excluding specified {label} (showing everything else)")
 
     return filters, messages

@@ -1,7 +1,8 @@
 """Response formatting utilities for GTA MCP server."""
 
 import json
-from typing import Dict, Any, List
+from collections import OrderedDict
+from typing import Dict, Any, List, Sequence
 from datetime import datetime
 
 
@@ -485,5 +486,305 @@ def format_ticker_markdown(data: Dict[str, Any]) -> str:
             "results": results[:truncated_count],
             "next": data.get("next")
         }) + f"\n\n⚠️ **Response truncated**: Showing {truncated_count} of {len(results)} updates."
-    
+
+    return result
+
+
+# ============================================================================
+# Count/Aggregation Formatters
+# ============================================================================
+
+
+def _safe_str(value: Any) -> str:
+    """Convert a value to display string, handling None."""
+    if value is None:
+        return "N/A"
+    return str(value)
+
+
+def _get_dim_value(record: Dict[str, Any], dimension: str) -> str:
+    """Extract the display value for a dimension from a count record.
+
+    The API returns dimension values with various key patterns:
+    - Direct key: e.g., "date_implemented_year": "2020"
+    - Name suffix: e.g., "gta_evaluation_name": "Red"
+    - ID suffix: e.g., "gta_evaluation_id": 1
+
+    Prefers _name over _id over direct key.
+
+    Args:
+        record: A single count record from the API.
+        dimension: The count_by dimension name.
+
+    Returns:
+        Display string for this dimension's value.
+    """
+    # Try _name suffix first (most readable)
+    name_key = f"{dimension}_name"
+    if name_key in record:
+        return _safe_str(record[name_key])
+
+    # Try direct key
+    if dimension in record:
+        return _safe_str(record[dimension])
+
+    # Try _id suffix
+    id_key = f"{dimension}_id"
+    if id_key in record:
+        return _safe_str(record[id_key])
+
+    return "?"
+
+
+def format_counts_markdown(
+    data: Any,
+    count_by: List[str],
+    count_variable: str,
+    filter_messages: List[str],
+) -> str:
+    """Format count/aggregation results as markdown tables.
+
+    Adapts formatting based on the number of count_by dimensions:
+    - 1 dimension: simple two-column table
+    - 2 dimensions: cross-tabulation matrix
+    - 3+ dimensions: grouped list format
+
+    Args:
+        data: API response (list of count records).
+        count_by: The dimensions used for grouping.
+        count_variable: What was counted.
+        filter_messages: Informational messages from filter building.
+
+    Returns:
+        Markdown-formatted string.
+    """
+    output: List[str] = []
+
+    # Header
+    dims_label = " x ".join(count_by)
+    output.append(f"# GTA Intervention Counts: {dims_label}\n")
+    output.append(f"**Count variable**: {count_variable}\n")
+
+    # Filter messages
+    if filter_messages:
+        for msg in filter_messages:
+            output.append(f"ℹ️ {msg}")
+        output.append("")
+
+    # Handle empty results
+    if not data:
+        output.append("*No results found for the given filters.*")
+        return "\n".join(output)
+
+    # Ensure data is a list
+    records = data if isinstance(data, list) else [data]
+
+    num_dims = len(count_by)
+
+    if num_dims == 1:
+        result = _format_counts_1d(records, count_by[0], count_variable)
+    elif num_dims == 2:
+        result = _format_counts_2d(records, count_by, count_variable)
+    else:
+        result = _format_counts_nd(records, count_by, count_variable)
+
+    output.append(result)
+
+    full_result = "\n".join(output)
+
+    # Truncate if needed
+    if len(full_result) > CHARACTER_LIMIT:
+        full_result = full_result[:CHARACTER_LIMIT - 100] + (
+            "\n\n⚠️ **Response truncated** due to size. "
+            "Add more filters to reduce the result set."
+        )
+
+    return full_result
+
+
+def _format_counts_1d(
+    records: List[Dict[str, Any]],
+    dimension: str,
+    count_variable: str,
+) -> str:
+    """Format single-dimension counts as a two-column table."""
+    output: List[str] = []
+
+    # Sort records by count descending
+    sorted_records = sorted(records, key=lambda r: r.get("value", 0), reverse=True)
+
+    # Table header
+    dim_header = dimension.replace("_", " ").title()
+    output.append(f"| {dim_header} | Count |")
+    output.append("|---|---:|")
+
+    total = 0
+    for record in sorted_records:
+        dim_value = _get_dim_value(record, dimension)
+        count = record.get("value", 0)
+        total += count
+        output.append(f"| {dim_value} | {count:,} |")
+
+    # Total row
+    output.append(f"| **Total** | **{total:,}** |")
+
+    return "\n".join(output)
+
+
+def _format_counts_2d(
+    records: List[Dict[str, Any]],
+    dimensions: List[str],
+    count_variable: str,
+) -> str:
+    """Format two-dimension counts as a cross-tabulation matrix."""
+    output: List[str] = []
+    dim1, dim2 = dimensions[0], dimensions[1]
+
+    # Build cross-tab data structure
+    row_values: OrderedDict[str, Dict[str, int]] = OrderedDict()
+    col_values_set: OrderedDict[str, None] = OrderedDict()
+
+    for record in records:
+        row_val = _get_dim_value(record, dim1)
+        col_val = _get_dim_value(record, dim2)
+        count = record.get("value", 0)
+
+        if row_val not in row_values:
+            row_values[row_val] = {}
+        row_values[row_val][col_val] = count
+        col_values_set[col_val] = None
+
+    col_values = list(col_values_set.keys())
+
+    # Sort rows (try numeric sort for years, fallback to string)
+    try:
+        sorted_rows = sorted(row_values.keys(), key=lambda x: int(x))
+    except (ValueError, TypeError):
+        sorted_rows = sorted(row_values.keys())
+
+    # Sort columns similarly
+    try:
+        col_values = sorted(col_values, key=lambda x: int(x))
+    except (ValueError, TypeError):
+        col_values = sorted(col_values)
+
+    # Build header
+    dim1_header = dim1.replace("_", " ").title()
+    col_headers = [dim1_header] + col_values + ["Total"]
+    output.append("| " + " | ".join(col_headers) + " |")
+    output.append("|" + "|".join(["---"] + ["---:"] * (len(col_values) + 1)) + "|")
+
+    # Build rows
+    col_totals = {col: 0 for col in col_values}
+    grand_total = 0
+
+    for row_key in sorted_rows:
+        row_data = row_values[row_key]
+        cells = [row_key]
+        row_total = 0
+        for col in col_values:
+            val = row_data.get(col, 0)
+            cells.append(f"{val:,}")
+            row_total += val
+            col_totals[col] += val
+        cells.append(f"**{row_total:,}**")
+        grand_total += row_total
+        output.append("| " + " | ".join(cells) + " |")
+
+    # Total row
+    total_cells = ["**Total**"]
+    for col in col_values:
+        total_cells.append(f"**{col_totals[col]:,}**")
+    total_cells.append(f"**{grand_total:,}**")
+    output.append("| " + " | ".join(total_cells) + " |")
+
+    return "\n".join(output)
+
+
+def _format_counts_nd(
+    records: List[Dict[str, Any]],
+    dimensions: List[str],
+    count_variable: str,
+) -> str:
+    """Format 3+ dimension counts as a grouped list."""
+    output: List[str] = []
+
+    # Sort by first dimension, then subsequent
+    def sort_key(record: Dict[str, Any]) -> tuple:
+        return tuple(_get_dim_value(record, d) for d in dimensions)
+
+    sorted_records = sorted(records, key=sort_key)
+
+    # Group by first dimension
+    current_group = None
+    group_total = 0
+    grand_total = 0
+
+    for record in sorted_records:
+        group_value = _get_dim_value(record, dimensions[0])
+        count = record.get("value", 0)
+        grand_total += count
+
+        if group_value != current_group:
+            if current_group is not None:
+                output.append(f"  **Subtotal: {group_total:,}**\n")
+            current_group = group_value
+            group_total = 0
+            dim0_header = dimensions[0].replace("_", " ").title()
+            output.append(f"### {dim0_header}: {group_value}\n")
+
+        group_total += count
+
+        # Format sub-dimensions
+        sub_parts = []
+        for dim in dimensions[1:]:
+            sub_parts.append(f"{dim.replace('_', ' ').title()}: {_get_dim_value(record, dim)}")
+        sub_label = ", ".join(sub_parts)
+        output.append(f"- {sub_label} → **{count:,}**")
+
+    # Final subtotal
+    if current_group is not None:
+        output.append(f"  **Subtotal: {group_total:,}**\n")
+
+    output.append(f"\n**Grand Total: {grand_total:,}**")
+
+    return "\n".join(output)
+
+
+def format_counts_json(
+    data: Any,
+    count_by: List[str],
+    count_variable: str,
+) -> str:
+    """Format count results as JSON string.
+
+    Args:
+        data: API response (list of count records).
+        count_by: The dimensions used for grouping.
+        count_variable: What was counted.
+
+    Returns:
+        JSON-formatted string.
+    """
+    wrapped = {
+        "count_by": count_by,
+        "count_variable": count_variable,
+        "results": data if isinstance(data, list) else [data],
+        "total_records": len(data) if isinstance(data, list) else 1,
+    }
+
+    result = json.dumps(wrapped, indent=2, ensure_ascii=False)
+
+    if len(result) > CHARACTER_LIMIT:
+        records = data if isinstance(data, list) else [data]
+        truncated_count = len(records) // 2
+        wrapped["results"] = records[:truncated_count]
+        wrapped["total_records"] = len(records)
+        wrapped["truncated"] = True
+        wrapped["truncation_message"] = (
+            f"Truncated from {len(records)} to {truncated_count} records. "
+            "Add more filters to reduce the result set."
+        )
+        result = json.dumps(wrapped, indent=2, ensure_ascii=False)
+
     return result
