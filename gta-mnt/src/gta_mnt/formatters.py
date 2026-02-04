@@ -139,17 +139,24 @@ def format_step1_queue(data: dict) -> str:
 
     lines = [
         f"# Step 1 Review Queue ({count} measures)\n",
-        "| ID | Title | Implementing Jurisdiction | Date Entered Review |",
-        "|-----|-------|--------------------------|---------------------|"
+        "| ID | Title | Date Entered Review |",
+        "|-----|-------|---------------------|"
     ]
 
     for measure in results:
         state_act_id = measure.get("id", "N/A")
-        title = measure.get("title", "Untitled")[:60]  # Truncate long titles
-        jurisdiction = measure.get("implementing_jurisdiction", "N/A")
-        status_time = measure.get("status_time", "N/A")[:10]  # Date only
+        title = (measure.get("title") or "Untitled")[:60]  # Truncate long titles
 
-        lines.append(f"| {state_act_id} | {title} | {jurisdiction} | {status_time} |")
+        # Handle datetime object or string for status_time
+        status_time = measure.get("status_time")
+        if status_time is None:
+            status_time = "N/A"
+        elif hasattr(status_time, 'strftime'):
+            status_time = status_time.strftime("%Y-%m-%d")
+        else:
+            status_time = str(status_time)[:10]
+
+        lines.append(f"| {state_act_id} | {title} | {status_time} |")
 
     return "\n".join(lines)
 
@@ -167,18 +174,36 @@ def format_measure_detail(measure: dict) -> str:
     Returns:
         Markdown-formatted measure details
     """
+    # Handle error case
+    if measure.get("error"):
+        return f"# Error\n\n{measure['error']}"
+
     state_act_id = measure.get("id", "N/A")
-    title = measure.get("title", "Untitled")
-    description = measure.get("description", "No description")
-    implementing_jurisdiction = measure.get("implementing_jurisdiction", "N/A")
+    title = measure.get("title") or "Untitled"
+    description = measure.get("description") or "No description"
     status_id = measure.get("status_id", "N/A")
-    source_url = measure.get("source_url", "N/A")
+    status_name = measure.get("status_name") or "Unknown"
+    is_official = measure.get("is_source_official")
+    announcement_date = measure.get("announcement_date")
+
+    # Format implementing jurisdictions from list
+    impl_jurisdictions = measure.get("implementing_jurisdictions", [])
+    if impl_jurisdictions:
+        impl_jur_str = ", ".join([j.get("jurisdiction_name", j.get("iso_code", "N/A")) for j in impl_jurisdictions])
+    else:
+        impl_jur_str = "N/A"
+
+    # Get source URL from source_info or direct source field
+    source_info = measure.get("source_info", {})
+    primary_source = source_info.get("primary_source") or measure.get("source") or "N/A"
 
     lines = [
         f"# StateAct {state_act_id}: {title}\n",
-        f"**Implementing Jurisdiction:** {implementing_jurisdiction}",
-        f"**Status ID:** {status_id}",
-        f"**Source:** {source_url}\n",
+        f"**Implementing Jurisdiction:** {impl_jur_str}",
+        f"**Status:** {status_name} (ID: {status_id})",
+        f"**Official Source:** {'Yes' if is_official else 'No'}",
+        f"**Announcement Date:** {announcement_date or 'N/A'}",
+        f"**Source:** {primary_source}\n",
         "## Description",
         description,
         ""
@@ -190,19 +215,123 @@ def format_measure_detail(measure: dict) -> str:
         lines.append(f"\n## Interventions ({len(interventions)})\n")
         for i, intervention in enumerate(interventions, 1):
             int_id = intervention.get("id", "N/A")
-            int_type = intervention.get("intervention_type", "N/A")
-            affected_jur = intervention.get("affected_jurisdiction", "N/A")
-            lines.append(f"{i}. **INT-{int_id}**: {int_type} affecting {affected_jur}")
+            int_type = intervention.get("type_name") or intervention.get("intervention_type") or "N/A"
+            evaluation = intervention.get("evaluation_name") or "N/A"
+            affected_flow = intervention.get("affected_flow_name") or "N/A"
+            eligible_firms = intervention.get("eligible_firms_name") or "N/A"
+            inception_date = intervention.get("inception_date")
+            removal_date = intervention.get("removal_date")
+            implementation_level_id = intervention.get("implementation_level_id")
+            implementation_level_name = intervention.get("implementation_level_name")
+            prior_level = intervention.get("prior_level")
+            new_level = intervention.get("new_level")
+            unit_id = intervention.get("unit_id")
+            unit_name = intervention.get("unit_name")
+            int_description = intervention.get("description") or ""
+
+            # Format implementation level with name if available
+            if implementation_level_name:
+                impl_level_str = f"{implementation_level_name} (ID: {implementation_level_id})"
+            elif implementation_level_id:
+                impl_level_str = f"ID: {implementation_level_id}"
+            else:
+                impl_level_str = "N/A"
+
+            # Format unit with name if available
+            if unit_name:
+                unit_str = unit_name
+            elif unit_id:
+                unit_str = f"ID: {unit_id}"
+            else:
+                unit_str = "N/A"
+
+            lines.append(f"### {i}. INT-{int_id}: {int_type}")
+            lines.append(f"- **Evaluation:** {evaluation}")
+            lines.append(f"- **Affected Flow:** {affected_flow}")
+            lines.append(f"- **Implementation Level:** {impl_level_str}")
+            lines.append(f"- **Eligible Firms:** {eligible_firms}")
+            lines.append(f"- **Inception Date:** {inception_date or 'N/A'}")
+            lines.append(f"- **Removal Date:** {removal_date or 'N/A'}")
+            if prior_level is not None or new_level is not None:
+                lines.append(f"- **Prior Level:** {prior_level if prior_level is not None else 'N/A'}")
+                lines.append(f"- **New Level:** {new_level if new_level is not None else 'N/A'}")
+                lines.append(f"- **Unit:** {unit_str}")
+            lines.append("")
+
+            # Affected Jurisdictions section with type
+            affected_jurs = intervention.get("affected_jurisdictions", [])
+            if affected_jurs:
+                lines.append("#### Affected Jurisdictions")
+                for aj in affected_jurs:
+                    name = aj.get("jurisdiction_name") or aj.get("iso_code") or "Unknown"
+                    iso = aj.get("iso_code") or ""
+                    type_name = aj.get("type_name")
+                    if type_name:
+                        lines.append(f"- {name} ({iso}) [{type_name}]")
+                    else:
+                        lines.append(f"- {name} ({iso})")
+                lines.append("")
+
+            # Distorted Markets section
+            distorted_markets = intervention.get("distorted_markets", [])
+            if distorted_markets:
+                lines.append("#### Distorted Markets")
+                for dm in distorted_markets:
+                    name = dm.get("jurisdiction_name") or dm.get("iso_code") or "Unknown"
+                    iso = dm.get("iso_code") or ""
+                    type_name = dm.get("type_name")
+                    if type_name:
+                        lines.append(f"- {name} ({iso}) [{type_name}]")
+                    else:
+                        lines.append(f"- {name} ({iso})")
+                lines.append("")
+
+            # Firms section
+            firms = intervention.get("firms", [])
+            if firms:
+                lines.append("#### Firms")
+                for firm in firms:
+                    firm_name = firm.get("firm_name") or "Unknown"
+                    role_name = firm.get("role_name")
+                    if role_name:
+                        lines.append(f"- {firm_name} [{role_name}]")
+                    else:
+                        lines.append(f"- {firm_name}")
+                lines.append("")
+
+            # Description section (full text, no truncation)
+            if int_description:
+                lines.append("#### Description")
+                lines.append(int_description)
+                lines.append("")
 
     # Comments section
     comments = measure.get("comments", [])
     if comments:
         lines.append(f"\n## Comments ({len(comments)})\n")
         for comment in comments:
-            author = comment.get("author", "Unknown")
-            created = comment.get("created", "N/A")[:10]
-            text = comment.get("text", "")[:200]  # Truncate
-            lines.append(f"- **{author}** ({created}): {text}...")
+            author = comment.get("author_name") or comment.get("author") or "Unknown"
+            # Handle datetime or string for creation_time
+            created = comment.get("creation_time") or comment.get("created")
+            if created is None:
+                created = "N/A"
+            elif hasattr(created, 'strftime'):
+                created = created.strftime("%Y-%m-%d %H:%M")
+            else:
+                created = str(created)[:16]
+            text = comment.get("comment_value") or comment.get("text") or ""
+            text = text[:300]  # Truncate
+            lines.append(f"### {author} ({created})")
+            lines.append(f"{text}{'...' if len(text) >= 300 else ''}\n")
+
+    # Linked sources section
+    linked_sources = source_info.get("linked_sources", []) or measure.get("sources", [])
+    if linked_sources:
+        lines.append(f"\n## Linked Sources ({len(linked_sources)})\n")
+        for src in linked_sources:
+            url = src.get("source_url", "N/A")
+            is_collected = src.get("is_collected")
+            lines.append(f"- {url} {'(archived)' if is_collected else ''}")
 
     return "\n".join(lines)
 
@@ -260,16 +389,17 @@ def format_templates(data: dict) -> str:
 
     lines = [
         f"# Comment Templates ({len(results)})\n",
-        "| ID | Name | Type | Description |",
-        "|-----|------|------|-------------|"
+        "| ID | Name | Checklist | Preview |",
+        "|-----|------|-----------|---------|"
     ]
 
     for template in results:
         template_id = template.get("id", "N/A")
-        name = template.get("name", "Untitled")
-        template_type = template.get("type", "N/A")
-        description = template.get("description", "")[:60]  # Truncate
+        name = template.get("template_name") or template.get("name") or "Untitled"
+        is_checklist = "Yes" if template.get("is_checklist") else "No"
+        text = template.get("template_text") or template.get("description") or ""
+        preview = text[:50].replace("\n", " ")  # Truncate and remove newlines
 
-        lines.append(f"| {template_id} | {name} | {template_type} | {description} |")
+        lines.append(f"| {template_id} | {name} | {is_checklist} | {preview}... |")
 
     return "\n".join(lines)

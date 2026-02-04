@@ -1,11 +1,15 @@
-"""MCP server for GTA monitoring and automated review (Sancho Claudino)."""
+"""MCP server for GTA monitoring and automated review (Sancho Claudino).
+
+Refactored to use direct MySQL database access instead of REST API endpoints.
+"""
 
 import os
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
+import sys
+from typing import Optional, List
+from pydantic import BaseModel, Field
+from mcp.server.fastmcp import FastMCP
 
-from .auth import JWTAuthManager
-from .api import GTAAPIClient
+from .api import GTADatabaseClient
 from .source_fetcher import SourceFetcher
 from .constants import SANCHO_USER_ID, SANCHO_FRAMEWORK_ID
 from .formatters import (
@@ -17,330 +21,262 @@ from .formatters import (
 
 
 # Initialize FastMCP server
-server = Server("gta-mnt")
+mcp = FastMCP("gta_mnt")
 
-# Global singletons (will be initialized in main)
-auth_manager: JWTAuthManager
-api_client: GTAAPIClient
-source_fetcher: SourceFetcher
-
-
-@server.list_tools()
-async def list_tools():
-    """List available MCP tools."""
-    return [
-        {
-            "name": "gta_mnt_list_step1_queue",
-            "description": (
-                "List measures awaiting Step 1 review, ordered by status_time DESC "
-                "(most recent first). Uses api_state_act_status_log for accurate ordering."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "number", "description": "Max measures to return (1-100)", "default": 20},
-                    "offset": {"type": "number", "description": "Offset for pagination", "default": 0},
-                    "implementing_jurisdictions": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Filter by jurisdiction codes (e.g., ['USA', 'CHN'])"
-                    },
-                    "date_entered_review_gte": {
-                        "type": "string",
-                        "description": "Filter by date entered review (YYYY-MM-DD)"
-                    }
-                }
-            }
-        },
-        {
-            "name": "gta_mnt_get_measure",
-            "description": (
-                "Get complete StateAct details including all interventions, comments, "
-                "and source references for validation."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "state_act_id": {"type": "number", "description": "StateAct ID"},
-                    "include_interventions": {"type": "boolean", "description": "Include nested interventions", "default": True},
-                    "include_comments": {"type": "boolean", "description": "Include existing comments", "default": True}
-                },
-                "required": ["state_act_id"]
-            }
-        },
-        {
-            "name": "gta_mnt_get_source",
-            "description": (
-                "Retrieve official source for a StateAct. Priority: S3 archived file, "
-                "fallback to URL. Extracts text from PDFs and HTML."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "state_act_id": {"type": "number", "description": "StateAct ID"},
-                    "fetch_content": {"type": "boolean", "description": "Fetch and extract content", "default": True}
-                },
-                "required": ["state_act_id"]
-            }
-        },
-        {
-            "name": "gta_mnt_add_comment",
-            "description": (
-                "Add a structured review comment to a measure. Supports issue comments, "
-                "verification comments, and review complete comments."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "measure_id": {"type": "number", "description": "StateAct ID"},
-                    "comment_text": {"type": "string", "description": "Full comment text (structured per spec)"},
-                    "template_id": {"type": "number", "description": "Optional template ID"}
-                },
-                "required": ["measure_id", "comment_text"]
-            }
-        },
-        {
-            "name": "gta_mnt_set_status",
-            "description": (
-                "Update StateAct status (e.g., to 'Under revision' after issues found). "
-                "Creates entry in api_state_act_status_log."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "state_act_id": {"type": "number", "description": "StateAct ID"},
-                    "new_status_id": {"type": "number", "description": "Status ID (2=Step1, 3=Publishable, 6=Under revision)"},
-                    "comment": {"type": "string", "description": "Optional reason for status change"}
-                },
-                "required": ["state_act_id", "new_status_id"]
-            }
-        },
-        {
-            "name": "gta_mnt_add_framework",
-            "description": (
-                "Attach 'sancho claudino review' framework tag to a measure for tracking. "
-                "Use this to mark that a measure has been reviewed by Sancho Claudino."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "state_act_id": {"type": "number", "description": "StateAct ID"},
-                    "framework_name": {"type": "string", "description": "Framework name", "default": "sancho claudino review"}
-                },
-                "required": ["state_act_id"]
-            }
-        },
-        {
-            "name": "gta_mnt_list_templates",
-            "description": "List available comment templates for standardized feedback.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "include_checklist": {"type": "boolean", "description": "Include checklist templates", "default": False}
-                }
-            }
-        },
-        {
-            "name": "gta_mnt_log_review",
-            "description": (
-                "Save review log to persistent storage. Creates review-log.md with "
-                "timestamp, source, fields validated, issues found, and actions taken."
-            ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "state_act_id": {"type": "number", "description": "StateAct ID"},
-                    "source_url": {"type": "string", "description": "Source URL used for validation"},
-                    "fields_validated": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of fields checked"
-                    },
-                    "issues_found": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of issues discovered (empty if none)"
-                    },
-                    "decision": {"type": "string", "description": "APPROVE or DISAPPROVE"},
-                    "actions_taken": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of actions (comments posted, status changed, framework added)"
-                    }
-                },
-                "required": ["state_act_id", "source_url", "decision"]
-            }
-        }
-    ]
+# Global singletons (lazy-initialized)
+_db_client: Optional[GTADatabaseClient] = None
+_source_fetcher: Optional[SourceFetcher] = None
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: dict):
-    """Handle tool invocations."""
-    try:
-        # WS2: List Step 1 Queue
-        if name == "gta_mnt_list_step1_queue":
-            data = await api_client.list_step1_queue(
-                limit=arguments.get("limit", 20),
-                offset=arguments.get("offset", 0),
-                implementing_jurisdictions=arguments.get("implementing_jurisdictions"),
-                date_entered_review_gte=arguments.get("date_entered_review_gte")
-            )
-            formatted = format_step1_queue(data)
-            return {"content": [{"type": "text", "text": formatted}]}
+def get_db_client() -> GTADatabaseClient:
+    """Get or create the database client."""
+    global _db_client
+    if _db_client is None:
+        _db_client = GTADatabaseClient()
+    return _db_client
 
-        # WS3: Get Measure Detail
-        elif name == "gta_mnt_get_measure":
-            measure = await api_client.get_measure(
-                state_act_id=arguments["state_act_id"],
-                include_interventions=arguments.get("include_interventions", True),
-                include_comments=arguments.get("include_comments", True)
-            )
-            formatted = format_measure_detail(measure)
-            return {"content": [{"type": "text", "text": formatted}]}
 
-        # WS4: Get Source
-        elif name == "gta_mnt_get_source":
-            state_act_id = arguments["state_act_id"]
-            fetch_content = arguments.get("fetch_content", True)
+def get_source_fetcher() -> SourceFetcher:
+    """Get or create the source fetcher."""
+    global _source_fetcher
+    if _source_fetcher is None:
+        _source_fetcher = SourceFetcher()
+    return _source_fetcher
 
-            # First get measure to retrieve source URLs
-            measure = await api_client.get_measure(
-                state_act_id=state_act_id,
-                include_interventions=False,
-                include_comments=False
-            )
 
-            # Fetch source using SourceFetcher
-            source_result = await source_fetcher.get_source(
-                state_act_id=state_act_id,
-                measure_data=measure,
-                fetch_content=fetch_content
-            )
+# Input models for tools
+class ListStep1QueueInput(BaseModel):
+    """Input for listing Step 1 review queue."""
+    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
+    offset: int = Field(default=0, ge=0, description="Offset for pagination")
+    implementing_jurisdictions: Optional[List[str]] = Field(
+        default=None,
+        description="Filter by jurisdiction codes (e.g., ['USA', 'CHN'])"
+    )
+    date_entered_review_gte: Optional[str] = Field(
+        default=None,
+        description="Filter by date entered review (YYYY-MM-DD)"
+    )
 
-            formatted = format_source_result(source_result)
-            return {"content": [{"type": "text", "text": formatted}]}
 
-        # WS6: Set Status
-        elif name == "gta_mnt_set_status":
-            result = await api_client.set_status(
-                state_act_id=arguments["state_act_id"],
-                new_status_id=arguments["new_status_id"],
-                comment=arguments.get("comment")
-            )
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"✅ {result['message']}\n\nStateAct {result['state_act_id']} → Status {result['new_status_id']}"
-                    }
-                ]
-            }
+class GetMeasureInput(BaseModel):
+    """Input for getting measure details."""
+    state_act_id: int = Field(..., description="StateAct ID")
+    include_interventions: bool = Field(default=True, description="Include nested interventions")
+    include_comments: bool = Field(default=True, description="Include existing comments")
 
-        # WS5: Add Comment
-        elif name == "gta_mnt_add_comment":
-            result = await api_client.add_comment(
-                measure_id=arguments["measure_id"],
-                comment_text=arguments["comment_text"],
-                template_id=arguments.get("template_id")
-            )
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"✅ {result['message']}\n\nComment ID: {result['comment_id']}\nAuthor: Sancho Claudino (user_id={SANCHO_USER_ID})"
-                    }
-                ]
-            }
 
-        # WS7: Add Framework
-        elif name == "gta_mnt_add_framework":
-            result = await api_client.add_framework(
-                state_act_id=arguments["state_act_id"],
-                framework_name=arguments.get("framework_name", "sancho claudino review")
-            )
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"✅ {result['message']}\n\nFramework ID: {result['framework_id']}"
-                    }
-                ]
-            }
+class GetSourceInput(BaseModel):
+    """Input for getting source content."""
+    state_act_id: int = Field(..., description="StateAct ID")
+    fetch_content: bool = Field(default=True, description="Fetch and extract content")
 
-        # Log Review (Persistent Storage)
-        elif name == "gta_mnt_log_review":
-            from .storage import ReviewStorage
-            storage = ReviewStorage()
 
-            log_path = storage.save_log(
-                state_act_id=arguments["state_act_id"],
-                source_url=arguments["source_url"],
-                fields_validated=arguments.get("fields_validated", []),
-                issues_found=arguments.get("issues_found", []),
-                decision=arguments["decision"],
-                actions_taken=arguments.get("actions_taken", [])
-            )
+class AddCommentInput(BaseModel):
+    """Input for adding a comment."""
+    measure_id: int = Field(..., description="StateAct ID")
+    comment_text: str = Field(..., description="Full comment text (structured per spec)")
+    template_id: Optional[int] = Field(default=None, description="Optional template ID")
 
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"✅ Review log saved\n\nStateAct: {arguments['state_act_id']}\nDecision: {arguments['decision']}\nLog: {log_path}"
-                    }
-                ]
-            }
 
-        # WS10: List Templates
-        elif name == "gta_mnt_list_templates":
-            data = await api_client.list_templates(
-                include_checklist=arguments.get("include_checklist", False)
-            )
-            formatted = format_templates(data)
-            return {"content": [{"type": "text", "text": formatted}]}
+class SetStatusInput(BaseModel):
+    """Input for setting status."""
+    state_act_id: int = Field(..., description="StateAct ID")
+    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision, 22=SC Reviewed)")
+    comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
+
+class AddFrameworkInput(BaseModel):
+    """Input for adding framework tag."""
+    state_act_id: int = Field(..., description="StateAct ID")
+    framework_name: str = Field(default="sancho claudino review", description="Framework name")
+
+
+class ListTemplatesInput(BaseModel):
+    """Input for listing templates."""
+    include_checklist: bool = Field(default=False, description="Include checklist templates")
+
+
+class LogReviewInput(BaseModel):
+    """Input for logging a review."""
+    state_act_id: int = Field(..., description="StateAct ID")
+    source_url: str = Field(..., description="Source URL used for validation")
+    fields_validated: List[str] = Field(default_factory=list, description="List of fields checked")
+    issues_found: List[str] = Field(default_factory=list, description="List of issues discovered (empty if none)")
+    decision: str = Field(..., description="APPROVE or DISAPPROVE")
+    actions_taken: List[str] = Field(default_factory=list, description="List of actions (comments posted, status changed, framework added)")
+
+
+@mcp.tool(name="gta_mnt_list_step1_queue")
+async def list_step1_queue(params: ListStep1QueueInput) -> str:
+    """List measures awaiting Step 1 review, ordered by status_time DESC (most recent first).
+
+    Uses api_state_act_status_log for accurate ordering.
+    """
+    db_client = get_db_client()
+    data = await db_client.list_step1_queue(
+        limit=params.limit,
+        offset=params.offset,
+        implementing_jurisdictions=params.implementing_jurisdictions,
+        date_entered_review_gte=params.date_entered_review_gte
+    )
+    return format_step1_queue(data)
+
+
+@mcp.tool(name="gta_mnt_get_measure")
+async def get_measure(params: GetMeasureInput) -> str:
+    """Get complete StateAct details including all interventions, comments, and source references.
+
+    Returns full measure data for validation.
+    """
+    db_client = get_db_client()
+    measure = await db_client.get_measure(
+        state_act_id=params.state_act_id,
+        include_interventions=params.include_interventions,
+        include_comments=params.include_comments
+    )
+    return format_measure_detail(measure)
+
+
+@mcp.tool(name="gta_mnt_get_source")
+async def get_source(params: GetSourceInput) -> str:
+    """Retrieve official source for a StateAct.
+
+    Priority: S3 archived file, fallback to URL. Extracts text from PDFs and HTML.
+    """
+    db_client = get_db_client()
+    source_fetcher = get_source_fetcher()
+
+    # First get measure to retrieve source URLs
+    measure = await db_client.get_measure(
+        state_act_id=params.state_act_id,
+        include_interventions=False,
+        include_comments=False
+    )
+
+    # Fetch source using SourceFetcher
+    source_result = await source_fetcher.get_source(
+        state_act_id=params.state_act_id,
+        measure_data=measure,
+        fetch_content=params.fetch_content
+    )
+
+    return format_source_result(source_result)
+
+
+@mcp.tool(name="gta_mnt_add_comment")
+async def add_comment(params: AddCommentInput) -> str:
+    """Add a structured review comment to a measure.
+
+    Supports issue comments, verification comments, and review complete comments.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_comment(
+        measure_id=params.measure_id,
+        comment_text=params.comment_text,
+        template_id=params.template_id
+    )
+
+    if result['success']:
+        return f"✅ {result['message']}\n\nComment ID: {result['comment_id']}\nAuthor: Sancho Claudino (user_id={SANCHO_USER_ID})"
+    else:
+        return f"❌ {result['message']}"
+
+
+@mcp.tool(name="gta_mnt_set_status")
+async def set_status(params: SetStatusInput) -> str:
+    """Update StateAct status (e.g., to 'Under revision' after issues found).
+
+    Creates entry in api_state_act_status_log.
+    """
+    db_client = get_db_client()
+    result = await db_client.set_status(
+        state_act_id=params.state_act_id,
+        new_status_id=params.new_status_id,
+        comment=params.comment
+    )
+
+    if result['success']:
+        return f"✅ {result['message']}\n\nStateAct {result['state_act_id']} → Status {result['new_status_id']}"
+    else:
+        return f"❌ {result['message']}"
+
+
+@mcp.tool(name="gta_mnt_add_framework")
+async def add_framework(params: AddFrameworkInput) -> str:
+    """Attach 'sancho claudino review' framework tag to a measure for tracking.
+
+    Use this to mark that a measure has been reviewed by Sancho Claudino.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_framework(
+        state_act_id=params.state_act_id,
+        framework_name=params.framework_name
+    )
+
+    if result['success']:
+        if result.get('framework_id'):
+            return f"✅ {result['message']}\n\nFramework ID: {result['framework_id']}"
         else:
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Unknown tool: {name}"
-                    }
-                ]
-            }
+            return f"✅ {result['message']}\n\nStatus ID: {result.get('status_id', 22)}"
+    else:
+        return f"❌ {result['message']}"
 
-    except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"❌ Error executing {name}: {str(e)}"
-                }
-            ]
-        }
+
+@mcp.tool(name="gta_mnt_list_templates")
+async def list_templates(params: ListTemplatesInput) -> str:
+    """List available comment templates for standardized feedback."""
+    db_client = get_db_client()
+    data = await db_client.list_templates(
+        include_checklist=params.include_checklist
+    )
+    return format_templates(data)
+
+
+@mcp.tool(name="gta_mnt_log_review")
+async def log_review(params: LogReviewInput) -> str:
+    """Save review log to persistent storage.
+
+    Creates review-log.md with timestamp, source, fields validated, issues found, and actions taken.
+    """
+    from .storage import ReviewStorage
+    storage = ReviewStorage()
+
+    log_path = storage.save_log(
+        state_act_id=params.state_act_id,
+        source_url=params.source_url,
+        fields_validated=params.fields_validated,
+        issues_found=params.issues_found,
+        decision=params.decision,
+        actions_taken=params.actions_taken
+    )
+
+    return f"✅ Review log saved\n\nStateAct: {params.state_act_id}\nDecision: {params.decision}\nLog: {log_path}"
 
 
 def main():
-    """Run the MCP server."""
-    global auth_manager, api_client, source_fetcher
+    """Entry point for running the GTA MNT MCP server."""
+    # Check for required env vars (database credentials)
+    required_vars = ['GTA_DB_HOST', 'GTA_DB_PASSWORD_WRITE']
+    missing = [v for v in required_vars if not os.getenv(v)]
 
-    # Get credentials from environment
-    email = os.getenv("GTA_AUTH_EMAIL")
-    password = os.getenv("GTA_AUTH_PASSWORD")
+    # Also accept legacy credential names
+    if 'GTA_DB_PASSWORD_WRITE' in missing and os.getenv('GTA_DB_PASSWORD'):
+        missing.remove('GTA_DB_PASSWORD_WRITE')
 
-    if not email or not password:
-        raise RuntimeError(
-            "Missing required environment variables: GTA_AUTH_EMAIL, GTA_AUTH_PASSWORD"
+    if missing:
+        print(
+            f"ERROR: Missing required environment variables: {', '.join(missing)}\n"
+            "Please set database credentials before starting the server:\n"
+            "  export GTA_DB_HOST='your-db-host'\n"
+            "  export GTA_DB_PASSWORD_WRITE='your-password'\n"
+            "  gta-mnt",
+            file=sys.stderr
         )
+        sys.exit(1)
 
-    # Initialize singletons
-    auth_manager = JWTAuthManager(email, password)
-    api_client = GTAAPIClient(auth_manager)
-    source_fetcher = SourceFetcher()
-
-    # Run server
-    import asyncio
-    asyncio.run(stdio_server(server))
+    # Run the server with stdio transport (default for MCP)
+    mcp.run()
 
 
 if __name__ == "__main__":
