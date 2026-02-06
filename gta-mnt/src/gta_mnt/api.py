@@ -306,20 +306,79 @@ class GTADatabaseClient:
             measure['comments'] = cursor.fetchall()
 
         # Get source info from linked sources
-        cursor.execute('''
-            SELECT sl.source_url, sl.is_collected, sl.is_file, sl.last_checked
-            FROM api_state_act_source sas
-            JOIN api_source_list sl ON sas.source_id = sl.source_id
-            WHERE sas.state_act_id = %s
-            ORDER BY sl.last_checked DESC
-        ''', (state_act_id,))
-        sources = cursor.fetchall()
+        # Try extended query first with S3 path columns
+        try:
+            cursor.execute('''
+                SELECT
+                    sl.source_id,
+                    sl.source_url,
+                    sl.is_collected,
+                    sl.is_file,
+                    sl.last_checked,
+                    sl.collected_path,
+                    sl.file_path,
+                    sl.s3_key
+                FROM api_state_act_source sas
+                JOIN api_source_list sl ON sas.source_id = sl.source_id
+                WHERE sas.state_act_id = %s
+                ORDER BY sas.id ASC
+            ''', (state_act_id,))
+            sources = cursor.fetchall()
+        except Exception:
+            # Fallback to basic query if extended columns don't exist
+            cursor.execute('''
+                SELECT
+                    sl.source_id,
+                    sl.source_url,
+                    sl.is_collected,
+                    sl.is_file,
+                    sl.last_checked
+                FROM api_state_act_source sas
+                JOIN api_source_list sl ON sas.source_id = sl.source_id
+                WHERE sas.state_act_id = %s
+                ORDER BY sas.id ASC
+            ''', (state_act_id,))
+            sources = cursor.fetchall()
+
+        # If files are uploaded with naming convention (96351a.pdf, etc.), construct S3 paths
+        # The GTA system stores uploaded files as {state_act_id}{letter}.pdf in S3
+        s3_bucket = 'gta-source-files'  # Default bucket name
+        for i, src in enumerate(sources):
+            if src.get('is_file') and not src.get('collected_path') and not src.get('s3_key'):
+                # Construct S3 path from naming convention: {state_act_id}{letter}.pdf
+                letter = chr(ord('a') + i)  # a, b, c, d, ...
+                src['s3_key'] = f"sources/{state_act_id}{letter}.pdf"
+                src['s3_url'] = f"s3://{s3_bucket}/sources/{state_act_id}{letter}.pdf"
+
         measure['sources'] = sources
+
+        # Extract URLs from source_markdown if no linked sources in database
+        source_markdown = measure.get('source_markdown') or ''
+        extracted_urls = []
+        if source_markdown:
+            import re
+            # Extract URLs from markdown (http/https links)
+            url_pattern = r'https?://[^\s<>\"\'\)]+(?:\.[^\s<>\"\'\)]+)+'
+            extracted_urls = list(set(re.findall(url_pattern, source_markdown)))
+
+        # Combine database sources with extracted URLs
+        all_sources = list(sources)  # Copy to avoid modifying original
+        if not all_sources and extracted_urls:
+            # No database sources but we found URLs in markdown
+            for i, url in enumerate(extracted_urls):
+                all_sources.append({
+                    'source_id': None,
+                    'source_url': url,
+                    'is_collected': False,
+                    'is_file': False,
+                    'extracted_from_markdown': True
+                })
 
         # Also include the direct source field
         measure['source_info'] = {
             'primary_source': measure.get('source') or measure.get('source_markdown'),
-            'linked_sources': sources
+            'linked_sources': all_sources,
+            'extracted_urls': extracted_urls
         }
 
         return measure

@@ -152,7 +152,8 @@ class SourceFetcher:
         self,
         state_act_id: int,
         measure_data: dict,
-        fetch_content: bool = True
+        fetch_content: bool = True,
+        source_index: int = 0
     ) -> SourceResult:
         """Retrieve official source for a StateAct.
 
@@ -161,14 +162,38 @@ class SourceFetcher:
 
         Args:
             state_act_id: StateAct ID
-            measure_data: Measure dict from API (contains source_file, source_url)
+            measure_data: Measure dict from API (contains sources list)
             fetch_content: Whether to fetch and extract content
+            source_index: Which source to fetch (0-indexed, default first source)
 
         Returns:
             SourceResult with source type, URL, and optional content
         """
+        # Get sources list from measure data
+        sources = measure_data.get('sources', [])
+        source_info = measure_data.get('source_info', {})
+        linked_sources = source_info.get('linked_sources', sources)
+
+        # Legacy support: check for top-level source_file/source_url
         source_file = measure_data.get("source_file")
         source_url = measure_data.get("source_url")
+
+        # If we have a sources list, use it
+        if linked_sources and source_index < len(linked_sources):
+            src = linked_sources[source_index]
+            # Get S3 path from various possible column names
+            source_file = (
+                src.get('s3_url') or
+                src.get('s3_key') or
+                src.get('collected_path') or
+                src.get('file_path')
+            )
+            # Ensure S3 path has s3:// prefix if it's a key
+            if source_file and not source_file.startswith('s3://') and not source_file.startswith('http'):
+                source_file = f"s3://gta-source-files/{source_file}"
+            source_url = src.get('source_url')
+        elif not source_file and not source_url:
+            raise ValueError(f"No source available for StateAct {state_act_id} (index {source_index})")
 
         # Priority 1: S3 file
         if source_file and source_file.startswith("s3://"):

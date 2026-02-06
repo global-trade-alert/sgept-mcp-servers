@@ -69,6 +69,7 @@ class GetMeasureInput(BaseModel):
 class GetSourceInput(BaseModel):
     """Input for getting source content."""
     state_act_id: int = Field(..., description="StateAct ID")
+    source_index: int = Field(default=0, ge=0, description="Which source to fetch (0-indexed)")
     fetch_content: bool = Field(default=True, description="Fetch and extract content")
 
 
@@ -143,6 +144,7 @@ async def get_source(params: GetSourceInput) -> str:
     """Retrieve official source for a StateAct.
 
     Priority: S3 archived file, fallback to URL. Extracts text from PDFs and HTML.
+    Use source_index to fetch different sources (0=first, 1=second, etc.).
     """
     db_client = get_db_client()
     source_fetcher = get_source_fetcher()
@@ -154,11 +156,17 @@ async def get_source(params: GetSourceInput) -> str:
         include_comments=False
     )
 
+    # Check how many sources are available
+    sources = measure.get('sources', [])
+    if params.source_index >= len(sources):
+        return f"❌ Source index {params.source_index} out of range. StateAct {params.state_act_id} has {len(sources)} source(s) (indices 0-{len(sources)-1})."
+
     # Fetch source using SourceFetcher
     source_result = await source_fetcher.get_source(
         state_act_id=params.state_act_id,
         measure_data=measure,
-        fetch_content=params.fetch_content
+        fetch_content=params.fetch_content,
+        source_index=params.source_index
     )
 
     return format_source_result(source_result)

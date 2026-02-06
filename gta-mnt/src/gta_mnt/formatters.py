@@ -193,9 +193,10 @@ def format_measure_detail(measure: dict) -> str:
     else:
         impl_jur_str = "N/A"
 
-    # Get source URL from source_info or direct source field
+    # Get source info
     source_info = measure.get("source_info", {})
-    primary_source = source_info.get("primary_source") or measure.get("source") or "N/A"
+    source_markdown = measure.get("source_markdown") or ""
+    source_field = measure.get("source") or ""
 
     lines = [
         f"# StateAct {state_act_id}: {title}\n",
@@ -203,11 +204,19 @@ def format_measure_detail(measure: dict) -> str:
         f"**Status:** {status_name} (ID: {status_id})",
         f"**Official Source:** {'Yes' if is_official else 'No'}",
         f"**Announcement Date:** {announcement_date or 'N/A'}",
-        f"**Source:** {primary_source}\n",
+        "",
         "## Description",
         description,
         ""
     ]
+
+    # Add source citations section if source_markdown exists (contains full citations)
+    if source_markdown:
+        lines.append("\n## Source Citations\n")
+        lines.append(source_markdown)
+        lines.append("")
+    elif source_field:
+        lines.append(f"\n**Source:** {source_field}\n")
 
     # Interventions section
     interventions = measure.get("interventions", [])
@@ -328,10 +337,24 @@ def format_measure_detail(measure: dict) -> str:
     linked_sources = source_info.get("linked_sources", []) or measure.get("sources", [])
     if linked_sources:
         lines.append(f"\n## Linked Sources ({len(linked_sources)})\n")
-        for src in linked_sources:
+        for i, src in enumerate(linked_sources):
             url = src.get("source_url", "N/A")
             is_collected = src.get("is_collected")
-            lines.append(f"- {url} {'(archived)' if is_collected else ''}")
+            is_file = src.get("is_file")
+            s3_key = src.get("s3_key") or src.get("s3_url") or src.get("collected_path")
+
+            # Format source line with index for easy reference
+            status_parts = []
+            if is_collected or is_file:
+                status_parts.append("archived")
+            if s3_key:
+                status_parts.append(f"S3: {s3_key}")
+
+            status = f" ({', '.join(status_parts)})" if status_parts else ""
+            lines.append(f"- **[{i}]** {url}{status}")
+    else:
+        lines.append("\n## Linked Sources\n")
+        lines.append("*No linked sources found in database*")
 
     return "\n".join(lines)
 
