@@ -83,7 +83,7 @@ class AddCommentInput(BaseModel):
 class SetStatusInput(BaseModel):
     """Input for setting status."""
     state_act_id: int = Field(..., description="StateAct ID")
-    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision, 22=SC Reviewed)")
+    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision)")
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
 
@@ -223,10 +223,7 @@ async def add_framework(params: AddFrameworkInput) -> str:
     )
 
     if result['success']:
-        if result.get('framework_id'):
-            return f"✅ {result['message']}\n\nFramework ID: {result['framework_id']}"
-        else:
-            return f"✅ {result['message']}\n\nStatus ID: {result.get('status_id', 22)}"
+        return f"✅ {result['message']}\n\nFramework ID: {result['framework_id']}"
     else:
         return f"❌ {result['message']}"
 

@@ -156,25 +156,74 @@ class GTADatabaseClient:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        # Get measure from api_state_act_log (the main state act table)
-        cursor.execute('''
-            SELECT
-                sa.state_act_id as id,
-                sa.title,
-                sa.description,
-                sa.source,
-                sa.source_markdown,
-                sa.is_source_official,
-                sa.status_id,
-                sa.date_announced as announcement_date,
-                sa.date_created as creation_date,
-                sa.last_modified as last_update,
-                s.status_name
-            FROM api_state_act_log sa
-            LEFT JOIN api_state_act_status_list s ON sa.status_id = s.status_id
-            WHERE sa.state_act_id = %s
-        ''', (state_act_id,))
-        measure = cursor.fetchone()
+        # Get measure - try multiple table names (gta_measure vs api_state_act_log)
+        measure = None
+
+        # Try 1: gta_measure (documented table name)
+        try:
+            cursor.execute('''
+                SELECT
+                    m.id,
+                    m.title,
+                    m.description,
+                    m.source,
+                    m.source_markdown,
+                    m.is_source_official,
+                    m.status_id,
+                    m.announcement_date,
+                    m.date_created as creation_date,
+                    m.last_modified as last_update,
+                    s.status_name
+                FROM gta_measure m
+                LEFT JOIN api_state_act_status_list s ON m.status_id = s.status_id
+                WHERE m.id = %s
+            ''', (state_act_id,))
+            measure = cursor.fetchone()
+        except Exception:
+            pass
+
+        # Try 2: api_state_act_log (alternate table name)
+        if not measure:
+            try:
+                cursor.execute('''
+                    SELECT
+                        sa.state_act_id as id,
+                        sa.title,
+                        sa.description,
+                        sa.source,
+                        sa.source_markdown,
+                        sa.source_text,
+                        sa.is_source_official,
+                        sa.status_id,
+                        sa.date_announced as announcement_date,
+                        sa.date_created as creation_date,
+                        sa.last_modified as last_update,
+                        s.status_name
+                    FROM api_state_act_log sa
+                    LEFT JOIN api_state_act_status_list s ON sa.status_id = s.status_id
+                    WHERE sa.state_act_id = %s
+                ''', (state_act_id,))
+                measure = cursor.fetchone()
+            except Exception:
+                # Fallback without source_text column
+                cursor.execute('''
+                    SELECT
+                        sa.state_act_id as id,
+                        sa.title,
+                        sa.description,
+                        sa.source,
+                        sa.source_markdown,
+                        sa.is_source_official,
+                        sa.status_id,
+                        sa.date_announced as announcement_date,
+                        sa.date_created as creation_date,
+                        sa.last_modified as last_update,
+                        s.status_name
+                    FROM api_state_act_log sa
+                    LEFT JOIN api_state_act_status_list s ON sa.status_id = s.status_id
+                    WHERE sa.state_act_id = %s
+                ''', (state_act_id,))
+                measure = cursor.fetchone()
 
         if not measure:
             return {'error': f'Measure {state_act_id} not found'}
@@ -191,38 +240,70 @@ class GTADatabaseClient:
 
         # Optionally fetch interventions from api_intervention_log
         if include_interventions:
-            # Enhanced query with implementation_level_name and unit_name
-            cursor.execute('''
-                SELECT
-                    i.intervention_id as id,
-                    i.state_act_id as measure_id,
-                    i.description,
-                    i.gta_evaluation_id as evaluation_id,
-                    e.gta_evaluation_name as evaluation_name,
-                    i.affected_flow_id,
-                    af.affected_flow_name,
-                    i.eligible_firm_id as eligible_firms_id,
-                    ef.eligible_firm_name as eligible_firms_name,
-                    i.intervention_type_id as measure_type_id,
-                    t.intervention_type_name as type_name,
-                    i.date_implemented as inception_date,
-                    i.date_removed as removal_date,
-                    i.implementation_level_id,
-                    il.implementation_level_name,
-                    i.prior_level,
-                    i.new_level,
-                    i.unit_id,
-                    u.unit_name
-                FROM api_intervention_log i
-                LEFT JOIN api_intervention_type_list t ON i.intervention_type_id = t.intervention_type_id
-                LEFT JOIN api_gta_evaluation_list e ON i.gta_evaluation_id = e.gta_evaluation_id
-                LEFT JOIN api_affected_flow_list af ON i.affected_flow_id = af.affected_flow_id
-                LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
-                LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
-                LEFT JOIN api_unit_list u ON i.unit_id = u.unit_id
-                WHERE i.state_act_id = %s
-            ''', (state_act_id,))
-            measure['interventions'] = cursor.fetchall()
+            # Try enhanced query with implementation_level_name and unit_name
+            try:
+                cursor.execute('''
+                    SELECT
+                        i.intervention_id as id,
+                        i.state_act_id as measure_id,
+                        i.description,
+                        i.gta_evaluation_id as evaluation_id,
+                        e.gta_evaluation_name as evaluation_name,
+                        i.affected_flow_id,
+                        af.affected_flow_name,
+                        i.eligible_firm_id as eligible_firms_id,
+                        ef.eligible_firm_name as eligible_firms_name,
+                        i.intervention_type_id as measure_type_id,
+                        t.intervention_type_name as type_name,
+                        i.date_implemented as inception_date,
+                        i.date_removed as removal_date,
+                        i.implementation_level_id,
+                        il.implementation_level_name,
+                        i.prior_level,
+                        i.new_level,
+                        i.unit_id,
+                        u.unit_name
+                    FROM api_intervention_log i
+                    LEFT JOIN api_intervention_type_list t ON i.intervention_type_id = t.intervention_type_id
+                    LEFT JOIN api_gta_evaluation_list e ON i.gta_evaluation_id = e.gta_evaluation_id
+                    LEFT JOIN api_affected_flow_list af ON i.affected_flow_id = af.affected_flow_id
+                    LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
+                    LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
+                    LEFT JOIN api_unit_list u ON i.unit_id = u.unit_id
+                    WHERE i.state_act_id = %s
+                ''', (state_act_id,))
+                measure['interventions'] = cursor.fetchall()
+            except Exception:
+                # Fallback: query without unit lookup (column may not exist)
+                cursor.execute('''
+                    SELECT
+                        i.intervention_id as id,
+                        i.state_act_id as measure_id,
+                        i.description,
+                        i.gta_evaluation_id as evaluation_id,
+                        e.gta_evaluation_name as evaluation_name,
+                        i.affected_flow_id,
+                        af.affected_flow_name,
+                        i.eligible_firm_id as eligible_firms_id,
+                        ef.eligible_firm_name as eligible_firms_name,
+                        i.intervention_type_id as measure_type_id,
+                        t.intervention_type_name as type_name,
+                        i.date_implemented as inception_date,
+                        i.date_removed as removal_date,
+                        i.implementation_level_id,
+                        il.implementation_level_name,
+                        i.prior_level,
+                        i.new_level,
+                        i.unit_id
+                    FROM api_intervention_log i
+                    LEFT JOIN api_intervention_type_list t ON i.intervention_type_id = t.intervention_type_id
+                    LEFT JOIN api_gta_evaluation_list e ON i.gta_evaluation_id = e.gta_evaluation_id
+                    LEFT JOIN api_affected_flow_list af ON i.affected_flow_id = af.affected_flow_id
+                    LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
+                    LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
+                    WHERE i.state_act_id = %s
+                ''', (state_act_id,))
+                measure['interventions'] = cursor.fetchall()
 
             # Get affected jurisdictions for each intervention (via api_intervention_aj)
             # Enhanced to include jurisdiction type (inferred/targeted/excluded/incidental)
@@ -306,39 +387,161 @@ class GTADatabaseClient:
             measure['comments'] = cursor.fetchall()
 
         # Get source info from linked sources
-        # Try extended query first with S3 path columns
+        # Try multiple table names and schemas since GTA has evolved over time
+        sources = []
+        tables_tried = []
+
+        # Try 1: api_files table (uploaded files with field_id = state_act_id)
         try:
             cursor.execute('''
                 SELECT
-                    sl.source_id,
-                    sl.source_url,
-                    sl.is_collected,
-                    sl.is_file,
-                    sl.last_checked,
-                    sl.collected_path,
-                    sl.file_path,
-                    sl.s3_key
-                FROM api_state_act_source sas
-                JOIN api_source_list sl ON sas.source_id = sl.source_id
-                WHERE sas.state_act_id = %s
-                ORDER BY sas.id ASC
+                    af.id as source_id,
+                    af.file_url as source_url,
+                    af.file_name,
+                    af.file_url as s3_url,
+                    1 as is_file,
+                    1 as is_collected
+                FROM api_files af
+                WHERE af.field_id = %s
+                  AND af.is_deleted = 0
+                ORDER BY af.id ASC
             ''', (state_act_id,))
             sources = cursor.fetchall()
-        except Exception:
-            # Fallback to basic query if extended columns don't exist
-            cursor.execute('''
-                SELECT
-                    sl.source_id,
-                    sl.source_url,
-                    sl.is_collected,
-                    sl.is_file,
-                    sl.last_checked
-                FROM api_state_act_source sas
-                JOIN api_source_list sl ON sas.source_id = sl.source_id
-                WHERE sas.state_act_id = %s
-                ORDER BY sas.id ASC
-            ''', (state_act_id,))
-            sources = cursor.fetchall()
+            tables_tried.append(('api_files', len(sources)))
+        except Exception as e:
+            tables_tried.append(('api_files', f'error: {str(e)[:50]}'))
+
+        # Try 2: api_state_act_source + api_source_list (linked sources)
+        if not sources:
+            try:
+                cursor.execute('''
+                    SELECT
+                        sl.source_id,
+                        sl.source_url
+                    FROM api_state_act_source sas
+                    JOIN api_source_list sl ON sas.source_id = sl.source_id
+                    WHERE sas.state_act_id = %s
+                    ORDER BY sas.id ASC
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('api_state_act_source+api_source_list', len(sources)))
+            except Exception as e:
+                tables_tried.append(('api_state_act_source+api_source_list', f'error: {str(e)[:50]}'))
+
+        # Try 2: gta_state_act_source (older schema, direct URL storage)
+        if not sources:
+            try:
+                # First try with state_act_id
+                cursor.execute('''
+                    SELECT *
+                    FROM gta_state_act_source
+                    WHERE state_act_id = %s
+                    LIMIT 10
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('gta_state_act_source(state_act_id)', len(sources)))
+            except Exception as e:
+                tables_tried.append(('gta_state_act_source(state_act_id)', f'error: {str(e)[:50]}'))
+
+        # Try 2b: gta_state_act_source with measure_id
+        if not sources:
+            try:
+                cursor.execute('''
+                    SELECT *
+                    FROM gta_state_act_source
+                    WHERE measure_id = %s
+                    LIMIT 10
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('gta_state_act_source(measure_id)', len(sources)))
+            except Exception as e:
+                tables_tried.append(('gta_state_act_source(measure_id)', f'error: {str(e)[:50]}'))
+
+        # Try 3: Look in api_state_act_file for uploaded files
+        if not sources:
+            try:
+                cursor.execute('''
+                    SELECT
+                        id as source_id,
+                        file_path as source_url,
+                        s3_key,
+                        1 as is_file,
+                        1 as is_collected
+                    FROM api_state_act_file
+                    WHERE state_act_id = %s
+                    ORDER BY id ASC
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('api_state_act_file', len(sources)))
+            except Exception as e:
+                tables_tried.append(('api_state_act_file', f'error: {str(e)[:50]}'))
+
+        # Debug: List columns in key tables
+        try:
+            cursor.execute('DESCRIBE gta_state_act_source')
+            columns = [row['Field'] for row in cursor.fetchall()]
+            tables_tried.append(('gta_state_act_source_cols', ', '.join(columns)))
+        except Exception as e:
+            tables_tried.append(('gta_state_act_source_cols', f'error'))
+
+        try:
+            cursor.execute('DESCRIBE api_source_list')
+            columns = [row['Field'] for row in cursor.fetchall()]
+            tables_tried.append(('api_source_list_cols', ', '.join(columns[:8])))
+        except Exception as e:
+            tables_tried.append(('api_source_list_cols', f'error'))
+
+        # Try 5: gta_source table (might be junction with measure_id)
+        if not sources:
+            try:
+                cursor.execute('''
+                    SELECT
+                        id as source_id,
+                        url as source_url,
+                        s3_key,
+                        1 as is_file
+                    FROM gta_source
+                    WHERE measure_id = %s
+                    ORDER BY id ASC
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('gta_source', len(sources)))
+            except Exception as e:
+                tables_tried.append(('gta_source', f'error: {str(e)[:50]}'))
+
+        # Try 5: Look for attached documents (some systems use this pattern)
+        if not sources:
+            try:
+                cursor.execute('''
+                    SELECT
+                        id as source_id,
+                        file_url as source_url,
+                        s3_path as s3_key,
+                        1 as is_file
+                    FROM gta_attached_document
+                    WHERE state_act_id = %s
+                    ORDER BY id ASC
+                ''', (state_act_id,))
+                sources = cursor.fetchall()
+                tables_tried.append(('gta_attached_document', len(sources)))
+            except Exception as e:
+                tables_tried.append(('gta_attached_document', f'error: {str(e)[:50]}'))
+
+        # Try 6: Check gta_measure.source field directly for URL
+        if not sources and measure.get('source'):
+            source_field = measure.get('source', '')
+            if source_field.startswith('http'):
+                sources = [{
+                    'source_id': None,
+                    'source_url': source_field,
+                    'is_file': False,
+                    'is_collected': False,
+                    'from_measure_field': True
+                }]
+                tables_tried.append(('measure.source_field', 1))
+
+        # Store debug info about which tables were tried
+        measure['_debug_tables_tried'] = tables_tried
 
         # If files are uploaded with naming convention (96351a.pdf, etc.), construct S3 paths
         # The GTA system stores uploaded files as {state_act_id}{letter}.pdf in S3
@@ -352,14 +555,20 @@ class GTADatabaseClient:
 
         measure['sources'] = sources
 
-        # Extract URLs from source_markdown if no linked sources in database
+        # Extract URLs from various text fields
+        import re
+        url_pattern = r'https?://[^\s<>\"\'\)]+(?:\.[^\s<>\"\'\)]+)+'
+
         source_markdown = measure.get('source_markdown') or ''
+        description = measure.get('description') or ''
+
         extracted_urls = []
+        # Try source_markdown first
         if source_markdown:
-            import re
-            # Extract URLs from markdown (http/https links)
-            url_pattern = r'https?://[^\s<>\"\'\)]+(?:\.[^\s<>\"\'\)]+)+'
             extracted_urls = list(set(re.findall(url_pattern, source_markdown)))
+        # Also try description if no URLs in source_markdown
+        if not extracted_urls and description:
+            extracted_urls = list(set(re.findall(url_pattern, description)))
 
         # Combine database sources with extracted URLs
         all_sources = list(sources)  # Copy to avoid modifying original
@@ -397,7 +606,7 @@ class GTADatabaseClient:
 
         Args:
             state_act_id: StateAct ID
-            new_status_id: Status ID (2=Step1, 3=Publishable, 6=Under revision, 22=SC Reviewed)
+            new_status_id: Status ID (2=Step1, 3=Publishable, 6=Under revision)
             comment: Optional reason for status change
 
         Returns:
@@ -504,8 +713,8 @@ class GTADatabaseClient:
     ) -> dict:
         """Attach framework tag to a StateAct for tracking.
 
-        Note: If framework 495 doesn't exist, we use status 22 (Sancho Claudino Reviewed)
-        instead as an alternative tracking mechanism.
+        Creates framework 495 in gta_framework if it doesn't exist,
+        then inserts the assignment in api_state_act_framework.
 
         Args:
             state_act_id: StateAct ID
@@ -518,40 +727,26 @@ class GTADatabaseClient:
         cursor = conn.cursor()
 
         try:
-            # Check if framework exists
+            # Create framework if it doesn't exist
             cursor.execute(
-                'SELECT id FROM gta_framework WHERE id = %s',
-                (SANCHO_FRAMEWORK_ID,)
+                'INSERT IGNORE INTO gta_framework (id, name) VALUES (%s, %s)',
+                (SANCHO_FRAMEWORK_ID, framework_name)
             )
-            framework = cursor.fetchone()
 
-            if framework:
-                # Use framework tagging
-                cursor.execute('''
-                    INSERT INTO api_state_act_framework (framework_id, state_act_id)
-                    VALUES (%s, %s)
-                    ON DUPLICATE KEY UPDATE framework_id = framework_id
-                ''', (SANCHO_FRAMEWORK_ID, state_act_id))
-                conn.commit()
+            # Attach framework to state act
+            cursor.execute('''
+                INSERT INTO api_state_act_framework (framework_id, state_act_id)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE framework_id = framework_id
+            ''', (SANCHO_FRAMEWORK_ID, state_act_id))
+            conn.commit()
 
-                return {
-                    'state_act_id': state_act_id,
-                    'framework_id': SANCHO_FRAMEWORK_ID,
-                    'success': True,
-                    'message': f"Framework '{framework_name}' attached to StateAct {state_act_id}"
-                }
-            else:
-                # Framework doesn't exist - use status 22 as alternative
-                # Status 22 = "Sancho Claudino Reviewed"
-                await self.set_status(state_act_id, 22)
-
-                return {
-                    'state_act_id': state_act_id,
-                    'framework_id': None,
-                    'status_id': 22,
-                    'success': True,
-                    'message': f"Framework {SANCHO_FRAMEWORK_ID} not found. Set status to 22 (Sancho Claudino Reviewed) instead."
-                }
+            return {
+                'state_act_id': state_act_id,
+                'framework_id': SANCHO_FRAMEWORK_ID,
+                'success': True,
+                'message': f"Framework '{framework_name}' attached to StateAct {state_act_id}"
+            }
 
         except Exception as e:
             conn.rollback()
