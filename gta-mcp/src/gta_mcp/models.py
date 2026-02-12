@@ -449,12 +449,13 @@ class GTACountInput(BaseModel):
         min_length=1,
     )
 
-    count_variable: Literal["intervention_id", "state_act_id"] = Field(
+    count_variable: Literal["intervention_id", "state_act_id", "affected_products", "affected_sectors"] = Field(
         default="intervention_id",
         description=(
             "What to count: 'intervention_id' counts individual interventions (default), "
             "'state_act_id' counts unique state acts (legal instruments, which may contain "
-            "multiple interventions)."
+            "multiple interventions), 'affected_products' counts distinct HS product codes affected, "
+            "'affected_sectors' counts distinct CPC sectors affected."
         ),
     )
 
@@ -526,6 +527,21 @@ class GTACountInput(BaseModel):
     date_implemented_lte: Optional[str] = Field(
         default=None,
         description="Implemented on or before this date (YYYY-MM-DD)."
+    )
+
+    date_removed_gte: Optional[str] = Field(
+        default=None,
+        description="Revoked/removed on or after this date (YYYY-MM-DD)."
+    )
+
+    date_removed_lte: Optional[str] = Field(
+        default=None,
+        description="Revoked/removed on or before this date (YYYY-MM-DD)."
+    )
+
+    affected_flow: Optional[List[int]] = Field(
+        default=None,
+        description="Filter by trade flow direction: 1 (Inward), 2 (Outward), 3 (Outward subsidy)."
     )
 
     is_in_force: Optional[bool] = Field(

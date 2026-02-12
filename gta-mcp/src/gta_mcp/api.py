@@ -1504,6 +1504,19 @@ def build_count_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[st
             date_implemented_lte or "2099-12-31",
         ]
 
+    # Handle revocation period dates
+    date_removed_gte = params.get('date_removed_gte')
+    date_removed_lte = params.get('date_removed_lte')
+    if date_removed_gte or date_removed_lte:
+        filters['revocation_period'] = [
+            date_removed_gte or "1900-01-01",
+            date_removed_lte or "2099-12-31",
+        ]
+
+    # Affected flow (trade direction)
+    if params.get('affected_flow'):
+        filters['affected_flow'] = params['affected_flow']
+
     # Is in force
     if params.get('is_in_force') is not None:
         from datetime import date
