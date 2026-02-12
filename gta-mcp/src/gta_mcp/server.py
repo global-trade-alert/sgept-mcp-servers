@@ -41,7 +41,10 @@ from .resources_loader import (
     load_query_examples,
     load_mast_chapters,
     load_query_syntax,
-    load_exclusion_filters
+    load_exclusion_filters,
+    load_data_model_guide,
+    load_analytical_caveats,
+    load_common_mistakes
 )
 
 
@@ -769,6 +772,51 @@ def get_exclusion_filters() -> str:
 		Markdown document with keep_* parameter reference, patterns, and examples
 	"""
 	return load_exclusion_filters()
+
+
+@mcp.resource(
+	"gta://guide/data-model",
+	name="Guide: GTA Data Model",
+	description="Explains the GTA data hierarchy: State Acts (government announcements) contain one or more Interventions (specific policy measures). Covers counting units (intervention_id vs state_act_id) and the product/sector relationship. Essential for understanding what you're counting and avoiding overcounting.",
+	mime_type="text/markdown"
+)
+def get_data_model_guide() -> str:
+	"""Return data model guide explaining GTA hierarchy and counting units.
+
+	Returns:
+		Markdown document with data model explanation
+	"""
+	return load_data_model_guide()
+
+
+@mcp.resource(
+	"gta://guide/analytical-caveats",
+	name="Guide: Analytical Caveats (Critical)",
+	description="15 critical caveats distilled from the GTA analytical configuration (549 rules). Covers: evaluation filter-only values (4/5 are groupings), Amber = likely harmful, India code 699 anomaly, MAST non-alphabetical IDs, what's NOT in the database, overcounting by sector/product, date semantics, publication lag, EU jurisdiction complexity, trade defence lifecycle, and more. READ THIS before interpreting GTA results.",
+	mime_type="text/markdown"
+)
+def get_analytical_caveats() -> str:
+	"""Return analytical caveats guide with critical interpretation rules.
+
+	Returns:
+		Markdown document with 15 critical caveats
+	"""
+	return load_analytical_caveats()
+
+
+@mcp.resource(
+	"gta://guide/common-mistakes",
+	name="Guide: Common Mistakes When Using GTA Data",
+	description="Quick-reference DO/DON'T checklist for agents. Covers evaluation filter usage, date field selection, counting pitfalls, database scope limitations, and data quality caveats. Consult before making analytical claims.",
+	mime_type="text/markdown"
+)
+def get_common_mistakes() -> str:
+	"""Return common mistakes checklist for GTA data analysis.
+
+	Returns:
+		Markdown document with DO/DON'T checklist
+	"""
+	return load_common_mistakes()
 
 
 def main():

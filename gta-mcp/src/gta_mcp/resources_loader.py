@@ -494,3 +494,60 @@ def load_exclusion_filters() -> str:
 			_CACHE["exclusion_filters"] = f.read()
 
 	return _CACHE["exclusion_filters"]
+
+
+def load_data_model_guide() -> str:
+	"""Load the data model guide from markdown file.
+
+	Returns:
+		Complete markdown guide explaining GTA data hierarchy and counting units
+	"""
+	if "data_model_guide" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "data_model.md"
+
+		if not file_path.exists():
+			return "Error: Data model guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["data_model_guide"] = f.read()
+
+	return _CACHE["data_model_guide"]
+
+
+def load_analytical_caveats() -> str:
+	"""Load the analytical caveats guide from markdown file.
+
+	Returns:
+		Complete markdown guide with 15 critical caveats from the GTA analytical configuration
+	"""
+	if "analytical_caveats" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "analytical_caveats.md"
+
+		if not file_path.exists():
+			return "Error: Analytical caveats guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["analytical_caveats"] = f.read()
+
+	return _CACHE["analytical_caveats"]
+
+
+def load_common_mistakes() -> str:
+	"""Load the common mistakes guide from markdown file.
+
+	Returns:
+		Complete markdown checklist of DO/DON'T for agents using GTA data
+	"""
+	if "common_mistakes" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "common_mistakes.md"
+
+		if not file_path.exists():
+			return "Error: Common mistakes guide resource file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["common_mistakes"] = f.read()
+
+	return _CACHE["common_mistakes"]
