@@ -214,7 +214,7 @@ PROMPTS = [
         "type": "count",
         "request_data": {"mast_chapters": [14]},
         "count_by": "date_announced_year",
-        "count_variable": "interventions"
+        "count_variable": "intervention_id"
     },
     # 16 — COUNT (two calls)
     {
@@ -229,7 +229,7 @@ PROMPTS = [
                     "implementation_period": ["2025-01-01", "2025-12-31"]
                 },
                 "count_by": "date_implemented_year",
-                "count_variable": "interventions"
+                "count_variable": "intervention_id"
             },
             {
                 "label": "2024",
@@ -238,7 +238,7 @@ PROMPTS = [
                     "implementation_period": ["2024-01-01", "2024-12-31"]
                 },
                 "count_by": "date_implemented_year",
-                "count_variable": "interventions"
+                "count_variable": "intervention_id"
             }
         ]
     },

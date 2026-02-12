@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Sequence
 from datetime import datetime
 
 
-CHARACTER_LIMIT = 25000  # Maximum response size in characters
+CHARACTER_LIMIT = 100000  # Maximum response size in characters
 
 
 def extract_text(field: Any, join_multiple: bool = False) -> str:

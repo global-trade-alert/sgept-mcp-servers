@@ -5,7 +5,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 10699,
+      "elapsed_ms": 801,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -133,7 +133,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 14622,
+      "elapsed_ms": 240,
       "ids_requested": [
         152110,
         148999,
@@ -415,7 +415,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 83672,
+      "elapsed_ms": 901,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -969,7 +969,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 1545,
+      "elapsed_ms": 170,
       "ids_requested": [
         151413,
         150651,
@@ -1331,7 +1331,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 3151,
+      "elapsed_ms": 287,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -1422,7 +1422,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 8628,
+      "elapsed_ms": 199,
       "ids_requested": [
         151266,
         149796,
@@ -1659,7 +1659,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 495,
+      "elapsed_ms": 463,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -1701,7 +1701,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 138674,
+      "elapsed_ms": 836,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -2252,7 +2252,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 14940,
+      "elapsed_ms": 131,
       "ids_requested": [
         152717,
         142858,
@@ -2937,7 +2937,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 33610,
+      "elapsed_ms": 408,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -3180,7 +3180,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 5654,
+      "elapsed_ms": 165,
       "ids_requested": [
         152570,
         142715,
@@ -3291,7 +3291,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 62480,
+      "elapsed_ms": 880,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -3842,7 +3842,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 7675,
+      "elapsed_ms": 133,
       "ids_requested": [
         152717,
         142858,
@@ -4527,7 +4527,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 34400,
+      "elapsed_ms": 632,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -4970,7 +4970,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 5862,
+      "elapsed_ms": 130,
       "ids_requested": [
         152705,
         139988,
@@ -5112,7 +5112,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 102766,
+      "elapsed_ms": 801,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -5581,7 +5581,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 1105,
+      "elapsed_ms": 131,
       "ids_requested": [
         152737,
         150785,
@@ -5932,7 +5932,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 89552,
+      "elapsed_ms": 637,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -6486,7 +6486,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 3168,
+      "elapsed_ms": 135,
       "ids_requested": [
         152527,
         146600,
@@ -6737,7 +6737,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 5665,
+      "elapsed_ms": 334,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -6890,7 +6890,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 901,
+      "elapsed_ms": 137,
       "ids_requested": [
         151457,
         141380,
@@ -7012,7 +7012,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 395,
+      "elapsed_ms": 146,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -7065,7 +7065,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 524,
+      "elapsed_ms": 150,
       "ids_requested": [
         58242,
         90120
@@ -7262,7 +7262,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 3002,
+      "elapsed_ms": 240,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -7367,7 +7367,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 4121,
+      "elapsed_ms": 153,
       "ids_requested": [
         142050,
         142454,
@@ -7628,7 +7628,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 350,
+      "elapsed_ms": 138,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -7680,7 +7680,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 418,
+      "elapsed_ms": 128,
       "ids_requested": [
         64871
       ],
@@ -7897,8 +7897,8 @@
     "prompt": "Has the use of export restrictions increased since 2020?",
     "type": "count",
     "count_result": {
-      "status": 400,
-      "elapsed_ms": 224,
+      "status": 200,
+      "elapsed_ms": 1329,
       "body_sent": {
         "request_data": {
           "mast_chapters": [
@@ -7907,12 +7907,93 @@
           "count_by": [
             "date_announced_year"
           ],
-          "count_variable": "interventions"
+          "count_variable": "intervention_id"
         }
       },
-      "count_data": [],
-      "total_count": 0,
-      "error": "{\"request_data\":[\"Unexpected option `interventions` for field count_variable.\"]}"
+      "count_data": [
+        {
+          "value": 1100,
+          "date_announced_year": "2022"
+        },
+        {
+          "value": 945,
+          "date_announced_year": "2020"
+        },
+        {
+          "value": 928,
+          "date_announced_year": "2012"
+        },
+        {
+          "value": 896,
+          "date_announced_year": "2023"
+        },
+        {
+          "value": 887,
+          "date_announced_year": "2021"
+        },
+        {
+          "value": 858,
+          "date_announced_year": "2013"
+        },
+        {
+          "value": 855,
+          "date_announced_year": "2015"
+        },
+        {
+          "value": 810,
+          "date_announced_year": "2011"
+        },
+        {
+          "value": 803,
+          "date_announced_year": "2025"
+        },
+        {
+          "value": 769,
+          "date_announced_year": "2010"
+        },
+        {
+          "value": 744,
+          "date_announced_year": "2014"
+        },
+        {
+          "value": 738,
+          "date_announced_year": "2009"
+        },
+        {
+          "value": 705,
+          "date_announced_year": "2016"
+        },
+        {
+          "value": 685,
+          "date_announced_year": "2018"
+        },
+        {
+          "value": 680,
+          "date_announced_year": "2024"
+        },
+        {
+          "value": 654,
+          "date_announced_year": "2019"
+        },
+        {
+          "value": 621,
+          "date_announced_year": "2017"
+        },
+        {
+          "value": 113,
+          "date_announced_year": "2008"
+        },
+        {
+          "value": 34,
+          "date_announced_year": "2026"
+        },
+        {
+          "value": 6,
+          "date_announced_year": "1970"
+        }
+      ],
+      "total_count": 20,
+      "error": null
     }
   },
   {
@@ -7921,8 +8002,8 @@
     "type": "count_pair",
     "count_results": [
       {
-        "status": 400,
-        "elapsed_ms": 250,
+        "status": 200,
+        "elapsed_ms": 2397,
         "body_sent": {
           "request_data": {
             "gta_evaluation": [
@@ -7935,17 +8016,42 @@
             "count_by": [
               "date_implemented_year"
             ],
-            "count_variable": "interventions"
+            "count_variable": "intervention_id"
           }
         },
-        "count_data": [],
-        "total_count": 0,
-        "error": "{\"request_data\":[\"Unexpected option `interventions` for field count_variable.\"]}",
+        "count_data": [
+          {
+            "value": 3903,
+            "date_implemented_year": "2025"
+          },
+          {
+            "value": 2760,
+            "date_implemented_year": "No implementation date"
+          },
+          {
+            "value": 4,
+            "date_implemented_year": "2026"
+          },
+          {
+            "value": 1,
+            "date_implemented_year": "2013"
+          },
+          {
+            "value": 1,
+            "date_implemented_year": "2024"
+          },
+          {
+            "value": 1,
+            "date_implemented_year": "2020"
+          }
+        ],
+        "total_count": 6,
+        "error": null,
         "label": "2025"
       },
       {
-        "status": 400,
-        "elapsed_ms": 172,
+        "status": 200,
+        "elapsed_ms": 2419,
         "body_sent": {
           "request_data": {
             "gta_evaluation": [
@@ -7958,12 +8064,37 @@
             "count_by": [
               "date_implemented_year"
             ],
-            "count_variable": "interventions"
+            "count_variable": "intervention_id"
           }
         },
-        "count_data": [],
-        "total_count": 0,
-        "error": "{\"request_data\":[\"Unexpected option `interventions` for field count_variable.\"]}",
+        "count_data": [
+          {
+            "value": 4439,
+            "date_implemented_year": "2024"
+          },
+          {
+            "value": 2760,
+            "date_implemented_year": "No implementation date"
+          },
+          {
+            "value": 7,
+            "date_implemented_year": "2025"
+          },
+          {
+            "value": 4,
+            "date_implemented_year": "2026"
+          },
+          {
+            "value": 1,
+            "date_implemented_year": "2013"
+          },
+          {
+            "value": 1,
+            "date_implemented_year": "2020"
+          }
+        ],
+        "total_count": 6,
+        "error": null,
         "label": "2024"
       }
     ]
@@ -7974,7 +8105,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 15697,
+      "elapsed_ms": 389,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -8183,7 +8314,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 1977,
+      "elapsed_ms": 128,
       "ids_requested": [
         152435,
         70740,
@@ -8325,7 +8456,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 40723,
+      "elapsed_ms": 457,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -8734,7 +8865,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 7200,
+      "elapsed_ms": 161,
       "ids_requested": [
         152717,
         149212,
@@ -8925,7 +9056,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 4030,
+      "elapsed_ms": 298,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -8985,7 +9116,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 7052,
+      "elapsed_ms": 226,
       "ids_requested": [
         151187,
         78695,
@@ -9331,7 +9462,7 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 144600,
+      "elapsed_ms": 814,
       "body_sent": {
         "limit": 500,
         "offset": 0,
@@ -9891,7 +10022,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 4171,
+      "elapsed_ms": 136,
       "ids_requested": [
         152697,
         148527,
