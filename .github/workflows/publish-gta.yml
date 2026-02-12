@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Publish GTA-MCP to PyPI
 
 on:
   release:
@@ -6,9 +6,10 @@ on:
 
 jobs:
   publish:
-    name: Build and publish to PyPI
+    name: Build and publish sgept-gta-mcp
+    if: startsWith(github.event.release.tag_name, 'gta-v')
     runs-on: ubuntu-latest
-    environment: pypi
+    environment: pypi-gta
     permissions:
       id-token: write  # Required for trusted publishing
 
