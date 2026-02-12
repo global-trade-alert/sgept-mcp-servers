@@ -6,6 +6,8 @@ Example prompts you can copy-paste into Claude. Each prompt works out of the box
 
 Pick a category that matches your work. Copy a prompt, paste it into Claude, and adapt it to your specific question. Claude will use the GTA database to find relevant trade policy interventions.
 
+**Tip:** When your question involves specific commodities (steel, lithium, semiconductors), Claude will automatically use `gta_lookup_hs_codes` to find the right product codes before searching. When your question involves services or broad sectors (financial services, transport), Claude will use `gta_lookup_sectors` to find the right sector codes. You don't need to know these codes yourself — just ask your question in plain language.
+
 ---
 
 ## 1. Tariff Escalation and Retaliation
@@ -42,15 +44,15 @@ Uses `gta_search_interventions` with `implementing_jurisdictions: ['CHN']` and `
 
 **Prompt:** "Which countries have restricted exports of lithium or cobalt since 2022?"
 
-Searches for export bans, quotas, or licensing requirements affecting critical battery materials.
+Claude will first use `gta_lookup_hs_codes` to find the HS codes for lithium (e.g., 282520) and cobalt (e.g., 810520), then search for export restrictions on those specific products. This two-step approach ensures results are precise rather than relying on text matching alone.
 
 **Prompt:** "What measures currently affect semiconductor manufacturing equipment trade?"
 
-Filters interventions by sector (semiconductors) and measure type (export controls, trade defence, FDI screening).
+Claude will use `gta_lookup_hs_codes` to find HS codes for semiconductor equipment (e.g., heading 8486), then search for interventions affecting those products across all measure types.
 
 **Prompt:** "Show me all export restrictions on graphite imposed globally since 2020"
 
-Searches for interventions with "graphite" in the product description and "export" in the measure type.
+Claude will use `gta_lookup_hs_codes` to find graphite HS codes, then search for export restrictions (`mast_chapters: ['P']`) on those products.
 
 **Prompt:** "What local content requirements affect battery production in Indonesia?"
 
@@ -90,15 +92,15 @@ Uses `gta_search_interventions` with EU as implementing country, US as affected,
 
 **Prompt:** "What measures has Brazil implemented affecting US agricultural exports?"
 
-Filters for Brazilian interventions targeting the US. To narrow to agricultural products specifically, add `affected_sectors` with agricultural CPC codes (e.g., 11-49 for primary agriculture) or relevant HS codes. Without sector filtering, results include all Brazilian measures affecting the US.
+Claude will use `gta_lookup_hs_codes` to find agricultural HS codes (chapters 01-24) or `gta_lookup_sectors` for agricultural CPC sectors, then filter for Brazilian interventions affecting the US on those products.
 
 **Prompt:** "Compare trade barriers imposed by ASEAN members on EU services"
 
-Searches for harmful interventions by ASEAN countries affecting the EU. To filter for services specifically, add `affected_sectors` with CPC sectors >= 500 (e.g., 711 for financial services, 841 for telecommunications). Without explicit sector filtering, results include all measure types.
+Claude will use `gta_lookup_sectors` to find services-related CPC codes (CPC 500+, e.g., 711 for financial services, 841 for telecommunications), then search for harmful interventions by ASEAN countries affecting the EU in those sectors.
 
 **Prompt:** "What import restrictions does India impose on Swiss pharmaceutical products?"
 
-Filters for Indian interventions affecting Switzerland in the pharmaceutical sector.
+Claude will use `gta_lookup_hs_codes` to find pharmaceutical HS codes (e.g., chapter 30), then filter for Indian import restrictions affecting Switzerland on those products.
 
 **Prompt:** "Show me all measures China has implemented affecting Australian mineral exports since 2020"
 

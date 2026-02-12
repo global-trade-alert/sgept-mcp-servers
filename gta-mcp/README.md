@@ -1,12 +1,12 @@
 # GTA MCP Server
 
-Query 75,000+ trade policy interventions through Claude — tariffs, subsidies, export bans, and more from 200+ countries.
+Query 78,000+ trade policy interventions through Claude — tariffs, subsidies, export bans, and more from 200+ countries.
 
 ## What is Global Trade Alert?
 
-Global Trade Alert (GTA) is a research initiative by the St Gallen Endowment for Prosperity through Trade (SGEPT) that tracks government trade policy changes worldwide since November 2008. Unlike trade databases that rely on government self-reporting, GTA independently documents and verifies policy interventions using primary sources — official gazettes, ministry announcements, legislative records, and press releases.
+Global Trade Alert (GTA) is a transparency initiative by the St Gallen Endowment for Prosperity through Trade (SGEPT) that tracks government trade policy changes worldwide since November 2008. Unlike trade databases that rely on government self-reporting, GTA independently documents and verifies policy interventions using primary sources — official gazettes, ministry announcements, legislative records, and press releases.
 
-GTA covers all types of trade measures: not just tariffs, but subsidies, export restrictions, investment barriers, public procurement rules, sanitary standards, and more. Each intervention is classified by color: Red (harmful/discriminatory), Amber (likely harmful but uncertain), or Green (liberalising). The database contains over 75,000 documented interventions across 200+ jurisdictions.
+GTA covers all types of trade measures: not just tariffs, but subsidies, export restrictions, FDI barriers, public procurement rules, localisation requirements and more. Each intervention is classified by color: Red (harmful/discriminatory), Amber (likely harmful but uncertain), or Green (liberalising). The database contains over 78,000 documented interventions across 200+ jurisdictions.
 
 This breadth distinguishes GTA from the WTO's trade monitoring system, which captures only measures that governments voluntarily report. GTA reveals the full landscape of state intervention in markets — including measures governments prefer not to highlight.
 
@@ -54,7 +54,7 @@ After installing, restart your terminal. Verify it works by running `uvx --versi
 
 ### Getting an API key
 
-You need a GTA API key from SGEPT. Request access at https://globaltradealert.org/api-access — you'll receive your key by email, typically within 1-2 business days.
+You need a GTA API key from SGEPT. Request access at https://globaltradealert.org/api-access — you'll receive your demo key direcly; request support for full access credentials.
 
 ### For Claude Desktop (recommended)
 
@@ -169,6 +169,26 @@ Get aggregated counts across 24 dimensions including year, country, type, sector
 
 **Example:** "How many harmful trade interventions did G20 countries implement each year from 2020 to 2025?"
 
+### 6. `gta_lookup_hs_codes`
+
+Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix. Use this before `gta_search_interventions` when asking about specific commodities or products.
+
+**Key parameters:**
+- `search_term`: Product keyword (e.g., "lithium"), chapter number (e.g., "28"), or code prefix (e.g., "8541")
+- `max_results`: Maximum codes to return (default 50)
+
+**Example:** "Look up HS codes for steel" returns codes like 7206-7229 which you can then pass to `gta_search_interventions` as `affected_products`.
+
+### 7. `gta_lookup_sectors`
+
+Search CPC (Central Product Classification) sector codes by keyword or code prefix. Use this before `gta_search_interventions` when asking about services or broad economic sectors.
+
+**Key parameters:**
+- `search_term`: Sector keyword (e.g., "financial", "transport") or code prefix (e.g., "71")
+- `max_results`: Maximum sectors to return (default 50)
+
+**Example:** "Look up sectors related to financial services" returns CPC codes like 711, 715, 717 which you can pass as `affected_sectors`.
+
 ## Available Resources
 
 Resources provide reference data and documentation through the MCP resource system (accessible via prompts like "Show me the GTA glossary").
@@ -176,13 +196,16 @@ Resources provide reference data and documentation through the MCP resource syst
 | Resource | URI | Purpose |
 |----------|-----|---------|
 | Jurisdictions | `gta://reference/jurisdictions` | Country codes, names, ISO/UN mapping |
+| Jurisdiction Groups | `gta://reference/jurisdiction-groups` | G7, G20, EU-27, BRICS, ASEAN, CPTPP, RCEP member codes |
 | Intervention Types | `gta://reference/intervention-types` | Definitions, examples, MAST mapping |
 | MAST Chapters | `gta://reference/mast-chapters` | Product classification system |
 | Sectors | `gta://reference/sectors` | Economic sector taxonomy |
 | Glossary | `gta://reference/glossary` | Key GTA terms explained for non-experts |
 | Data Model | `gta://guide/data-model` | How interventions, products, and jurisdictions relate |
 | Date Fields | `gta://guide/date-fields` | Announced vs implemented dates |
+| CPC vs HS | `gta://guide/cpc-vs-hs` | When to use sector codes vs product codes |
 | Analytical Caveats | `gta://guide/analytical-caveats` | Data limitations and interpretation guidance |
+| Query Intent Mapping | `gta://guide/query-intent-mapping` | Natural language terms to structured GTA filters |
 | Query Patterns | `gta://guide/query-patterns` | Common analysis workflows |
 
 ## Understanding GTA Data
@@ -273,8 +296,8 @@ pytest tests/test_tools.py
 **License:** MIT
 
 **Support:**
-- API access: Contact SGEPT at info@sgept.org
+- API access: Contact SGEPT at support@sgept.org
 - Server bugs: File issues on GitHub at https://github.com/sgept/sgept-mcp-servers
 - Full changelog: [CHANGELOG.md](CHANGELOG.md)
 
-**About SGEPT:** The St Gallen Endowment for Prosperity through Trade is a research institute affiliated with the University of St Gallen, Switzerland. Learn more at https://sgept.org
+**About SGEPT:** Learn more at https://sgept.org
