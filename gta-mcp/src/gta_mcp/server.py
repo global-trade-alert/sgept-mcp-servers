@@ -47,8 +47,12 @@ from .resources_loader import (
     load_analytical_caveats,
     load_common_mistakes,
     load_glossary,
-    load_search_strategy
+    load_search_strategy,
+    load_jurisdiction_groups,
+    load_query_intent_mapping,
 )
+from .hs_lookup import search_hs_codes
+from .sector_lookup import search_sectors
 
 
 # Initialize MCP server
@@ -129,50 +133,34 @@ def get_auth_manager() -> JWTAuthManager:
     }
 )
 async def gta_search_interventions(params: GTASearchInput) -> str:
-    """Search and filter trade policy interventions from the Global Trade Alert database.
+    """Search trade policy interventions from the Global Trade Alert database.
 
-    This tool allows comprehensive searching of government trade interventions. Use structured
-    filters FIRST (countries, products, intervention types, dates), then add 'query' parameter
-    ONLY for entity names (companies, programs) not captured by standard filters.
+    Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
 
-    Use this tool to:
-    - Find trade barriers and restrictions by specific countries
-    - Analyze interventions affecting particular products or sectors
-    - Track policy changes over time periods
-    - Identify liberalizing vs. harmful measures
-    - Search for specific companies or programs by name
+    BEFORE calling this tool:
+    - For commodity/product queries → use `gta_lookup_hs_codes` to find HS product codes
+    - For service/sector queries → use `gta_lookup_sectors` to find CPC sector codes
+    - For country groups (G20, EU, BRICS) → see gta://reference/jurisdiction-groups
+    - For mapping concepts to filters → see gta://guide/query-intent-mapping
 
-    Key parameters: implementing_jurisdictions, intervention_types, affected_products,
-    date_announced_gte, query (entity names only). See parameter descriptions for full details.
+    Key filters: implementing_jurisdictions, affected_products, mast_chapters, intervention_types,
+    gta_evaluation, date_announced_gte. Use 'query' ONLY for named entities (companies, programs).
 
-    Note: gta_evaluation accepts 'Red', 'Amber', or 'Green' for individual values. Use 'Harmful'
-    as shorthand for Red+Amber (most common analytical definition of 'harmful'). Individual
-    intervention records always have Red, Amber, or Green — never 'Harmful' or 'Liberalizing'.
+    gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
+    Use 'Harmful' as shorthand for Red+Amber.
 
-    Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
-    and dates.
+    ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
+    as formatted. Do NOT modify or reformat — it provides clickable citations.
 
-    ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)" section
-    at the end. You MUST include this complete reference list in your response to the user EXACTLY
-    as formatted. The reference list format is:
-    - {date}: {title} [ID [{intervention_id}](url)].
-    Do NOT modify or reformat the reference list. It provides essential clickable citations.
-
-    Common examples:
-        - US tariffs on China in 2024:
-          implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
+    Examples:
+        - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
+        - Subsidies: mast_chapters=['L']
+        - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
+          then mast_chapters=['P'], affected_products=[282520, 283691, ...]
 
-        - All subsidies (broad search):
-          mast_chapters=['L']
-
-        - Tesla-specific subsidies:
-          query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
-
-    For parameter reference: gta://guide/parameters
-    For comprehensive examples: gta://guide/query-examples
-    For query syntax: gta://guide/query-syntax
-    For MAST chapters: gta://reference/mast-chapters
+    Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
+    gta://reference/mast-chapters, gta://reference/jurisdiction-groups
     """
     try:
         client = get_api_client()
@@ -594,6 +582,189 @@ async def gta_count_interventions(params: GTACountInput) -> str:
 
 
 # ============================================================================
+# Lookup Tools - Product & Sector Code Discovery
+# ============================================================================
+
+
+@mcp.tool(
+    name="gta_lookup_hs_codes",
+    annotations={
+        "title": "Look Up HS Product Codes",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def gta_lookup_hs_codes(search_term: str, max_results: int = 50) -> str:
+    """Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix.
+
+    Use BEFORE gta_search_interventions when the user asks about specific commodities or products.
+    Returns matching codes across all 3 levels (chapters, headings, subheadings) with the numeric
+    IDs needed for the affected_products filter.
+
+    Examples:
+        - search_term='lithium' → finds HS 282520, 283691, etc.
+        - search_term='28' → lists all codes in chapter 28 (inorganic chemicals)
+        - search_term='8541' → lists subheadings under heading 8541 (semiconductors)
+        - search_term='steel' → finds relevant iron/steel HS codes
+
+    Returns a markdown table with codes and a ready-to-use affected_products list.
+    """
+    try:
+        return search_hs_codes(search_term, max_results)
+    except FileNotFoundError as e:
+        return f"❌ {str(e)}"
+    except Exception as e:
+        return f"❌ Error searching HS codes: {str(e)}"
+
+
+@mcp.tool(
+    name="gta_lookup_sectors",
+    annotations={
+        "title": "Look Up CPC Sector Codes",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def gta_lookup_sectors(search_term: str, max_results: int = 50) -> str:
+    """Search CPC (Central Product Classification) sector codes by keyword or code prefix.
+
+    Use BEFORE gta_search_interventions when the user asks about services or broad sector
+    categories. Returns matching sectors with IDs for the affected_sectors filter.
+    CPC ID >= 500 = services, ID < 500 = goods.
+
+    Examples:
+        - search_term='financial' → finds CPC 711, 715, 717
+        - search_term='71' → lists all sectors in division 71 (financial services)
+        - search_term='transport' → finds transport-related CPC sectors
+
+    Returns a markdown table with codes and a ready-to-use affected_sectors list.
+    """
+    try:
+        return search_sectors(search_term, max_results)
+    except FileNotFoundError as e:
+        return f"❌ {str(e)}"
+    except Exception as e:
+        return f"❌ Error searching sectors: {str(e)}"
+
+
+# ============================================================================
+# MCP Prompts - Workflow Templates
+# ============================================================================
+
+
+@mcp.prompt(
+    name="analyze_subsidies",
+    description="Analyze government subsidies for a country and sector. Pre-configures MAST chapter L filter and structured search workflow."
+)
+def prompt_analyze_subsidies(country: str, sector: str) -> str:
+    return (
+        f"Analyze government subsidies by {country} in the {sector} sector.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use `gta_lookup_hs_codes` or `gta_lookup_sectors` to find codes for '{sector}'\n"
+        f"2. Use `gta_search_interventions` with:\n"
+        f"   - implementing_jurisdictions=['{country}']\n"
+        "   - mast_chapters=['L'] (subsidies)\n"
+        "   - The product/sector codes from step 1\n"
+        "   - gta_evaluation=['Harmful'] if focusing on discriminatory subsidies\n"
+        "3. Triage the overview results and drill into the most relevant interventions\n"
+        "4. Summarize: types of subsidies, scale, affected trading partners, timeline"
+    )
+
+
+@mcp.prompt(
+    name="compare_trade_barriers",
+    description="Compare trade barriers between two countries in a specific sector. Runs parallel searches for bilateral analysis."
+)
+def prompt_compare_trade_barriers(country_a: str, country_b: str, sector: str) -> str:
+    return (
+        f"Compare trade barriers between {country_a} and {country_b} in the {sector} sector.\n\n"
+        "Follow this workflow:\n"
+        f"1. Look up product/sector codes for '{sector}' using lookup tools\n"
+        f"2. Search measures {country_a} implements affecting {country_b}:\n"
+        f"   - implementing_jurisdictions=['{country_a}'], affected_jurisdictions=['{country_b}']\n"
+        "   - gta_evaluation=['Harmful']\n"
+        "   - The product/sector codes from step 1\n"
+        f"3. Search measures {country_b} implements affecting {country_a}:\n"
+        f"   - implementing_jurisdictions=['{country_b}'], affected_jurisdictions=['{country_a}']\n"
+        "   - Same filters as above\n"
+        "4. Compare: number of measures, types, severity, timeline\n"
+        "5. Identify asymmetries and escalation patterns"
+    )
+
+
+@mcp.prompt(
+    name="track_recent_changes",
+    description="Monitor recent trade policy changes for a jurisdiction. Uses date_modified_gte for change tracking."
+)
+def prompt_track_recent_changes(days: str = "7", jurisdiction: str = "") -> str:
+    jurisdiction_filter = f"\n   - implementing_jurisdictions=['{jurisdiction}']" if jurisdiction else ""
+    return (
+        f"Track trade policy changes from the last {days} days"
+        f"{f' for {jurisdiction}' if jurisdiction else ' globally'}.\n\n"
+        "Follow this workflow:\n"
+        "1. Search for recently modified interventions:\n"
+        f"   - date_modified_gte=(today minus {days} days, YYYY-MM-DD format)"
+        f"{jurisdiction_filter}\n"
+        "   - sorting='-last_updated'\n"
+        "2. Also check the ticker for text updates:\n"
+        f"   - Use `gta_list_ticker_updates` with date_modified_gte\n"
+        "3. Categorize changes: new measures, modifications, removals\n"
+        "4. Highlight the most significant changes by evaluation and type\n"
+        "5. Note any patterns (escalation, liberalization trends)"
+    )
+
+
+@mcp.prompt(
+    name="sector_impact_report",
+    description="Generate a cross-country sector impact report. Analyzes which countries impose measures affecting a sector."
+)
+def prompt_sector_impact_report(sector: str, evaluation: str = "Harmful") -> str:
+    return (
+        f"Generate a sector impact report for '{sector}' focusing on {evaluation} measures.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use lookup tools to find HS/CPC codes for '{sector}'\n"
+        "2. Get aggregate counts by implementing country:\n"
+        "   - Use `gta_count_interventions` with count_by=['implementer']\n"
+        f"   - gta_evaluation=['{evaluation}']\n"
+        "   - The product/sector codes from step 1\n"
+        "3. Get aggregate counts by year:\n"
+        "   - count_by=['date_announced_year']\n"
+        "4. Search the most recent measures for context:\n"
+        "   - Use `gta_search_interventions` with the same filters\n"
+        "5. Summarize: top implementing countries, trend over time, measure types, "
+        "key recent measures"
+    )
+
+
+@mcp.prompt(
+    name="critical_minerals_tracker",
+    description="Track trade measures affecting a specific critical mineral. Uses HS code lookup for precise product filtering."
+)
+def prompt_critical_minerals_tracker(mineral: str, evaluation: str = "Harmful") -> str:
+    return (
+        f"Track trade measures affecting {mineral}.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use `gta_lookup_hs_codes` to find all HS codes related to '{mineral}'\n"
+        "2. Search export restrictions:\n"
+        "   - mast_chapters=['P'] (export measures)\n"
+        "   - affected_products=[codes from step 1]\n"
+        f"   - gta_evaluation=['{evaluation}']\n"
+        "3. Search subsidies for domestic production:\n"
+        "   - mast_chapters=['L'] (subsidies)\n"
+        "   - affected_products=[same codes]\n"
+        "4. Search import measures:\n"
+        "   - mast_chapters=['D', 'E'] (trade defence, quotas)\n"
+        "   - affected_products=[same codes]\n"
+        "5. Summarize: which countries restrict exports, which subsidize production, "
+        "which impose import barriers. Include timeline and current in-force status."
+    )
+
+
+# ============================================================================
 # MCP Resources - Reference Data
 # ============================================================================
 
@@ -918,6 +1089,36 @@ def get_search_strategy() -> str:
 		Markdown guide explaining detail levels and search workflow
 	"""
 	return load_search_strategy()
+
+
+@mcp.resource(
+	"gta://reference/jurisdiction-groups",
+	name="Reference: Jurisdiction Groups (G7, G20, EU, BRICS, ASEAN, CPTPP)",
+	description="ISO and UN codes for major country groups. Use when a query mentions G7, G20, EU-27, BRICS, ASEAN, CPTPP, or RCEP to get the correct implementing_jurisdictions or affected_jurisdictions list. Includes ready-to-use ISO code arrays.",
+	mime_type="text/markdown"
+)
+def get_jurisdiction_groups() -> str:
+	"""Return jurisdiction groups reference with member codes.
+
+	Returns:
+		Markdown reference with ISO/UN codes for G7, G20, EU-27, BRICS, ASEAN, CPTPP, RCEP
+	"""
+	return load_jurisdiction_groups()
+
+
+@mcp.resource(
+	"gta://guide/query-intent-mapping",
+	name="Guide: Natural Language to Structured Filters",
+	description="Maps analytical concepts from natural language queries to GTA structured filters. Covers: policy types to MAST chapters (subsidies→L, export controls→P), evaluation terms (harmful→Red+Amber), commodity terms to HS code lookup, service terms to CPC sector lookup, geographic groups to jurisdiction codes, and temporal terms to date filters. READ THIS before translating user questions into API calls.",
+	mime_type="text/markdown"
+)
+def get_query_intent_mapping() -> str:
+	"""Return query intent mapping guide for translating NL to structured filters.
+
+	Returns:
+		Markdown guide mapping natural language terms to GTA structured filters
+	"""
+	return load_query_intent_mapping()
 
 
 def main():

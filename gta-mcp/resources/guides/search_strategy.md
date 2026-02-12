@@ -68,6 +68,46 @@ gta_search_interventions(
 
 This shows interventions added or significantly modified since the specified date, ordered by most recent changes first. Useful for weekly monitoring.
 
+## Pre-Search: Product & Sector Code Lookup
+
+Before calling `gta_search_interventions`, determine if the query mentions specific commodities, products, or services. If so, use the lookup tools first:
+
+### HS Code Lookup (for goods/commodities)
+
+```
+gta_lookup_hs_codes(search_term="lithium")
+→ Returns table with HS codes: 282520 (lithium oxide), 283691 (lithium carbonate), etc.
+→ Use the IDs with affected_products filter
+```
+
+This replaces the error-prone pattern of using `query: "lithium cobalt"` (AND logic, often returns 0 results).
+
+### CPC Sector Lookup (for services/broad categories)
+
+```
+gta_lookup_sectors(search_term="financial")
+→ Returns table with CPC codes: 711 (financial services), 715, 717
+→ Use the IDs with affected_sectors filter
+```
+
+### When to Use Which
+
+| Question mentions... | Lookup tool | Filter parameter |
+|---------------------|------------|-----------------|
+| Specific commodity (lithium, steel, cobalt) | `gta_lookup_hs_codes` | `affected_products` |
+| Broad product category (agriculture, automotive) | `gta_lookup_hs_codes` | `affected_products` |
+| Services (financial, telecom, transport) | `gta_lookup_sectors` | `affected_sectors` |
+| Country groups (G20, EU, BRICS, ASEAN) | See gta://reference/jurisdiction-groups | `implementing_jurisdictions` |
+| Policy types (subsidies, export controls) | See gta://guide/query-intent-mapping | `mast_chapters` |
+
+### Recommended Multi-Pass Workflow with Lookups
+
+1. **Look up codes**: Use `gta_lookup_hs_codes` or `gta_lookup_sectors` to find product/sector codes
+2. **Map intent**: Use gta://guide/query-intent-mapping to translate policy concepts to filters
+3. **Search broadly**: Call `gta_search_interventions` with structured filters (auto-overview)
+4. **Triage results**: Identify relevant interventions from the overview table
+5. **Drill down**: Call again with `intervention_id: [selected IDs]` for analysis-ready detail
+
 ## Custom Key Selection
 
 For advanced use, the `show_keys` parameter lets you specify exactly which fields to return:

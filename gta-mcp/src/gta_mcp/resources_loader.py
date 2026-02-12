@@ -605,3 +605,41 @@ def load_search_strategy() -> str:
 			_CACHE["search_strategy"] = f.read()
 
 	return _CACHE["search_strategy"]
+
+
+def load_jurisdiction_groups() -> str:
+	"""Load the jurisdiction groups reference from markdown file.
+
+	Returns:
+		Markdown reference with G7/G20/EU/BRICS/ASEAN/CPTPP member codes
+	"""
+	if "jurisdiction_groups" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "reference" / "jurisdiction_groups.md"
+
+		if not file_path.exists():
+			return "Error: Jurisdiction groups reference file not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["jurisdiction_groups"] = f.read()
+
+	return _CACHE["jurisdiction_groups"]
+
+
+def load_query_intent_mapping() -> str:
+	"""Load the query intent mapping guide from markdown file.
+
+	Returns:
+		Markdown guide mapping natural language terms to GTA structured filters
+	"""
+	if "query_intent_mapping" not in _CACHE:
+		resources_dir = get_resources_dir()
+		file_path = resources_dir / "guides" / "query_intent_mapping.md"
+
+		if not file_path.exists():
+			return "Error: Query intent mapping guide not found"
+
+		with open(file_path, 'r', encoding='utf-8') as f:
+			_CACHE["query_intent_mapping"] = f.read()
+
+	return _CACHE["query_intent_mapping"]

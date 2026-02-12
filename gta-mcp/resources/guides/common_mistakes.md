@@ -79,6 +79,30 @@
 **Use date_modified_gte with -last_updated sorting for monitoring**
 - Example: "What GTA entries were updated this week?" → use `date_modified_gte: "2026-02-05"` with `sorting: "-last_updated"` to see recently modified interventions first.
 
+## Query vs Structured Filters
+
+**Always use structured filters before the `query` parameter.** The `query` field searches intervention descriptions — it is NOT intelligent NLP search.
+
+**Real failure example — "lithium cobalt" returns 0 results:**
+- Wrong: `query: "lithium cobalt"` → performs AND/phrase match, requires both terms
+- Correct: Use `gta_lookup_hs_codes('lithium')` and `gta_lookup_hs_codes('cobalt')` to find HS codes, then `affected_products: [282520, 283691, 810520, ...]`
+
+**Real failure example — "subsidise" not mapped to structured filter:**
+- Wrong: `query: "semiconductor"` alone → returns 747 results including non-subsidies
+- Correct: `mast_chapters: ['L'], query: "semiconductor"` → only subsidy-type measures
+
+**Real failure example — "G20 countries" not translated to member codes:**
+- Wrong: `query: "G20"` → searches descriptions for "G20" text
+- Correct: `implementing_jurisdictions: ['ARG','AUS','BRA',...]` using gta://reference/jurisdiction-groups
+
+**Decision flow:**
+1. Policy type concept? → Map to `mast_chapters` or `intervention_types` (see gta://guide/query-intent-mapping)
+2. Commodity/product? → Use `gta_lookup_hs_codes` → `affected_products`
+3. Service sector? → Use `gta_lookup_sectors` → `affected_sectors`
+4. Country group? → Look up in gta://reference/jurisdiction-groups
+5. Evaluation concept? → Map to `gta_evaluation`
+6. **Only then**: use `query` for remaining named entities (companies, programs)
+
 ## Interpretation Guidance
 
 **When you see gaps in recent data:**
