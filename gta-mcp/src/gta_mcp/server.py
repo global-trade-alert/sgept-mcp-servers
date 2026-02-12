@@ -205,7 +205,7 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             if params.detail_level == "overview":
                 use_overview_format = True
                 if params.limit == 50:
-                    effective_limit = 500
+                    effective_limit = 1000
             elif params.detail_level == "standard":
                 pass  # standard keys, user's limit
             # detail_level="full" → show_keys=None (API returns everything)
@@ -218,7 +218,7 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             show_keys = KEY_PROFILES["overview"]
             use_overview_format = True
             if params.limit == 50:
-                effective_limit = 500
+                effective_limit = 1000
 
         # Make API request
         results = await client.search_interventions(

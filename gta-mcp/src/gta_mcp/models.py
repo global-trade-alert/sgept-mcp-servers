@@ -207,12 +207,12 @@ class GTASearchInput(BaseModel):
         description=(
             "Controls how much data is returned per intervention. "
             "'overview': compact triage data (ID, title, type, evaluation, date, implementer) — "
-            "auto-raises limit to 500 for broad triage. "
+            "auto-raises limit to 1000 for broad triage. "
             "'standard': analysis-ready data (adds sectors, affected countries, all dates, MAST chapter) — "
             "best for detailed work on a filtered set. "
             "'full': everything including descriptions, sources, and product-level detail — "
             "best for deep dives on specific interventions. "
-            "Default behaviour: broad searches auto-select 'overview' (up to 500 compact results); "
+            "Default behaviour: broad searches auto-select 'overview' (up to 1000 compact results); "
             "searches with specific intervention_id auto-select 'standard'. "
             "You rarely need to set this explicitly."
         )

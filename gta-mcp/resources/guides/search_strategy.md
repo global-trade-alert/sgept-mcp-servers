@@ -6,12 +6,12 @@ The GTA MCP server automatically manages response size and completeness. You do 
 
 | Your query | Server auto-selects | What you get |
 |------------|--------------------|--------------|
-| Broad search (no `intervention_id`) | **Overview mode**, limit=500 | Compact table: ID, title, type, evaluation, date, implementer |
+| Broad search (no `intervention_id`) | **Overview mode**, limit=1000 | Compact table: ID, title, type, evaluation, date, implementer |
 | Specific IDs (`intervention_id: [...]`) | **Standard mode** | Analysis-ready: adds sectors, affected countries, all dates, MAST chapter |
 
 This enables a natural two-step workflow:
 
-1. **Search broadly** → see up to 500 interventions as a compact triage list
+1. **Search broadly** → see up to 1000 interventions as a compact triage list
 2. **Pick the relevant IDs** → call again with `intervention_id: [selected IDs]` for full analysis data
 
 ## Example Workflow
@@ -25,7 +25,7 @@ gta_search_interventions(
 )
 ```
 
-Returns a compact table of up to 500 interventions. Scan titles, types, and evaluations to identify what's relevant.
+Returns a compact table of up to 1000 interventions. Scan titles, types, and evaluations to identify what's relevant.
 
 ### Step 2: Get details for relevant IDs
 

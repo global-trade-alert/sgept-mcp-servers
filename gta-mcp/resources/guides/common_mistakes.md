@@ -30,7 +30,7 @@
 - Example: If you encounter terms like "contingent trade-protective measure" or "behind-the-border instrument," check the glossary for GTA's specific definitions.
 
 **Specify limit parameter to control response size (default is 50)**
-- Example: For exploratory queries, use `limit: 10` to get quick results. For comprehensive analysis, use `limit: 500` or higher.
+- Example: For exploratory queries, use `limit: 10` to get quick results. For comprehensive analysis, use `limit: 1000` or higher.
 
 ## DON'T:
 
@@ -71,7 +71,7 @@
 - Wrong: "6 export restrictions were announced in 1970." Correct: Pre-2008 dates in GTA count results are likely data quality artefacts. GTA monitoring begins November 2008. Filter or exclude pre-2008 groups from trend analysis.
 
 **Set detail_level manually (the server handles this automatically)**
-- Wrong: Always setting `detail_level: "overview"` or `detail_level: "standard"` on every query. Correct: The server auto-selects overview mode (compact, limit=500) for broad searches and standard mode for specific intervention_id lookups. You rarely need to set `detail_level` explicitly.
+- Wrong: Always setting `detail_level: "overview"` or `detail_level: "standard"` on every query. Correct: The server auto-selects overview mode (compact, limit=1000) for broad searches and standard mode for specific intervention_id lookups. You rarely need to set `detail_level` explicitly.
 
 **Expect full intervention details on a broad search (the default is compact overview)**
 - Wrong: Expecting descriptions, product arrays, and sources from a broad search. Correct: Broad searches return a compact overview table (ID, title, type, evaluation, date, implementer). To get full details, pick the relevant intervention IDs and call again with `intervention_id: [selected IDs]`.
