@@ -1,11 +1,11 @@
 """Multi-pass workflow evaluation for the GTA MCP server's 20 sample prompts.
 
 Tests the automatic detection logic:
-- Broad search (no intervention_id) -> overview keys + limit=500
+- Broad search (no intervention_id) -> overview keys + limit=1000
 - Specific ID lookup (intervention_id) -> standard keys
 
 For each prompt, runs:
-  Pass 1: Overview (broad search with overview keys, limit=500)
+  Pass 1: Overview (broad search with overview keys, limit=1000)
   Pass 2: Detail (pick 5 IDs from Pass 1, fetch with standard keys)
   Count queries: Direct count calls (no multi-pass needed)
 
@@ -307,9 +307,9 @@ async def api_post(client: httpx.AsyncClient, url: str, body: dict) -> tuple:
 # --------------------------------------------------------------------------- #
 
 async def run_overview_pass(client: httpx.AsyncClient, request_data: dict) -> dict:
-    """Run a broad search with overview keys and limit=500."""
+    """Run a broad search with overview keys and limit=1000."""
     body = {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": request_data,
@@ -477,7 +477,7 @@ async def run_all():
                 # ----------------------------------------------------------
                 if query_type == "search":
                     # Pass 1: Overview
-                    print(f"  Pass 1 (Overview, limit=500)...")
+                    print(f"  Pass 1 (Overview, limit=1000)...")
                     pass1 = await run_overview_pass(client, p["request_data"])
                     entry["pass1_overview"] = pass1
                     print(f"    -> {pass1['total_results']} results, "

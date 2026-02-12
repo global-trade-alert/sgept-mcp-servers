@@ -5,9 +5,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 801,
+      "elapsed_ms": 6202,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -133,7 +133,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 240,
+      "elapsed_ms": 175,
       "ids_requested": [
         152110,
         148999,
@@ -415,9 +415,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 901,
+      "elapsed_ms": 6458,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -443,9 +443,9 @@
           "intervention_url"
         ]
       },
-      "total_results": 500,
-      "response_size_bytes": 252752,
-      "response_size_kb": 246.8,
+      "total_results": 623,
+      "response_size_bytes": 310712,
+      "response_size_kb": 303.4,
       "sample_titles": [
         "Mexico: Removal of several products from the \"basic basket\" products list temporarily exempted from import duties (December 2025)",
         "Brazil: Modification of import tariff-rate quotas and import duties for 15 products (December 2025)",
@@ -953,7 +953,130 @@
         144216,
         144223,
         144189,
-        144207
+        144207,
+        144222,
+        144110,
+        144124,
+        144027,
+        144016,
+        143835,
+        143840,
+        143766,
+        143785,
+        143786,
+        143787,
+        143788,
+        143789,
+        143790,
+        143791,
+        143792,
+        143793,
+        143794,
+        143795,
+        143796,
+        143799,
+        143821,
+        143822,
+        143823,
+        143824,
+        143661,
+        143681,
+        143623,
+        143624,
+        143625,
+        143626,
+        143628,
+        143629,
+        143630,
+        143631,
+        143655,
+        143659,
+        143556,
+        143402,
+        143403,
+        143404,
+        143406,
+        143407,
+        143408,
+        143409,
+        143419,
+        143420,
+        143465,
+        143466,
+        143467,
+        143468,
+        143470,
+        143471,
+        143472,
+        143473,
+        143476,
+        143302,
+        143303,
+        143304,
+        143305,
+        143306,
+        143307,
+        143308,
+        143647,
+        143217,
+        143218,
+        143219,
+        143220,
+        143221,
+        143222,
+        143223,
+        143224,
+        143312,
+        143313,
+        143314,
+        143315,
+        143316,
+        143317,
+        143318,
+        143319,
+        143320,
+        142993,
+        142989,
+        142894,
+        143152,
+        143000,
+        143001,
+        143025,
+        143026,
+        143061,
+        142886,
+        143171,
+        142691,
+        142692,
+        142693,
+        142694,
+        142695,
+        142696,
+        142697,
+        142698,
+        142699,
+        142741,
+        142529,
+        145701,
+        142700,
+        142701,
+        142702,
+        142703,
+        142704,
+        142705,
+        142706,
+        142708,
+        142709,
+        142710,
+        142711,
+        142712,
+        142713,
+        142345,
+        141636,
+        141637,
+        141638,
+        141639,
+        141640
       ],
       "keys_returned": [
         "date_announced",
@@ -969,13 +1092,13 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 170,
+      "elapsed_ms": 487,
       "ids_requested": [
         151413,
-        150651,
-        148496,
-        145773,
-        144207
+        150009,
+        146646,
+        144562,
+        141640
       ],
       "body_sent": {
         "limit": 10,
@@ -983,10 +1106,10 @@
         "request_data": {
           "intervention_id": [
             151413,
-            150651,
-            148496,
-            145773,
-            144207
+            150009,
+            146646,
+            144562,
+            141640
           ],
           "announcement_period": [
             "1900-01-01",
@@ -1015,16 +1138,16 @@
         ]
       },
       "ids_returned": [
-        144207,
-        145773,
-        148496,
-        150651,
+        141640,
+        144562,
+        146646,
+        150009,
         151413
       ],
       "all_ids_present": true,
       "num_returned": 5,
-      "response_size_bytes": 10228,
-      "response_size_kb": 10.0,
+      "response_size_bytes": 11665,
+      "response_size_kb": 11.4,
       "keys_returned": [
         "affected_jurisdictions",
         "affected_sectors",
@@ -1046,55 +1169,30 @@
         "state_act_url"
       ],
       "sample_record": {
-        "intervention_id": 144207,
-        "state_act_id": 91118,
-        "state_act_title": "Vietnam: Government reduces import tariff rates on certain products in response to geopolitical developments",
-        "intervention_url": "https://globaltradealert.org/intervention/144207?key=eba65271-5400-4782-96c3-182099ef163d",
-        "state_act_url": "https://www.globaltradealert.org/state-act/91118?key=eba65271-5400-4782-96c3-182099ef163d",
+        "intervention_id": 141640,
+        "state_act_id": 89914,
+        "state_act_title": "Australia: Customs tariff amendments in a Tariff Concession Order published on 8 January 2025",
+        "intervention_url": "https://globaltradealert.org/intervention/141640?key=eba65271-5400-4782-96c3-182099ef163d",
+        "state_act_url": "https://www.globaltradealert.org/state-act/89914?key=eba65271-5400-4782-96c3-182099ef163d",
         "is_official_source": true,
         "gta_evaluation": "Green",
         "implementing_jurisdictions": [
           {
-            "id": 704,
-            "name": "Vietnam",
-            "iso": "VNM"
-          }
-        ],
-        "affected_jurisdictions": [
-          {
-            "id": 32,
-            "name": "Argentina",
-            "iso": "ARG"
-          },
-          {
             "id": 36,
             "name": "Australia",
             "iso": "AUS"
-          },
+          }
+        ],
+        "affected_jurisdictions": [
           {
             "id": 40,
             "name": "Austria",
             "iso": "AUT"
           },
           {
-            "id": 68,
-            "name": "Bolivia",
-            "iso": "BOL"
-          },
-          {
-            "id": 76,
-            "name": "Brazil",
-            "iso": "BRA"
-          },
-          {
-            "id": 96,
-            "name": "Brunei Darussalam",
-            "iso": "BRN"
-          },
-          {
-            "id": 104,
-            "name": "Myanmar",
-            "iso": "MMR"
+            "id": 56,
+            "name": "Belgium",
+            "iso": "BEL"
           },
           {
             "id": 124,
@@ -1102,24 +1200,19 @@
             "iso": "CAN"
           },
           {
-            "id": 152,
-            "name": "Chile",
-            "iso": "CHL"
-          },
-          {
             "id": 156,
             "name": "China",
             "iso": "CHN"
           },
           {
-            "id": 203,
-            "name": "Czechia",
-            "iso": "CZE"
-          },
-          {
             "id": 208,
             "name": "Denmark",
             "iso": "DNK"
+          },
+          {
+            "id": 246,
+            "name": "Finland",
+            "iso": "FIN"
           },
           {
             "id": 251,
@@ -1130,16 +1223,6 @@
             "id": 276,
             "name": "Germany",
             "iso": "DEU"
-          },
-          {
-            "id": 344,
-            "name": "Hong Kong",
-            "iso": "HKG"
-          },
-          {
-            "id": 348,
-            "name": "Hungary",
-            "iso": "HUN"
           },
           {
             "id": 360,
@@ -1162,19 +1245,9 @@
             "iso": "KOR"
           },
           {
-            "id": 440,
-            "name": "Lithuania",
-            "iso": "LTU"
-          },
-          {
-            "id": 458,
-            "name": "Malaysia",
-            "iso": "MYS"
-          },
-          {
-            "id": 508,
-            "name": "Mozambique",
-            "iso": "MOZ"
+            "id": 484,
+            "name": "Mexico",
+            "iso": "MEX"
           },
           {
             "id": 528,
@@ -1187,29 +1260,14 @@
             "iso": "NZL"
           },
           {
-            "id": 586,
-            "name": "Pakistan",
-            "iso": "PAK"
-          },
-          {
-            "id": 600,
-            "name": "Paraguay",
-            "iso": "PRY"
+            "id": 598,
+            "name": "Papua New Guinea",
+            "iso": "PNG"
           },
           {
             "id": 616,
             "name": "Poland",
             "iso": "POL"
-          },
-          {
-            "id": 620,
-            "name": "Portugal",
-            "iso": "PRT"
-          },
-          {
-            "id": 642,
-            "name": "Romania",
-            "iso": "ROU"
           },
           {
             "id": 699,
@@ -1227,11 +1285,6 @@
             "iso": "SVK"
           },
           {
-            "id": 710,
-            "name": "South Africa",
-            "iso": "ZAF"
-          },
-          {
             "id": 724,
             "name": "Spain",
             "iso": "ESP"
@@ -1242,19 +1295,9 @@
             "iso": "SWE"
           },
           {
-            "id": 764,
-            "name": "Thailand",
-            "iso": "THA"
-          },
-          {
-            "id": 792,
-            "name": "Turkiye",
-            "iso": "TUR"
-          },
-          {
-            "id": 804,
-            "name": "Ukraine",
-            "iso": "UKR"
+            "id": 756,
+            "name": "Switzerland",
+            "iso": "CHE"
           },
           {
             "id": 826,
@@ -1273,52 +1316,12 @@
         "mast_chapter": "Tariff measures",
         "affected_sectors": [
           {
-            "sector_id": 11,
-            "name": "Cereals..."
-          },
-          {
-            "sector_id": 13,
-            "name": "Fruits and nuts..."
-          },
-          {
-            "sector_id": 120,
-            "name": "Crude petroleum and ..."
-          },
-          {
-            "sector_id": 211,
-            "name": "Meat and meat produc..."
-          },
-          {
-            "sector_id": 214,
-            "name": "Prepared and preserv..."
-          },
-          {
-            "sector_id": 219,
-            "name": "Oil-cake and other r..."
-          },
-          {
-            "sector_id": 319,
-            "name": "Other products of wo..."
-          },
-          {
-            "sector_id": 334,
-            "name": "Petroleum gases and ..."
-          },
-          {
-            "sector_id": 341,
-            "name": "Basic organic chemic..."
-          },
-          {
-            "sector_id": 381,
-            "name": "Furniture..."
-          },
-          {
-            "sector_id": 491,
-            "name": "Motor vehicles, trai..."
+            "sector_id": 433,
+            "name": "Bearings, gears, gea..."
           }
         ],
-        "date_announced": "2025-03-31",
-        "date_implemented": "2025-03-31",
+        "date_announced": "2025-01-08",
+        "date_implemented": "2024-09-11",
         "date_removed": null,
         "is_in_force": 1
       },
@@ -1331,9 +1334,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 287,
+      "elapsed_ms": 586,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -1422,7 +1425,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 199,
+      "elapsed_ms": 171,
       "ids_requested": [
         151266,
         149796,
@@ -1659,9 +1662,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 463,
+      "elapsed_ms": 531,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -1701,9 +1704,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 836,
+      "elapsed_ms": 8848,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -1726,9 +1729,9 @@
           "intervention_url"
         ]
       },
-      "total_results": 500,
-      "response_size_bytes": 255701,
-      "response_size_kb": 249.7,
+      "total_results": 747,
+      "response_size_bytes": 369466,
+      "response_size_kb": 360.8,
       "sample_titles": [
         "United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund",
         "China: Government reportedly allows several Chinese firms to import of Nvidia H200 AI chips",
@@ -2235,8 +2238,255 @@
         122973,
         108417,
         109355,
+        107526,
+        107527,
         107528,
-        107530
+        107530,
+        107641,
+        111508,
+        111600,
+        114378,
+        115133,
+        114669,
+        108856,
+        104731,
+        104732,
+        104710,
+        115240,
+        120449,
+        103072,
+        102165,
+        120704,
+        102071,
+        102199,
+        103065,
+        101605,
+        101592,
+        101852,
+        101854,
+        115155,
+        101603,
+        107175,
+        118019,
+        135174,
+        118801,
+        135208,
+        118347,
+        135244,
+        135000,
+        135012,
+        135020,
+        135027,
+        118140,
+        118143,
+        118151,
+        118152,
+        135053,
+        118165,
+        135071,
+        118431,
+        135073,
+        135337,
+        135082,
+        135339,
+        135085,
+        117934,
+        135348,
+        135349,
+        135352,
+        135353,
+        135354,
+        117948,
+        135358,
+        135359,
+        135362,
+        135365,
+        117957,
+        135368,
+        117963,
+        135372,
+        118732,
+        117967,
+        135382,
+        118744,
+        118259,
+        121571,
+        108451,
+        129702,
+        100855,
+        100626,
+        100643,
+        100648,
+        100546,
+        109867,
+        115007,
+        115059,
+        104364,
+        104365,
+        103613,
+        107391,
+        100627,
+        109509,
+        100591,
+        107380,
+        99073,
+        102613,
+        99196,
+        89375,
+        99381,
+        96320,
+        86245,
+        101499,
+        85982,
+        99400,
+        86463,
+        84524,
+        118785,
+        118020,
+        118796,
+        118060,
+        118343,
+        118110,
+        118113,
+        118379,
+        118131,
+        118133,
+        118141,
+        118142,
+        118150,
+        135052,
+        118670,
+        118164,
+        118420,
+        118680,
+        117917,
+        118430,
+        118175,
+        117933,
+        117947,
+        135357,
+        118724,
+        117958,
+        135367,
+        118729,
+        135371,
+        117964,
+        118733,
+        118735,
+        117968,
+        118738,
+        118741,
+        118745,
+        118746,
+        118752,
+        118756,
+        118759,
+        118762,
+        118510,
+        118002,
+        118774,
+        118780,
+        84853,
+        100588,
+        84515,
+        82633,
+        81615,
+        80754,
+        84940,
+        83520,
+        79480,
+        84947,
+        82325,
+        82313,
+        118799,
+        135207,
+        118633,
+        135051,
+        93080,
+        92068,
+        135356,
+        135370,
+        135380,
+        118740,
+        118747,
+        118777,
+        136786,
+        73592,
+        71811,
+        71812,
+        71731,
+        71093,
+        70913,
+        70920,
+        92777,
+        92067,
+        118736,
+        135379,
+        118739,
+        118755,
+        118776,
+        70274,
+        70275,
+        70862,
+        70467,
+        72261,
+        62918,
+        66920,
+        61361,
+        62347,
+        60603,
+        84941,
+        92776,
+        135378,
+        118757,
+        118775,
+        63172,
+        73639,
+        58535,
+        57917,
+        71842,
+        71843,
+        93126,
+        118758,
+        9636,
+        88756,
+        118195,
+        74957,
+        13965,
+        20633,
+        91321,
+        90681,
+        74956,
+        93493,
+        19129,
+        88905,
+        88753,
+        18049,
+        18050,
+        91429,
+        91430,
+        90866,
+        98272,
+        98292,
+        90659,
+        90670,
+        18419,
+        90815,
+        90826,
+        90865,
+        16490,
+        91541,
+        91382,
+        73116,
+        74954,
+        98367,
+        91633,
+        91569,
+        91123,
+        91420,
+        94022,
+        19199,
+        19697
       ],
       "keys_returned": [
         "date_announced",
@@ -2252,13 +2502,13 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 131,
+      "elapsed_ms": 400,
       "ids_requested": [
         152717,
-        142858,
-        138004,
-        129504,
-        107530
+        139615,
+        113918,
+        135365,
+        19697
       ],
       "body_sent": {
         "limit": 10,
@@ -2266,10 +2516,10 @@
         "request_data": {
           "intervention_id": [
             152717,
-            142858,
-            138004,
-            129504,
-            107530
+            139615,
+            113918,
+            135365,
+            19697
           ],
           "announcement_period": [
             "1900-01-01",
@@ -2298,16 +2548,16 @@
         ]
       },
       "ids_returned": [
-        107530,
-        129504,
-        138004,
-        142858,
+        19697,
+        113918,
+        135365,
+        139615,
         152717
       ],
       "all_ids_present": true,
       "num_returned": 5,
-      "response_size_bytes": 21526,
-      "response_size_kb": 21.0,
+      "response_size_bytes": 12944,
+      "response_size_kb": 12.6,
       "keys_returned": [
         "affected_jurisdictions",
         "affected_sectors",
@@ -2329,13 +2579,13 @@
         "state_act_url"
       ],
       "sample_record": {
-        "intervention_id": 107530,
-        "state_act_id": 66540,
-        "state_act_title": "United States of America: U.S. Administration enacts the CHIPS and Science Act of 2022",
-        "intervention_url": "https://globaltradealert.org/intervention/107530?key=eba65271-5400-4782-96c3-182099ef163d",
-        "state_act_url": "https://www.globaltradealert.org/state-act/66540?key=eba65271-5400-4782-96c3-182099ef163d",
+        "intervention_id": 19697,
+        "state_act_id": 8529,
+        "state_act_title": "United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor",
+        "intervention_url": "https://globaltradealert.org/intervention/19697?key=eba65271-5400-4782-96c3-182099ef163d",
+        "state_act_url": "https://www.globaltradealert.org/state-act/8529?key=eba65271-5400-4782-96c3-182099ef163d",
         "is_official_source": true,
-        "gta_evaluation": "Red",
+        "gta_evaluation": "Amber",
         "implementing_jurisdictions": [
           {
             "id": 840,
@@ -2350,29 +2600,34 @@
             "iso": "ARM"
           },
           {
-            "id": 136,
-            "name": "Cayman Islands",
-            "iso": "CYM"
+            "id": 191,
+            "name": "Croatia",
+            "iso": "HRV"
           },
           {
-            "id": 578,
-            "name": "Norway",
-            "iso": "NOR"
+            "id": 203,
+            "name": "Czechia",
+            "iso": "CZE"
           },
           {
-            "id": 591,
-            "name": "Panama",
-            "iso": "PAN"
+            "id": 400,
+            "name": "Jordan",
+            "iso": "JOR"
           },
           {
-            "id": 600,
-            "name": "Paraguay",
-            "iso": "PRY"
+            "id": 792,
+            "name": "Turkiye",
+            "iso": "TUR"
           },
           {
-            "id": 818,
-            "name": "Egypt",
-            "iso": "EGY"
+            "id": 804,
+            "name": "Ukraine",
+            "iso": "UKR"
+          },
+          {
+            "id": 36,
+            "name": "Australia",
+            "iso": "AUS"
           },
           {
             "id": 40,
@@ -2385,11 +2640,6 @@
             "iso": "BRA"
           },
           {
-            "id": 100,
-            "name": "Bulgaria",
-            "iso": "BGR"
-          },
-          {
             "id": 124,
             "name": "Canada",
             "iso": "CAN"
@@ -2398,6 +2648,16 @@
             "id": 156,
             "name": "China",
             "iso": "CHN"
+          },
+          {
+            "id": 188,
+            "name": "Costa Rica",
+            "iso": "CRI"
+          },
+          {
+            "id": 246,
+            "name": "Finland",
+            "iso": "FIN"
           },
           {
             "id": 251,
@@ -2410,6 +2670,11 @@
             "iso": "DEU"
           },
           {
+            "id": 344,
+            "name": "Hong Kong",
+            "iso": "HKG"
+          },
+          {
             "id": 348,
             "name": "Hungary",
             "iso": "HUN"
@@ -2420,9 +2685,19 @@
             "iso": "IDN"
           },
           {
-            "id": 376,
-            "name": "Israel",
-            "iso": "ISR"
+            "id": 372,
+            "name": "Ireland",
+            "iso": "IRL"
+          },
+          {
+            "id": 381,
+            "name": "Italy",
+            "iso": "ITA"
+          },
+          {
+            "id": 392,
+            "name": "Japan",
+            "iso": "JPN"
           },
           {
             "id": 410,
@@ -2440,6 +2715,21 @@
             "iso": "MEX"
           },
           {
+            "id": 504,
+            "name": "Morocco",
+            "iso": "MAR"
+          },
+          {
+            "id": 608,
+            "name": "Philippines",
+            "iso": "PHL"
+          },
+          {
+            "id": 643,
+            "name": "Russia",
+            "iso": "RUS"
+          },
+          {
             "id": 699,
             "name": "India",
             "iso": "IND"
@@ -2448,71 +2738,6 @@
             "id": 702,
             "name": "Singapore",
             "iso": "SGP"
-          },
-          {
-            "id": 704,
-            "name": "Vietnam",
-            "iso": "VNM"
-          },
-          {
-            "id": 764,
-            "name": "Thailand",
-            "iso": "THA"
-          },
-          {
-            "id": 36,
-            "name": "Australia",
-            "iso": "AUS"
-          },
-          {
-            "id": 56,
-            "name": "Belgium",
-            "iso": "BEL"
-          },
-          {
-            "id": 191,
-            "name": "Croatia",
-            "iso": "HRV"
-          },
-          {
-            "id": 208,
-            "name": "Denmark",
-            "iso": "DNK"
-          },
-          {
-            "id": 344,
-            "name": "Hong Kong",
-            "iso": "HKG"
-          },
-          {
-            "id": 381,
-            "name": "Italy",
-            "iso": "ITA"
-          },
-          {
-            "id": 392,
-            "name": "Japan",
-            "iso": "JPN"
-          },
-          {
-            "id": 528,
-            "name": "Netherlands",
-            "iso": "NLD"
-          },
-          {
-            "id": 616,
-            "name": "Poland",
-            "iso": "POL"
-          },
-          {
-            "id": 703,
-            "name": "Slovakia",
-            "iso": "SVK"
-          },
-          {
-            "id": 724,
-            "name": "Spain",
-            "iso": "ESP"
           },
           {
             "id": 752,
@@ -2525,9 +2750,9 @@
             "iso": "CHE"
           },
           {
-            "id": 784,
-            "name": "United Arab Emirates",
-            "iso": "ARE"
+            "id": 764,
+            "name": "Thailand",
+            "iso": "THA"
           },
           {
             "id": 826,
@@ -2535,59 +2760,24 @@
             "iso": "GBR"
           },
           {
-            "id": 203,
-            "name": "Czechia",
-            "iso": "CZE"
+            "id": 376,
+            "name": "Israel",
+            "iso": "ISR"
           },
           {
-            "id": 372,
-            "name": "Ireland",
-            "iso": "IRL"
+            "id": 703,
+            "name": "Slovakia",
+            "iso": "SVK"
           },
           {
-            "id": 554,
-            "name": "New Zealand",
-            "iso": "NZL"
+            "id": 56,
+            "name": "Belgium",
+            "iso": "BEL"
           },
           {
-            "id": 608,
-            "name": "Philippines",
-            "iso": "PHL"
-          },
-          {
-            "id": 246,
-            "name": "Finland",
-            "iso": "FIN"
-          },
-          {
-            "id": 620,
-            "name": "Portugal",
-            "iso": "PRT"
-          },
-          {
-            "id": 642,
-            "name": "Romania",
-            "iso": "ROU"
-          },
-          {
-            "id": 116,
-            "name": "Cambodia",
-            "iso": "KHM"
-          },
-          {
-            "id": 233,
-            "name": "Estonia",
-            "iso": "EST"
-          },
-          {
-            "id": 705,
-            "name": "Slovenia",
-            "iso": "SVN"
-          },
-          {
-            "id": 788,
-            "name": "Tunisia",
-            "iso": "TUN"
+            "id": 208,
+            "name": "Denmark",
+            "iso": "DNK"
           },
           {
             "id": 214,
@@ -2595,224 +2785,14 @@
             "iso": "DOM"
           },
           {
-            "id": 188,
-            "name": "Costa Rica",
-            "iso": "CRI"
-          },
-          {
-            "id": 643,
-            "name": "Russia",
-            "iso": "RUS"
-          },
-          {
-            "id": 710,
-            "name": "South Africa",
-            "iso": "ZAF"
-          },
-          {
-            "id": 792,
-            "name": "Turkiye",
-            "iso": "TUR"
-          },
-          {
-            "id": 120,
-            "name": "Cameroon",
-            "iso": "CMR"
-          },
-          {
-            "id": 152,
-            "name": "Chile",
-            "iso": "CHL"
-          },
-          {
-            "id": 418,
-            "name": "Lao",
-            "iso": "LAO"
-          },
-          {
-            "id": 104,
-            "name": "Myanmar",
-            "iso": "MMR"
-          },
-          {
-            "id": 144,
-            "name": "Sri Lanka",
-            "iso": "LKA"
-          },
-          {
-            "id": 300,
-            "name": "Greece",
-            "iso": "GRC"
-          },
-          {
-            "id": 428,
-            "name": "Latvia",
-            "iso": "LVA"
-          },
-          {
             "id": 440,
             "name": "Lithuania",
             "iso": "LTU"
           },
           {
-            "id": 499,
-            "name": "Montenegro",
-            "iso": "MNE"
-          },
-          {
-            "id": 804,
-            "name": "Ukraine",
-            "iso": "UKR"
-          },
-          {
-            "id": 20,
-            "name": "Andorra",
-            "iso": "AND"
-          },
-          {
-            "id": 170,
-            "name": "Colombia",
-            "iso": "COL"
-          },
-          {
-            "id": 659,
-            "name": "Saint Kitts & Nevis",
-            "iso": "KNA"
-          },
-          {
-            "id": 32,
-            "name": "Argentina",
-            "iso": "ARG"
-          },
-          {
-            "id": 44,
-            "name": "Bahamas",
-            "iso": "BHS"
-          },
-          {
-            "id": 48,
-            "name": "Bahrain",
-            "iso": "BHR"
-          },
-          {
-            "id": 50,
-            "name": "Bangladesh",
-            "iso": "BGD"
-          },
-          {
-            "id": 52,
-            "name": "Barbados",
-            "iso": "BRB"
-          },
-          {
-            "id": 68,
-            "name": "Bolivia",
-            "iso": "BOL"
-          },
-          {
-            "id": 70,
-            "name": "Bosnia & Herzegovina",
-            "iso": "BIH"
-          },
-          {
-            "id": 84,
-            "name": "Belize",
-            "iso": "BLZ"
-          },
-          {
-            "id": 112,
-            "name": "Belarus",
-            "iso": "BLR"
-          },
-          {
-            "id": 196,
-            "name": "Cyprus",
-            "iso": "CYP"
-          },
-          {
-            "id": 222,
-            "name": "El Salvador",
-            "iso": "SLV"
-          },
-          {
-            "id": 231,
-            "name": "Ethiopia",
-            "iso": "ETH"
-          },
-          {
-            "id": 320,
-            "name": "Guatemala",
-            "iso": "GTM"
-          },
-          {
-            "id": 332,
-            "name": "Haiti",
-            "iso": "HTI"
-          },
-          {
-            "id": 340,
-            "name": "Honduras",
-            "iso": "HND"
-          },
-          {
-            "id": 352,
-            "name": "Iceland",
-            "iso": "ISL"
-          },
-          {
-            "id": 400,
-            "name": "Jordan",
-            "iso": "JOR"
-          },
-          {
-            "id": 404,
-            "name": "Kenya",
-            "iso": "KEN"
-          },
-          {
-            "id": 422,
-            "name": "Lebanon",
-            "iso": "LBN"
-          },
-          {
-            "id": 442,
-            "name": "Luxembourg",
-            "iso": "LUX"
-          },
-          {
-            "id": 446,
-            "name": "Macao",
-            "iso": "MAC"
-          },
-          {
-            "id": 450,
-            "name": "Madagascar",
-            "iso": "MDG"
-          },
-          {
-            "id": 470,
-            "name": "Malta",
-            "iso": "MLT"
-          },
-          {
-            "id": 504,
-            "name": "Morocco",
-            "iso": "MAR"
-          },
-          {
-            "id": 512,
-            "name": "Oman",
-            "iso": "OMN"
-          },
-          {
-            "id": 524,
-            "name": "Nepal",
-            "iso": "NPL"
-          },
-          {
-            "id": 558,
-            "name": "Nicaragua",
-            "iso": "NIC"
+            "id": 528,
+            "name": "Netherlands",
+            "iso": "NLD"
           },
           {
             "id": 586,
@@ -2820,72 +2800,36 @@
             "iso": "PAK"
           },
           {
-            "id": 604,
-            "name": "Peru",
-            "iso": "PER"
+            "id": 620,
+            "name": "Portugal",
+            "iso": "PRT"
           },
           {
-            "id": 634,
-            "name": "Qatar",
-            "iso": "QAT"
+            "id": 724,
+            "name": "Spain",
+            "iso": "ESP"
           },
           {
-            "id": 662,
-            "name": "Saint Lucia",
-            "iso": "LCA"
+            "id": 300,
+            "name": "Greece",
+            "iso": "GRC"
           },
           {
-            "id": 682,
-            "name": "Saudi Arabia",
-            "iso": "SAU"
+            "id": 554,
+            "name": "New Zealand",
+            "iso": "NZL"
           },
           {
-            "id": 688,
-            "name": "Serbia",
-            "iso": "SRB"
-          },
-          {
-            "id": 716,
-            "name": "Zimbabwe",
-            "iso": "ZWE"
-          },
-          {
-            "id": 780,
-            "name": "Trinidad & Tobago",
-            "iso": "TTO"
-          },
-          {
-            "id": 807,
-            "name": "Macedonia",
-            "iso": "MKD"
-          },
-          {
-            "id": 858,
-            "name": "Uruguay",
-            "iso": "URY"
+            "id": 704,
+            "name": "Vietnam",
+            "iso": "VNM"
           }
         ],
-        "implementation_level": "National",
-        "eligible_firm": "all",
-        "intervention_type": "State aid, unspecified",
+        "implementation_level": "Subnational",
+        "eligible_firm": "firm-specific",
+        "intervention_type": "Tax or social insurance relief",
         "mast_chapter": "L: Subsidies (excl. export subsidies)",
         "affected_sectors": [
-          {
-            "sector_id": 449,
-            "name": "Other special-purpos..."
-          },
-          {
-            "sector_id": 451,
-            "name": "Office and accountin..."
-          },
-          {
-            "sector_id": 452,
-            "name": "Computing machinery ..."
-          },
-          {
-            "sector_id": 469,
-            "name": "Other electrical equ..."
-          },
           {
             "sector_id": 471,
             "name": "Electronic valves an..."
@@ -2893,39 +2837,11 @@
           {
             "sector_id": 472,
             "name": "Television and radio..."
-          },
-          {
-            "sector_id": 473,
-            "name": "Radio broadcast and ..."
-          },
-          {
-            "sector_id": 474,
-            "name": "Parts for the goods ..."
-          },
-          {
-            "sector_id": 475,
-            "name": "Disks, tapes, solid-..."
-          },
-          {
-            "sector_id": 476,
-            "name": "Audio, video and oth..."
-          },
-          {
-            "sector_id": 479,
-            "name": "Cards with magnetic ..."
-          },
-          {
-            "sector_id": 483,
-            "name": "Optical instruments ..."
-          },
-          {
-            "sector_id": 842,
-            "name": "Internet telecommuni..."
           }
         ],
-        "date_announced": "2022-08-09",
-        "date_implemented": "2022-08-09",
-        "date_removed": "2032-09-30",
+        "date_announced": "2008-12-01",
+        "date_implemented": "2008-12-01",
+        "date_removed": null,
         "is_in_force": 1
       },
       "error": null
@@ -2937,9 +2853,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 408,
+      "elapsed_ms": 2748,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -3180,7 +3096,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 165,
+      "elapsed_ms": 145,
       "ids_requested": [
         152570,
         142715,
@@ -3291,9 +3207,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 880,
+      "elapsed_ms": 1141,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -3316,9 +3232,9 @@
           "intervention_url"
         ]
       },
-      "total_results": 500,
-      "response_size_bytes": 255701,
-      "response_size_kb": 249.7,
+      "total_results": 747,
+      "response_size_bytes": 369466,
+      "response_size_kb": 360.8,
       "sample_titles": [
         "United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund",
         "China: Government reportedly allows several Chinese firms to import of Nvidia H200 AI chips",
@@ -3825,8 +3741,255 @@
         122973,
         108417,
         109355,
+        107526,
+        107527,
         107528,
-        107530
+        107530,
+        107641,
+        111508,
+        111600,
+        114378,
+        115133,
+        114669,
+        108856,
+        104731,
+        104732,
+        104710,
+        115240,
+        120449,
+        103072,
+        102165,
+        120704,
+        102071,
+        102199,
+        103065,
+        101605,
+        101592,
+        101852,
+        101854,
+        115155,
+        101603,
+        107175,
+        118019,
+        135174,
+        118801,
+        135208,
+        118347,
+        135244,
+        135000,
+        135012,
+        135020,
+        135027,
+        118140,
+        118143,
+        118151,
+        118152,
+        135053,
+        118165,
+        135071,
+        118431,
+        135073,
+        135337,
+        135082,
+        135339,
+        135085,
+        117934,
+        135348,
+        135349,
+        135352,
+        135353,
+        135354,
+        117948,
+        135358,
+        135359,
+        135362,
+        135365,
+        117957,
+        135368,
+        117963,
+        135372,
+        118732,
+        117967,
+        135382,
+        118744,
+        118259,
+        121571,
+        108451,
+        129702,
+        100855,
+        100626,
+        100643,
+        100648,
+        100546,
+        109867,
+        115007,
+        115059,
+        104364,
+        104365,
+        103613,
+        107391,
+        100627,
+        109509,
+        100591,
+        107380,
+        99073,
+        102613,
+        99196,
+        89375,
+        99381,
+        96320,
+        86245,
+        101499,
+        85982,
+        99400,
+        86463,
+        84524,
+        118785,
+        118020,
+        118796,
+        118060,
+        118343,
+        118110,
+        118113,
+        118379,
+        118131,
+        118133,
+        118141,
+        118142,
+        118150,
+        135052,
+        118670,
+        118164,
+        118420,
+        118680,
+        117917,
+        118430,
+        118175,
+        117933,
+        117947,
+        135357,
+        118724,
+        117958,
+        135367,
+        118729,
+        135371,
+        117964,
+        118733,
+        118735,
+        117968,
+        118738,
+        118741,
+        118745,
+        118746,
+        118752,
+        118756,
+        118759,
+        118762,
+        118510,
+        118002,
+        118774,
+        118780,
+        84853,
+        100588,
+        84515,
+        82633,
+        81615,
+        80754,
+        84940,
+        83520,
+        79480,
+        84947,
+        82325,
+        82313,
+        118799,
+        135207,
+        118633,
+        135051,
+        93080,
+        92068,
+        135356,
+        135370,
+        135380,
+        118740,
+        118747,
+        118777,
+        136786,
+        73592,
+        71811,
+        71812,
+        71731,
+        71093,
+        70913,
+        70920,
+        92777,
+        92067,
+        118736,
+        135379,
+        118739,
+        118755,
+        118776,
+        70274,
+        70275,
+        70862,
+        70467,
+        72261,
+        62918,
+        66920,
+        61361,
+        62347,
+        60603,
+        84941,
+        92776,
+        135378,
+        118757,
+        118775,
+        63172,
+        73639,
+        58535,
+        57917,
+        71842,
+        71843,
+        93126,
+        118758,
+        9636,
+        88756,
+        118195,
+        74957,
+        13965,
+        20633,
+        91321,
+        90681,
+        74956,
+        93493,
+        19129,
+        88905,
+        88753,
+        18049,
+        18050,
+        91429,
+        91430,
+        90866,
+        98272,
+        98292,
+        90659,
+        90670,
+        18419,
+        90815,
+        90826,
+        90865,
+        16490,
+        91541,
+        91382,
+        73116,
+        74954,
+        98367,
+        91633,
+        91569,
+        91123,
+        91420,
+        94022,
+        19199,
+        19697
       ],
       "keys_returned": [
         "date_announced",
@@ -3842,13 +4005,13 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 133,
+      "elapsed_ms": 289,
       "ids_requested": [
         152717,
-        142858,
-        138004,
-        129504,
-        107530
+        139615,
+        113918,
+        135365,
+        19697
       ],
       "body_sent": {
         "limit": 10,
@@ -3856,10 +4019,10 @@
         "request_data": {
           "intervention_id": [
             152717,
-            142858,
-            138004,
-            129504,
-            107530
+            139615,
+            113918,
+            135365,
+            19697
           ],
           "announcement_period": [
             "1900-01-01",
@@ -3888,16 +4051,16 @@
         ]
       },
       "ids_returned": [
-        107530,
-        129504,
-        138004,
-        142858,
+        19697,
+        113918,
+        135365,
+        139615,
         152717
       ],
       "all_ids_present": true,
       "num_returned": 5,
-      "response_size_bytes": 21526,
-      "response_size_kb": 21.0,
+      "response_size_bytes": 12944,
+      "response_size_kb": 12.6,
       "keys_returned": [
         "affected_jurisdictions",
         "affected_sectors",
@@ -3919,13 +4082,13 @@
         "state_act_url"
       ],
       "sample_record": {
-        "intervention_id": 107530,
-        "state_act_id": 66540,
-        "state_act_title": "United States of America: U.S. Administration enacts the CHIPS and Science Act of 2022",
-        "intervention_url": "https://globaltradealert.org/intervention/107530?key=eba65271-5400-4782-96c3-182099ef163d",
-        "state_act_url": "https://www.globaltradealert.org/state-act/66540?key=eba65271-5400-4782-96c3-182099ef163d",
+        "intervention_id": 19697,
+        "state_act_id": 8529,
+        "state_act_title": "United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor",
+        "intervention_url": "https://globaltradealert.org/intervention/19697?key=eba65271-5400-4782-96c3-182099ef163d",
+        "state_act_url": "https://www.globaltradealert.org/state-act/8529?key=eba65271-5400-4782-96c3-182099ef163d",
         "is_official_source": true,
-        "gta_evaluation": "Red",
+        "gta_evaluation": "Amber",
         "implementing_jurisdictions": [
           {
             "id": 840,
@@ -3940,29 +4103,34 @@
             "iso": "ARM"
           },
           {
-            "id": 136,
-            "name": "Cayman Islands",
-            "iso": "CYM"
+            "id": 191,
+            "name": "Croatia",
+            "iso": "HRV"
           },
           {
-            "id": 578,
-            "name": "Norway",
-            "iso": "NOR"
+            "id": 203,
+            "name": "Czechia",
+            "iso": "CZE"
           },
           {
-            "id": 591,
-            "name": "Panama",
-            "iso": "PAN"
+            "id": 400,
+            "name": "Jordan",
+            "iso": "JOR"
           },
           {
-            "id": 600,
-            "name": "Paraguay",
-            "iso": "PRY"
+            "id": 792,
+            "name": "Turkiye",
+            "iso": "TUR"
           },
           {
-            "id": 818,
-            "name": "Egypt",
-            "iso": "EGY"
+            "id": 804,
+            "name": "Ukraine",
+            "iso": "UKR"
+          },
+          {
+            "id": 36,
+            "name": "Australia",
+            "iso": "AUS"
           },
           {
             "id": 40,
@@ -3975,11 +4143,6 @@
             "iso": "BRA"
           },
           {
-            "id": 100,
-            "name": "Bulgaria",
-            "iso": "BGR"
-          },
-          {
             "id": 124,
             "name": "Canada",
             "iso": "CAN"
@@ -3988,6 +4151,16 @@
             "id": 156,
             "name": "China",
             "iso": "CHN"
+          },
+          {
+            "id": 188,
+            "name": "Costa Rica",
+            "iso": "CRI"
+          },
+          {
+            "id": 246,
+            "name": "Finland",
+            "iso": "FIN"
           },
           {
             "id": 251,
@@ -4000,6 +4173,11 @@
             "iso": "DEU"
           },
           {
+            "id": 344,
+            "name": "Hong Kong",
+            "iso": "HKG"
+          },
+          {
             "id": 348,
             "name": "Hungary",
             "iso": "HUN"
@@ -4010,9 +4188,19 @@
             "iso": "IDN"
           },
           {
-            "id": 376,
-            "name": "Israel",
-            "iso": "ISR"
+            "id": 372,
+            "name": "Ireland",
+            "iso": "IRL"
+          },
+          {
+            "id": 381,
+            "name": "Italy",
+            "iso": "ITA"
+          },
+          {
+            "id": 392,
+            "name": "Japan",
+            "iso": "JPN"
           },
           {
             "id": 410,
@@ -4030,6 +4218,21 @@
             "iso": "MEX"
           },
           {
+            "id": 504,
+            "name": "Morocco",
+            "iso": "MAR"
+          },
+          {
+            "id": 608,
+            "name": "Philippines",
+            "iso": "PHL"
+          },
+          {
+            "id": 643,
+            "name": "Russia",
+            "iso": "RUS"
+          },
+          {
             "id": 699,
             "name": "India",
             "iso": "IND"
@@ -4038,71 +4241,6 @@
             "id": 702,
             "name": "Singapore",
             "iso": "SGP"
-          },
-          {
-            "id": 704,
-            "name": "Vietnam",
-            "iso": "VNM"
-          },
-          {
-            "id": 764,
-            "name": "Thailand",
-            "iso": "THA"
-          },
-          {
-            "id": 36,
-            "name": "Australia",
-            "iso": "AUS"
-          },
-          {
-            "id": 56,
-            "name": "Belgium",
-            "iso": "BEL"
-          },
-          {
-            "id": 191,
-            "name": "Croatia",
-            "iso": "HRV"
-          },
-          {
-            "id": 208,
-            "name": "Denmark",
-            "iso": "DNK"
-          },
-          {
-            "id": 344,
-            "name": "Hong Kong",
-            "iso": "HKG"
-          },
-          {
-            "id": 381,
-            "name": "Italy",
-            "iso": "ITA"
-          },
-          {
-            "id": 392,
-            "name": "Japan",
-            "iso": "JPN"
-          },
-          {
-            "id": 528,
-            "name": "Netherlands",
-            "iso": "NLD"
-          },
-          {
-            "id": 616,
-            "name": "Poland",
-            "iso": "POL"
-          },
-          {
-            "id": 703,
-            "name": "Slovakia",
-            "iso": "SVK"
-          },
-          {
-            "id": 724,
-            "name": "Spain",
-            "iso": "ESP"
           },
           {
             "id": 752,
@@ -4115,9 +4253,9 @@
             "iso": "CHE"
           },
           {
-            "id": 784,
-            "name": "United Arab Emirates",
-            "iso": "ARE"
+            "id": 764,
+            "name": "Thailand",
+            "iso": "THA"
           },
           {
             "id": 826,
@@ -4125,59 +4263,24 @@
             "iso": "GBR"
           },
           {
-            "id": 203,
-            "name": "Czechia",
-            "iso": "CZE"
+            "id": 376,
+            "name": "Israel",
+            "iso": "ISR"
           },
           {
-            "id": 372,
-            "name": "Ireland",
-            "iso": "IRL"
+            "id": 703,
+            "name": "Slovakia",
+            "iso": "SVK"
           },
           {
-            "id": 554,
-            "name": "New Zealand",
-            "iso": "NZL"
+            "id": 56,
+            "name": "Belgium",
+            "iso": "BEL"
           },
           {
-            "id": 608,
-            "name": "Philippines",
-            "iso": "PHL"
-          },
-          {
-            "id": 246,
-            "name": "Finland",
-            "iso": "FIN"
-          },
-          {
-            "id": 620,
-            "name": "Portugal",
-            "iso": "PRT"
-          },
-          {
-            "id": 642,
-            "name": "Romania",
-            "iso": "ROU"
-          },
-          {
-            "id": 116,
-            "name": "Cambodia",
-            "iso": "KHM"
-          },
-          {
-            "id": 233,
-            "name": "Estonia",
-            "iso": "EST"
-          },
-          {
-            "id": 705,
-            "name": "Slovenia",
-            "iso": "SVN"
-          },
-          {
-            "id": 788,
-            "name": "Tunisia",
-            "iso": "TUN"
+            "id": 208,
+            "name": "Denmark",
+            "iso": "DNK"
           },
           {
             "id": 214,
@@ -4185,224 +4288,14 @@
             "iso": "DOM"
           },
           {
-            "id": 188,
-            "name": "Costa Rica",
-            "iso": "CRI"
-          },
-          {
-            "id": 643,
-            "name": "Russia",
-            "iso": "RUS"
-          },
-          {
-            "id": 710,
-            "name": "South Africa",
-            "iso": "ZAF"
-          },
-          {
-            "id": 792,
-            "name": "Turkiye",
-            "iso": "TUR"
-          },
-          {
-            "id": 120,
-            "name": "Cameroon",
-            "iso": "CMR"
-          },
-          {
-            "id": 152,
-            "name": "Chile",
-            "iso": "CHL"
-          },
-          {
-            "id": 418,
-            "name": "Lao",
-            "iso": "LAO"
-          },
-          {
-            "id": 104,
-            "name": "Myanmar",
-            "iso": "MMR"
-          },
-          {
-            "id": 144,
-            "name": "Sri Lanka",
-            "iso": "LKA"
-          },
-          {
-            "id": 300,
-            "name": "Greece",
-            "iso": "GRC"
-          },
-          {
-            "id": 428,
-            "name": "Latvia",
-            "iso": "LVA"
-          },
-          {
             "id": 440,
             "name": "Lithuania",
             "iso": "LTU"
           },
           {
-            "id": 499,
-            "name": "Montenegro",
-            "iso": "MNE"
-          },
-          {
-            "id": 804,
-            "name": "Ukraine",
-            "iso": "UKR"
-          },
-          {
-            "id": 20,
-            "name": "Andorra",
-            "iso": "AND"
-          },
-          {
-            "id": 170,
-            "name": "Colombia",
-            "iso": "COL"
-          },
-          {
-            "id": 659,
-            "name": "Saint Kitts & Nevis",
-            "iso": "KNA"
-          },
-          {
-            "id": 32,
-            "name": "Argentina",
-            "iso": "ARG"
-          },
-          {
-            "id": 44,
-            "name": "Bahamas",
-            "iso": "BHS"
-          },
-          {
-            "id": 48,
-            "name": "Bahrain",
-            "iso": "BHR"
-          },
-          {
-            "id": 50,
-            "name": "Bangladesh",
-            "iso": "BGD"
-          },
-          {
-            "id": 52,
-            "name": "Barbados",
-            "iso": "BRB"
-          },
-          {
-            "id": 68,
-            "name": "Bolivia",
-            "iso": "BOL"
-          },
-          {
-            "id": 70,
-            "name": "Bosnia & Herzegovina",
-            "iso": "BIH"
-          },
-          {
-            "id": 84,
-            "name": "Belize",
-            "iso": "BLZ"
-          },
-          {
-            "id": 112,
-            "name": "Belarus",
-            "iso": "BLR"
-          },
-          {
-            "id": 196,
-            "name": "Cyprus",
-            "iso": "CYP"
-          },
-          {
-            "id": 222,
-            "name": "El Salvador",
-            "iso": "SLV"
-          },
-          {
-            "id": 231,
-            "name": "Ethiopia",
-            "iso": "ETH"
-          },
-          {
-            "id": 320,
-            "name": "Guatemala",
-            "iso": "GTM"
-          },
-          {
-            "id": 332,
-            "name": "Haiti",
-            "iso": "HTI"
-          },
-          {
-            "id": 340,
-            "name": "Honduras",
-            "iso": "HND"
-          },
-          {
-            "id": 352,
-            "name": "Iceland",
-            "iso": "ISL"
-          },
-          {
-            "id": 400,
-            "name": "Jordan",
-            "iso": "JOR"
-          },
-          {
-            "id": 404,
-            "name": "Kenya",
-            "iso": "KEN"
-          },
-          {
-            "id": 422,
-            "name": "Lebanon",
-            "iso": "LBN"
-          },
-          {
-            "id": 442,
-            "name": "Luxembourg",
-            "iso": "LUX"
-          },
-          {
-            "id": 446,
-            "name": "Macao",
-            "iso": "MAC"
-          },
-          {
-            "id": 450,
-            "name": "Madagascar",
-            "iso": "MDG"
-          },
-          {
-            "id": 470,
-            "name": "Malta",
-            "iso": "MLT"
-          },
-          {
-            "id": 504,
-            "name": "Morocco",
-            "iso": "MAR"
-          },
-          {
-            "id": 512,
-            "name": "Oman",
-            "iso": "OMN"
-          },
-          {
-            "id": 524,
-            "name": "Nepal",
-            "iso": "NPL"
-          },
-          {
-            "id": 558,
-            "name": "Nicaragua",
-            "iso": "NIC"
+            "id": 528,
+            "name": "Netherlands",
+            "iso": "NLD"
           },
           {
             "id": 586,
@@ -4410,72 +4303,36 @@
             "iso": "PAK"
           },
           {
-            "id": 604,
-            "name": "Peru",
-            "iso": "PER"
+            "id": 620,
+            "name": "Portugal",
+            "iso": "PRT"
           },
           {
-            "id": 634,
-            "name": "Qatar",
-            "iso": "QAT"
+            "id": 724,
+            "name": "Spain",
+            "iso": "ESP"
           },
           {
-            "id": 662,
-            "name": "Saint Lucia",
-            "iso": "LCA"
+            "id": 300,
+            "name": "Greece",
+            "iso": "GRC"
           },
           {
-            "id": 682,
-            "name": "Saudi Arabia",
-            "iso": "SAU"
+            "id": 554,
+            "name": "New Zealand",
+            "iso": "NZL"
           },
           {
-            "id": 688,
-            "name": "Serbia",
-            "iso": "SRB"
-          },
-          {
-            "id": 716,
-            "name": "Zimbabwe",
-            "iso": "ZWE"
-          },
-          {
-            "id": 780,
-            "name": "Trinidad & Tobago",
-            "iso": "TTO"
-          },
-          {
-            "id": 807,
-            "name": "Macedonia",
-            "iso": "MKD"
-          },
-          {
-            "id": 858,
-            "name": "Uruguay",
-            "iso": "URY"
+            "id": 704,
+            "name": "Vietnam",
+            "iso": "VNM"
           }
         ],
-        "implementation_level": "National",
-        "eligible_firm": "all",
-        "intervention_type": "State aid, unspecified",
+        "implementation_level": "Subnational",
+        "eligible_firm": "firm-specific",
+        "intervention_type": "Tax or social insurance relief",
         "mast_chapter": "L: Subsidies (excl. export subsidies)",
         "affected_sectors": [
-          {
-            "sector_id": 449,
-            "name": "Other special-purpos..."
-          },
-          {
-            "sector_id": 451,
-            "name": "Office and accountin..."
-          },
-          {
-            "sector_id": 452,
-            "name": "Computing machinery ..."
-          },
-          {
-            "sector_id": 469,
-            "name": "Other electrical equ..."
-          },
           {
             "sector_id": 471,
             "name": "Electronic valves an..."
@@ -4483,39 +4340,11 @@
           {
             "sector_id": 472,
             "name": "Television and radio..."
-          },
-          {
-            "sector_id": 473,
-            "name": "Radio broadcast and ..."
-          },
-          {
-            "sector_id": 474,
-            "name": "Parts for the goods ..."
-          },
-          {
-            "sector_id": 475,
-            "name": "Disks, tapes, solid-..."
-          },
-          {
-            "sector_id": 476,
-            "name": "Audio, video and oth..."
-          },
-          {
-            "sector_id": 479,
-            "name": "Cards with magnetic ..."
-          },
-          {
-            "sector_id": 483,
-            "name": "Optical instruments ..."
-          },
-          {
-            "sector_id": 842,
-            "name": "Internet telecommuni..."
           }
         ],
-        "date_announced": "2022-08-09",
-        "date_implemented": "2022-08-09",
-        "date_removed": "2032-09-30",
+        "date_announced": "2008-12-01",
+        "date_implemented": "2008-12-01",
+        "date_removed": null,
         "is_in_force": 1
       },
       "error": null
@@ -4527,9 +4356,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 632,
+      "elapsed_ms": 2220,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -4970,7 +4799,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 130,
+      "elapsed_ms": 143,
       "ids_requested": [
         152705,
         139988,
@@ -5112,9 +4941,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 801,
+      "elapsed_ms": 4546,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -5581,7 +5410,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 131,
+      "elapsed_ms": 170,
       "ids_requested": [
         152737,
         150785,
@@ -5932,9 +5761,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 637,
+      "elapsed_ms": 7041,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -5960,9 +5789,9 @@
           "intervention_url"
         ]
       },
-      "total_results": 500,
-      "response_size_bytes": 233222,
-      "response_size_kb": 227.8,
+      "total_results": 1000,
+      "response_size_bytes": 464620,
+      "response_size_kb": 453.7,
       "sample_titles": [
         "Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)",
         "Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)",
@@ -6293,14 +6122,14 @@
         138503,
         138505,
         138453,
-        138454,
         138506,
+        138454,
         138462,
         138452,
         138480,
         138482,
-        138483,
         138481,
+        138483,
         138498,
         138500,
         138499,
@@ -6364,8 +6193,8 @@
         133658,
         133697,
         133698,
-        133699,
         133654,
+        133699,
         133701,
         133859,
         133417,
@@ -6394,8 +6223,8 @@
         131635,
         133450,
         131636,
-        133456,
         131621,
+        133456,
         131642,
         133458,
         131643,
@@ -6412,14 +6241,14 @@
         131180,
         131182,
         131183,
-        130257,
         130344,
+        130257,
+        130348,
         130260,
         130272,
-        130348,
+        130350,
         130266,
         130273,
-        130350,
         130275,
         130276,
         130277,
@@ -6470,7 +6299,507 @@
         122001,
         122003,
         121948,
-        121951
+        121951,
+        121968,
+        121970,
+        121971,
+        121980,
+        121981,
+        121860,
+        121729,
+        140847,
+        121576,
+        121575,
+        121577,
+        121522,
+        121578,
+        121517,
+        120877,
+        120878,
+        120879,
+        120880,
+        120842,
+        120843,
+        120543,
+        120836,
+        120840,
+        122896,
+        120253,
+        120254,
+        120238,
+        120241,
+        120242,
+        120243,
+        120244,
+        120232,
+        120233,
+        120234,
+        120235,
+        120236,
+        120247,
+        120545,
+        120246,
+        120580,
+        120255,
+        117647,
+        117665,
+        119400,
+        117483,
+        117661,
+        117662,
+        118816,
+        117632,
+        117481,
+        116960,
+        116961,
+        116956,
+        116958,
+        116959,
+        116962,
+        116964,
+        116965,
+        116966,
+        116967,
+        116968,
+        116969,
+        116970,
+        116955,
+        116789,
+        116805,
+        116807,
+        116478,
+        115559,
+        115568,
+        115569,
+        115675,
+        115676,
+        114737,
+        115539,
+        115504,
+        114726,
+        114730,
+        114734,
+        115088,
+        114285,
+        114667,
+        113886,
+        113891,
+        113909,
+        113910,
+        113974,
+        113975,
+        113976,
+        113977,
+        113734,
+        114003,
+        113736,
+        113738,
+        113739,
+        111655,
+        111656,
+        111657,
+        111658,
+        111669,
+        111670,
+        111671,
+        111672,
+        111675,
+        111676,
+        111643,
+        111678,
+        111445,
+        111653,
+        111444,
+        111389,
+        111436,
+        109577,
+        109578,
+        109315,
+        109316,
+        109318,
+        109319,
+        109297,
+        109299,
+        109300,
+        109301,
+        109302,
+        109303,
+        109305,
+        109313,
+        109291,
+        109293,
+        109309,
+        140839,
+        112363,
+        112395,
+        112365,
+        112397,
+        112367,
+        112369,
+        112371,
+        112373,
+        112375,
+        112377,
+        112379,
+        112381,
+        112383,
+        112385,
+        112387,
+        112389,
+        112391,
+        112393,
+        108491,
+        108493,
+        108474,
+        108476,
+        108477,
+        108478,
+        108479,
+        108480,
+        108489,
+        108490,
+        108618,
+        108619,
+        108621,
+        108625,
+        108633,
+        107766,
+        108292,
+        107753,
+        107518,
+        107315,
+        112339,
+        112341,
+        112343,
+        112345,
+        112347,
+        112349,
+        112351,
+        112353,
+        112355,
+        112357,
+        112359,
+        140831,
+        112361,
+        107167,
+        107169,
+        107170,
+        107171,
+        111530,
+        107184,
+        107581,
+        107164,
+        107165,
+        107179,
+        107189,
+        107192,
+        111533,
+        107593,
+        106522,
+        107596,
+        106497,
+        106499,
+        106501,
+        106502,
+        106491,
+        106492,
+        105497,
+        107597,
+        106186,
+        106197,
+        106200,
+        106201,
+        106202,
+        106208,
+        106210,
+        104895,
+        104896,
+        106190,
+        106191,
+        106193,
+        106194,
+        104893,
+        104413,
+        104872,
+        103989,
+        104232,
+        104240,
+        104371,
+        104373,
+        103914,
+        104375,
+        104376,
+        103702,
+        103703,
+        104168,
+        104169,
+        103706,
+        104178,
+        104181,
+        103908,
+        104084,
+        104085,
+        104086,
+        104087,
+        103892,
+        104200,
+        104201,
+        103399,
+        103906,
+        117648,
+        119650,
+        119653,
+        119654,
+        119655,
+        102707,
+        103725,
+        103996,
+        102234,
+        102235,
+        102270,
+        102273,
+        102309,
+        104411,
+        104412,
+        103163,
+        107510,
+        103714,
+        103718,
+        102223,
+        103903,
+        102225,
+        102230,
+        102231,
+        103403,
+        103418,
+        103419,
+        103420,
+        103423,
+        103426,
+        103160,
+        103427,
+        107509,
+        101728,
+        101035,
+        102206,
+        102208,
+        103164,
+        102210,
+        103390,
+        102212,
+        103391,
+        103392,
+        103393,
+        103394,
+        103395,
+        100834,
+        100842,
+        100790,
+        103370,
+        100791,
+        103371,
+        100792,
+        103368,
+        101271,
+        101274,
+        100789,
+        103369,
+        103258,
+        100933,
+        100949,
+        101809,
+        101043,
+        100786,
+        100784,
+        100785,
+        99939,
+        100385,
+        100392,
+        100393,
+        100394,
+        101267,
+        102217,
+        100247,
+        99703,
+        99545,
+        99546,
+        99547,
+        99548,
+        112333,
+        112335,
+        112337,
+        99673,
+        99683,
+        99529,
+        99531,
+        103288,
+        99533,
+        103289,
+        103290,
+        103291,
+        103293,
+        103294,
+        99549,
+        101096,
+        101812,
+        100087,
+        112331,
+        112323,
+        112325,
+        112327,
+        112329,
+        99671,
+        100324,
+        100327,
+        100330,
+        100338,
+        99463,
+        99464,
+        103271,
+        99466,
+        103272,
+        99468,
+        103273,
+        103274,
+        99664,
+        99866,
+        112315,
+        112317,
+        112319,
+        112321,
+        99662,
+        99663,
+        99756,
+        99757,
+        99760,
+        99762,
+        99765,
+        99766,
+        99450,
+        99453,
+        99456,
+        99457,
+        99851,
+        112313,
+        99565,
+        99566,
+        86638,
+        86639,
+        86640,
+        86641,
+        88082,
+        86059,
+        86285,
+        86286,
+        86287,
+        86288,
+        86289,
+        86290,
+        85635,
+        85631,
+        85792,
+        85793,
+        85912,
+        85913,
+        85790,
+        85791,
+        85555,
+        85553,
+        85101,
+        85102,
+        85099,
+        85096,
+        85097,
+        85098,
+        85095,
+        84811,
+        84812,
+        84674,
+        84675,
+        84676,
+        84677,
+        85110,
+        84398,
+        84516,
+        84517,
+        84518,
+        84519,
+        84520,
+        84521,
+        84395,
+        84394,
+        84225,
+        84288,
+        84289,
+        85464,
+        84210,
+        84211,
+        84212,
+        84213,
+        84215,
+        84059,
+        84060,
+        84180,
+        83796,
+        83813,
+        83795,
+        106836,
+        83750,
+        83760,
+        83738,
+        83739,
+        84139,
+        106830,
+        83550,
+        83717,
+        84185,
+        83507,
+        106835,
+        112311,
+        84186,
+        83505,
+        83555,
+        82895,
+        82896,
+        82898,
+        82927,
+        82928,
+        82931,
+        82866,
+        82883,
+        82894,
+        112307,
+        112309,
+        106834,
+        82715,
+        82716,
+        82525,
+        82652,
+        82653,
+        82654,
+        82655,
+        82680,
+        82681,
+        82713,
+        82714,
+        112305,
+        81719,
+        81708,
+        81631,
+        81632,
+        81633,
+        81704,
+        81261,
+        81265,
+        81298,
+        81258,
+        81249,
+        81251,
+        81253,
+        81254,
+        81255,
+        81247,
+        112303
       ],
       "keys_returned": [
         "date_announced",
@@ -6486,13 +6815,13 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 135,
+      "elapsed_ms": 486,
       "ids_requested": [
         152527,
-        146600,
         140661,
-        136190,
-        121951
+        121968,
+        119655,
+        112303
       ],
       "body_sent": {
         "limit": 10,
@@ -6500,10 +6829,10 @@
         "request_data": {
           "intervention_id": [
             152527,
-            146600,
             140661,
-            136190,
-            121951
+            121968,
+            119655,
+            112303
           ],
           "announcement_period": [
             "1900-01-01",
@@ -6532,16 +6861,16 @@
         ]
       },
       "ids_returned": [
-        121951,
-        136190,
+        112303,
+        119655,
+        121968,
         140661,
-        146600,
         152527
       ],
       "all_ids_present": true,
       "num_returned": 5,
-      "response_size_bytes": 15526,
-      "response_size_kb": 15.2,
+      "response_size_bytes": 15800,
+      "response_size_kb": 15.4,
       "keys_returned": [
         "affected_jurisdictions",
         "affected_sectors",
@@ -6563,11 +6892,11 @@
         "state_act_url"
       ],
       "sample_record": {
-        "intervention_id": 121951,
-        "state_act_id": 76916,
-        "state_act_title": "Brazil: Removal of several products from the capital goods and IT and telecommunications Ex-Tarif\u00e1rio lists (August 2023)",
-        "intervention_url": "https://globaltradealert.org/intervention/121951?key=eba65271-5400-4782-96c3-182099ef163d",
-        "state_act_url": "https://www.globaltradealert.org/state-act/76916?key=eba65271-5400-4782-96c3-182099ef163d",
+        "intervention_id": 112303,
+        "state_act_id": 69562,
+        "state_act_title": "Brazil: BNDES provides USD 13.94 million loan to an undisclosed agricultural undertaking under the <i>MODERFROTA</i> scheme (August 2020)",
+        "intervention_url": "https://globaltradealert.org/intervention/112303?key=eba65271-5400-4782-96c3-182099ef163d",
+        "state_act_url": "https://www.globaltradealert.org/state-act/69562?key=eba65271-5400-4782-96c3-182099ef163d",
         "is_official_source": true,
         "gta_evaluation": "Red",
         "implementing_jurisdictions": [
@@ -6579,49 +6908,9 @@
         ],
         "affected_jurisdictions": [
           {
-            "id": 158,
-            "name": "Chinese Taipei",
-            "iso": "TWN"
-          },
-          {
-            "id": 578,
-            "name": "Norway",
-            "iso": "NOR"
-          },
-          {
-            "id": 620,
-            "name": "Portugal",
-            "iso": "PRT"
-          },
-          {
-            "id": 124,
-            "name": "Canada",
-            "iso": "CAN"
-          },
-          {
-            "id": 156,
-            "name": "China",
-            "iso": "CHN"
-          },
-          {
-            "id": 203,
-            "name": "Czechia",
-            "iso": "CZE"
-          },
-          {
-            "id": 251,
-            "name": "France",
-            "iso": "FRA"
-          },
-          {
-            "id": 276,
-            "name": "Germany",
-            "iso": "DEU"
-          },
-          {
-            "id": 344,
-            "name": "Hong Kong",
-            "iso": "HKG"
+            "id": 246,
+            "name": "Finland",
+            "iso": "FIN"
           },
           {
             "id": 348,
@@ -6629,14 +6918,54 @@
             "iso": "HUN"
           },
           {
-            "id": 360,
-            "name": "Indonesia",
-            "iso": "IDN"
+            "id": 826,
+            "name": "United Kingdom",
+            "iso": "GBR"
           },
           {
-            "id": 372,
-            "name": "Ireland",
-            "iso": "IRL"
+            "id": 156,
+            "name": "China",
+            "iso": "CHN"
+          },
+          {
+            "id": 40,
+            "name": "Austria",
+            "iso": "AUT"
+          },
+          {
+            "id": 840,
+            "name": "United States of America",
+            "iso": "USA"
+          },
+          {
+            "id": 276,
+            "name": "Germany",
+            "iso": "DEU"
+          },
+          {
+            "id": 56,
+            "name": "Belgium",
+            "iso": "BEL"
+          },
+          {
+            "id": 528,
+            "name": "Netherlands",
+            "iso": "NLD"
+          },
+          {
+            "id": 124,
+            "name": "Canada",
+            "iso": "CAN"
+          },
+          {
+            "id": 32,
+            "name": "Argentina",
+            "iso": "ARG"
+          },
+          {
+            "id": 251,
+            "name": "France",
+            "iso": "FRA"
           },
           {
             "id": 376,
@@ -6654,14 +6983,9 @@
             "iso": "JPN"
           },
           {
-            "id": 410,
-            "name": "Republic of Korea",
-            "iso": "KOR"
-          },
-          {
-            "id": 458,
-            "name": "Malaysia",
-            "iso": "MYS"
+            "id": 428,
+            "name": "Latvia",
+            "iso": "LVA"
           },
           {
             "id": 484,
@@ -6669,24 +6993,14 @@
             "iso": "MEX"
           },
           {
-            "id": 528,
-            "name": "Netherlands",
-            "iso": "NLD"
-          },
-          {
             "id": 616,
             "name": "Poland",
             "iso": "POL"
           },
           {
-            "id": 702,
-            "name": "Singapore",
-            "iso": "SGP"
-          },
-          {
-            "id": 703,
-            "name": "Slovakia",
-            "iso": "SVK"
+            "id": 724,
+            "name": "Spain",
+            "iso": "ESP"
           },
           {
             "id": 752,
@@ -6694,37 +7008,31 @@
             "iso": "SWE"
           },
           {
-            "id": 764,
-            "name": "Thailand",
-            "iso": "THA"
-          },
-          {
-            "id": 826,
-            "name": "United Kingdom",
-            "iso": "GBR"
-          },
-          {
-            "id": 840,
-            "name": "United States of America",
-            "iso": "USA"
+            "id": 858,
+            "name": "Uruguay",
+            "iso": "URY"
           }
         ],
-        "implementation_level": "National",
-        "eligible_firm": "all",
-        "intervention_type": "Import tariff",
-        "mast_chapter": "Tariff measures",
+        "implementation_level": "NFI",
+        "eligible_firm": "firm-specific",
+        "intervention_type": "Local content incentive",
+        "mast_chapter": "I: Trade-related investment measures",
         "affected_sectors": [
           {
-            "sector_id": 452,
-            "name": "Computing machinery ..."
+            "sector_id": 441,
+            "name": "Agricultural or fore..."
           },
           {
-            "sector_id": 469,
-            "name": "Other electrical equ..."
+            "sector_id": 444,
+            "name": "Machinery for mining..."
+          },
+          {
+            "sector_id": 491,
+            "name": "Motor vehicles, trai..."
           }
         ],
-        "date_announced": "2023-08-16",
-        "date_implemented": "2023-10-17",
+        "date_announced": "2020-08-31",
+        "date_implemented": "2020-08-31",
         "date_removed": null,
         "is_in_force": 1
       },
@@ -6737,9 +7045,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 334,
+      "elapsed_ms": 882,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -6890,7 +7198,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 137,
+      "elapsed_ms": 176,
       "ids_requested": [
         151457,
         141380,
@@ -7012,9 +7320,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 146,
+      "elapsed_ms": 580,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -7065,7 +7373,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 150,
+      "elapsed_ms": 140,
       "ids_requested": [
         58242,
         90120
@@ -7262,9 +7570,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 240,
+      "elapsed_ms": 570,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -7367,7 +7675,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 153,
+      "elapsed_ms": 151,
       "ids_requested": [
         142050,
         142454,
@@ -7628,9 +7936,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 138,
+      "elapsed_ms": 404,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -7680,7 +7988,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 128,
+      "elapsed_ms": 170,
       "ids_requested": [
         64871
       ],
@@ -7898,7 +8206,7 @@
     "type": "count",
     "count_result": {
       "status": 200,
-      "elapsed_ms": 1329,
+      "elapsed_ms": 1172,
       "body_sent": {
         "request_data": {
           "mast_chapters": [
@@ -8003,7 +8311,7 @@
     "count_results": [
       {
         "status": 200,
-        "elapsed_ms": 2397,
+        "elapsed_ms": 2611,
         "body_sent": {
           "request_data": {
             "gta_evaluation": [
@@ -8051,7 +8359,7 @@
       },
       {
         "status": 200,
-        "elapsed_ms": 2419,
+        "elapsed_ms": 2398,
         "body_sent": {
           "request_data": {
             "gta_evaluation": [
@@ -8105,9 +8413,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 389,
+      "elapsed_ms": 1188,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -8314,7 +8622,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 128,
+      "elapsed_ms": 266,
       "ids_requested": [
         152435,
         70740,
@@ -8456,9 +8764,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 457,
+      "elapsed_ms": 2387,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -8865,7 +9173,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 161,
+      "elapsed_ms": 217,
       "ids_requested": [
         152717,
         149212,
@@ -9056,9 +9364,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 298,
+      "elapsed_ms": 1036,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -9116,7 +9424,7 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 226,
+      "elapsed_ms": 276,
       "ids_requested": [
         151187,
         78695,
@@ -9462,9 +9770,9 @@
     "type": "search",
     "pass1_overview": {
       "status": 200,
-      "elapsed_ms": 814,
+      "elapsed_ms": 16029,
       "body_sent": {
-        "limit": 500,
+        "limit": 1000,
         "offset": 0,
         "sorting": "-date_announced",
         "request_data": {
@@ -9496,9 +9804,9 @@
           "intervention_url"
         ]
       },
-      "total_results": 500,
-      "response_size_bytes": 399326,
-      "response_size_kb": 390.0,
+      "total_results": 1000,
+      "response_size_bytes": 727297,
+      "response_size_kb": 710.3,
       "sample_titles": [
         "Italy: EUR 390 million rescue loan to Acciaierie d'Italia",
         "Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity",
@@ -9508,12 +9816,12 @@
       ],
       "all_ids": [
         152697,
-        152516,
-        152517,
         152518,
         152519,
-        152396,
+        152516,
+        152517,
         152570,
+        152396,
         152341,
         152340,
         152078,
@@ -9525,56 +9833,56 @@
         152043,
         152042,
         152165,
+        151930,
+        151932,
         151946,
         151947,
         151948,
-        151930,
-        151932,
         151780,
+        152298,
         152303,
         152511,
         152514,
         152440,
         152515,
         152304,
-        152298,
         151840,
+        151797,
+        151800,
+        151599,
         151600,
         151709,
         151710,
         151711,
         151712,
-        151797,
-        151800,
-        151599,
+        151841,
         151589,
         151590,
-        151841,
-        151940,
-        151942,
         151417,
         151792,
         151793,
-        151415,
+        151940,
+        151942,
         151422,
-        151397,
-        151384,
+        151415,
         152035,
         152033,
         152034,
         151513,
         151517,
+        151397,
+        151384,
+        151436,
         151583,
         151333,
-        151436,
         151366,
         151423,
         151256,
-        151167,
-        151176,
         151185,
         151187,
         151189,
+        151167,
+        151176,
         151099,
         151630,
         151086,
@@ -9584,9 +9892,9 @@
         150790,
         150898,
         151065,
-        152074,
         150707,
         150712,
+        152074,
         151064,
         150694,
         150494,
@@ -9595,23 +9903,23 @@
         150410,
         150471,
         150269,
-        150217,
-        150221,
-        150099,
         150088,
-        150215,
+        150099,
         150101,
+        150215,
         150103,
         150106,
         150113,
+        150217,
+        150221,
         150079,
         149918,
         149901,
-        149752,
         149753,
+        149752,
         149739,
-        149679,
         152588,
+        149679,
         149566,
         149568,
         149552,
@@ -9619,11 +9927,11 @@
         149574,
         149420,
         149359,
-        149176,
-        149159,
         149167,
         149179,
         149439,
+        149176,
+        149159,
         149020,
         148910,
         148838,
@@ -9634,9 +9942,9 @@
         148549,
         148527,
         148908,
-        149941,
         149945,
         149951,
+        149941,
         148001,
         148717,
         148720,
@@ -9648,8 +9956,8 @@
         146976,
         147803,
         147804,
-        149024,
         149387,
+        149024,
         146766,
         146767,
         148643,
@@ -9660,30 +9968,30 @@
         148067,
         146844,
         146845,
-        146586,
         146606,
         146628,
-        146590,
         146629,
+        146590,
+        146586,
         146477,
         148183,
         146246,
+        146192,
+        146193,
         146151,
         146152,
         146153,
-        146192,
-        146193,
         146159,
         149930,
-        145869,
-        145907,
-        145861,
-        145908,
-        145862,
-        145871,
         146778,
         145851,
         145868,
+        145869,
+        145907,
+        145908,
+        145861,
+        145862,
+        145871,
         145845,
         149023,
         145663,
@@ -9699,8 +10007,8 @@
         145500,
         144948,
         144949,
-        145136,
         145499,
+        145136,
         145844,
         144762,
         144768,
@@ -9710,10 +10018,10 @@
         144702,
         150035,
         144823,
-        144587,
-        144590,
         144608,
         144911,
+        144587,
+        144590,
         144427,
         144472,
         144593,
@@ -9723,18 +10031,18 @@
         144838,
         144910,
         144414,
-        144381,
         144226,
         144379,
+        144381,
         144557,
-        148672,
         144186,
         144206,
+        148672,
         144100,
         144134,
         144065,
-        143958,
         146899,
+        143958,
         143783,
         143784,
         143589,
@@ -9747,23 +10055,23 @@
         143730,
         145938,
         143671,
-        143423,
         143377,
+        143423,
+        143358,
+        143365,
+        143367,
+        143369,
         143354,
         143355,
         143356,
         143371,
         143351,
-        143358,
-        143365,
-        143367,
-        143369,
-        143345,
         143430,
         143443,
         143445,
-        143230,
+        143345,
         143229,
+        143230,
         143231,
         144387,
         142999,
@@ -9775,42 +10083,42 @@
         142344,
         142348,
         143032,
+        142222,
+        142314,
         142411,
         142412,
         142416,
         142425,
-        142222,
-        142314,
         143744,
         141462,
-        141378,
         141626,
         141630,
         141631,
         141632,
         141633,
+        141378,
         141350,
         141351,
         141337,
         141339,
         141362,
-        141281,
         141280,
+        141281,
         141212,
         141213,
         141114,
         116732,
-        142971,
         142802,
         142805,
         142806,
+        142971,
         142889,
         140979,
         140630,
         140624,
+        140518,
         140492,
         140493,
-        140518,
         140476,
         140373,
         140412,
@@ -9818,22 +10126,22 @@
         140470,
         140251,
         140253,
-        140118,
-        140172,
         140173,
         140174,
         140175,
         140176,
         140347,
+        140118,
+        140172,
         140095,
         140109,
         140111,
         142868,
         140264,
+        117636,
         139897,
         139898,
         140079,
-        117636,
         139958,
         139860,
         139781,
@@ -9857,8 +10165,8 @@
         139007,
         139080,
         139562,
-        138701,
         141135,
+        138701,
         140193,
         142870,
         138404,
@@ -9868,26 +10176,26 @@
         138440,
         138311,
         138478,
-        139443,
         138321,
+        139443,
+        116676,
         138194,
         138195,
         138204,
-        116676,
+        137947,
+        137949,
+        138013,
+        138016,
         138007,
         138041,
         138009,
         138042,
         138014,
         138018,
-        137947,
-        137949,
-        138013,
-        138016,
         137965,
         137972,
-        140054,
         137944,
+        140054,
         141367,
         137510,
         137342,
@@ -9895,19 +10203,19 @@
         137290,
         137292,
         137293,
-        137296,
         139319,
         139325,
+        137296,
         136787,
         136792,
         136797,
         136886,
-        136782,
         139068,
         139069,
         139075,
         139076,
         139077,
+        136782,
         136633,
         136635,
         136678,
@@ -9917,21 +10225,21 @@
         116598,
         136775,
         136777,
-        115454,
         138389,
+        115454,
         136153,
         136197,
-        139011,
         138471,
-        138351,
+        139011,
         141060,
         136774,
+        138351,
         135961,
+        136261,
         136227,
         136231,
         136232,
         136257,
-        136261,
         135577,
         135454,
         135465,
@@ -9944,12 +10252,12 @@
         138304,
         138798,
         138885,
-        137857,
-        137874,
-        137894,
         137831,
         137842,
         137853,
+        137857,
+        137874,
+        137894,
         134730,
         138004,
         134092,
@@ -9961,11 +10269,11 @@
         133642,
         133545,
         133548,
+        133343,
         133604,
         134136,
         133610,
         134158,
-        133343,
         133518,
         133558,
         133576,
@@ -9985,20 +10293,32 @@
         131974,
         131859,
         131962,
+        133213,
         139862,
         139864,
         139865,
-        133213,
         131652,
         131653,
         131654,
         132096,
         131571,
         131679,
-        131537,
         132089,
+        131537,
         131708,
         131480,
+        131545,
+        131546,
+        131613,
+        131547,
+        130256,
+        131548,
+        132069,
+        131553,
+        131593,
+        131594,
+        132136,
+        131595,
         131614,
         131712,
         131647,
@@ -10006,7 +10326,495 @@
         131513,
         131538,
         131541,
-        131542
+        131542,
+        131543,
+        131474,
+        121973,
+        131752,
+        131450,
+        131731,
+        131737,
+        132063,
+        138553,
+        131262,
+        134231,
+        134293,
+        131255,
+        133040,
+        131449,
+        131470,
+        131471,
+        131472,
+        131473,
+        131475,
+        131476,
+        131432,
+        140414,
+        131444,
+        131448,
+        131070,
+        131084,
+        131437,
+        131031,
+        131077,
+        131085,
+        131719,
+        134798,
+        131153,
+        130409,
+        131239,
+        142888,
+        130422,
+        131178,
+        130335,
+        130338,
+        130450,
+        130354,
+        131124,
+        130288,
+        130150,
+        130151,
+        129820,
+        130145,
+        130101,
+        130267,
+        130073,
+        131776,
+        129982,
+        129983,
+        129984,
+        129985,
+        129986,
+        129987,
+        129946,
+        129988,
+        129948,
+        129990,
+        129950,
+        129991,
+        132242,
+        129952,
+        129268,
+        129954,
+        129956,
+        129957,
+        129958,
+        129959,
+        129981,
+        129904,
+        130135,
+        129837,
+        129860,
+        129855,
+        129664,
+        129854,
+        129493,
+        129508,
+        129514,
+        131442,
+        131443,
+        129429,
+        129284,
+        129336,
+        131717,
+        131441,
+        130449,
+        129777,
+        131501,
+        131045,
+        131051,
+        129517,
+        129541,
+        131715,
+        131716,
+        129413,
+        129562,
+        129144,
+        129526,
+        129151,
+        129152,
+        134124,
+        129369,
+        129709,
+        123111,
+        129548,
+        123142,
+        123029,
+        123030,
+        108611,
+        123022,
+        123050,
+        129877,
+        122886,
+        137789,
+        137750,
+        137768,
+        122775,
+        122976,
+        122974,
+        122987,
+        122988,
+        122580,
+        122918,
+        122614,
+        122811,
+        122717,
+        129240,
+        129243,
+        129245,
+        129247,
+        129251,
+        129253,
+        129256,
+        122107,
+        129258,
+        122108,
+        122702,
+        122706,
+        122708,
+        122713,
+        129059,
+        137902,
+        121736,
+        122599,
+        122072,
+        122994,
+        121618,
+        121588,
+        121520,
+        121632,
+        135395,
+        121447,
+        122710,
+        108726,
+        121394,
+        121395,
+        121396,
+        121397,
+        121433,
+        121454,
+        121441,
+        121448,
+        121449,
+        121451,
+        132256,
+        137830,
+        137843,
+        137854,
+        137858,
+        137876,
+        137877,
+        120957,
+        120958,
+        120959,
+        120960,
+        120961,
+        120962,
+        120963,
+        133723,
+        120935,
+        121309,
+        133717,
+        120787,
+        120804,
+        120806,
+        120819,
+        129504,
+        120820,
+        129506,
+        120824,
+        129507,
+        120690,
+        120736,
+        120810,
+        120821,
+        130048,
+        131656,
+        121019,
+        121216,
+        120592,
+        122919,
+        120848,
+        120844,
+        121500,
+        120516,
+        120529,
+        120465,
+        116855,
+        138070,
+        120365,
+        120454,
+        120337,
+        120338,
+        120339,
+        120340,
+        120341,
+        120342,
+        120343,
+        120344,
+        121017,
+        120345,
+        120346,
+        120347,
+        120328,
+        120348,
+        120333,
+        120349,
+        120334,
+        120335,
+        120336,
+        120269,
+        131495,
+        120315,
+        120504,
+        120509,
+        122920,
+        117717,
+        133192,
+        120206,
+        120211,
+        120212,
+        120215,
+        120264,
+        120314,
+        120157,
+        120159,
+        149639,
+        120708,
+        113999,
+        122861,
+        119806,
+        122570,
+        122571,
+        133711,
+        133712,
+        121022,
+        122134,
+        130032,
+        122135,
+        130034,
+        119791,
+        119793,
+        119827,
+        119828,
+        119829,
+        119830,
+        119668,
+        119886,
+        122921,
+        122445,
+        137904,
+        117626,
+        133715,
+        117758,
+        133716,
+        118869,
+        118839,
+        118885,
+        119403,
+        119745,
+        117478,
+        119746,
+        119747,
+        117468,
+        117475,
+        117494,
+        117439,
+        122514,
+        117450,
+        122471,
+        122547,
+        122588,
+        122423,
+        122550,
+        122563,
+        133726,
+        121091,
+        119552,
+        121026,
+        119606,
+        121030,
+        121032,
+        136795,
+        121087,
+        119591,
+        120374,
+        122490,
+        117102,
+        117167,
+        117583,
+        120542,
+        122522,
+        117069,
+        117070,
+        117071,
+        117251,
+        119448,
+        116718,
+        119291,
+        116558,
+        117041,
+        117042,
+        121617,
+        117043,
+        122598,
+        122526,
+        115455,
+        117040,
+        119294,
+        116666,
+        116938,
+        116742,
+        116389,
+        116390,
+        116391,
+        122551,
+        116376,
+        116377,
+        116378,
+        120144,
+        120145,
+        120146,
+        119932,
+        116318,
+        116311,
+        116312,
+        116315,
+        116316,
+        116255,
+        115915,
+        115914,
+        116317,
+        116296,
+        116328,
+        116335,
+        116349,
+        123127,
+        116351,
+        116361,
+        121392,
+        116362,
+        122922,
+        117033,
+        115897,
+        116292,
+        117032,
+        116293,
+        116489,
+        116741,
+        119449,
+        119450,
+        116736,
+        122531,
+        116013,
+        119292,
+        122520,
+        119300,
+        119293,
+        116305,
+        116206,
+        129942,
+        119451,
+        131439,
+        115917,
+        115830,
+        115832,
+        115833,
+        115834,
+        115835,
+        115836,
+        115837,
+        115838,
+        115839,
+        115840,
+        116640,
+        115542,
+        119570,
+        120140,
+        120141,
+        120142,
+        121455,
+        121456,
+        115547,
+        115549,
+        129117,
+        115962,
+        116803,
+        122511,
+        129499,
+        115986,
+        129210,
+        129116,
+        114460,
+        114461,
+        114462,
+        114463,
+        115922,
+        136512,
+        116504,
+        116506,
+        116151,
+        114364,
+        116146,
+        121353,
+        115178,
+        116121,
+        114250,
+        114252,
+        114253,
+        116126,
+        114240,
+        114241,
+        114242,
+        114243,
+        114244,
+        114245,
+        114246,
+        114247,
+        116124,
+        114218,
+        114222,
+        114239,
+        136962,
+        119453,
+        114154,
+        122451,
+        114155,
+        114163,
+        114164,
+        114165,
+        114131,
+        114663,
+        114132,
+        114212,
+        114215,
+        114153,
+        114211,
+        122537,
+        113997,
+        114282,
+        122493,
+        136961,
+        114182,
+        114255,
+        122068,
+        136959,
+        136960,
+        122366,
+        122538,
+        122470,
+        121643,
+        121767,
+        113981,
+        133065,
+        113982,
+        121144,
+        119454,
+        114068,
+        116171,
+        113880,
+        113884,
+        113879
       ],
       "keys_returned": [
         "date_announced",
@@ -10022,13 +10830,13 @@
     },
     "pass2_detail": {
       "status": 200,
-      "elapsed_ms": 136,
+      "elapsed_ms": 412,
       "ids_requested": [
         152697,
-        148527,
-        143369,
-        138013,
-        131542
+        143351,
+        131593,
+        120315,
+        113879
       ],
       "body_sent": {
         "limit": 10,
@@ -10036,10 +10844,10 @@
         "request_data": {
           "intervention_id": [
             152697,
-            148527,
-            143369,
-            138013,
-            131542
+            143351,
+            131593,
+            120315,
+            113879
           ],
           "announcement_period": [
             "1900-01-01",
@@ -10068,16 +10876,16 @@
         ]
       },
       "ids_returned": [
-        131542,
-        138013,
-        143369,
-        148527,
+        113879,
+        120315,
+        131593,
+        143351,
         152697
       ],
       "all_ids_present": true,
       "num_returned": 5,
-      "response_size_bytes": 18609,
-      "response_size_kb": 18.2,
+      "response_size_bytes": 14764,
+      "response_size_kb": 14.4,
       "keys_returned": [
         "affected_jurisdictions",
         "affected_sectors",
@@ -10099,138 +10907,35 @@
         "state_act_url"
       ],
       "sample_record": {
-        "intervention_id": 131542,
-        "state_act_id": 72865,
-        "state_act_title": "EU: New sanctions package targeting Russia includes diamond import ban and other trade and economic measures",
-        "intervention_url": "https://globaltradealert.org/intervention/131542?key=eba65271-5400-4782-96c3-182099ef163d",
-        "state_act_url": "https://www.globaltradealert.org/state-act/72865?key=eba65271-5400-4782-96c3-182099ef163d",
+        "intervention_id": 113879,
+        "state_act_id": 70951,
+        "state_act_title": "United States of America: Department of Transportation provides TIFIA loan worth USD 48.1 million for a rural highway project in Minnesota",
+        "intervention_url": "https://globaltradealert.org/intervention/113879?key=eba65271-5400-4782-96c3-182099ef163d",
+        "state_act_url": "https://www.globaltradealert.org/state-act/70951?key=eba65271-5400-4782-96c3-182099ef163d",
         "is_official_source": true,
         "gta_evaluation": "Red",
         "implementing_jurisdictions": [
           {
-            "id": 40,
-            "name": "Austria",
-            "iso": "AUT"
-          },
-          {
-            "id": 56,
-            "name": "Belgium",
-            "iso": "BEL"
-          },
-          {
-            "id": 100,
-            "name": "Bulgaria",
-            "iso": "BGR"
-          },
-          {
-            "id": 191,
-            "name": "Croatia",
-            "iso": "HRV"
-          },
-          {
-            "id": 196,
-            "name": "Cyprus",
-            "iso": "CYP"
-          },
-          {
-            "id": 203,
-            "name": "Czechia",
-            "iso": "CZE"
-          },
-          {
-            "id": 208,
-            "name": "Denmark",
-            "iso": "DNK"
-          },
-          {
-            "id": 233,
-            "name": "Estonia",
-            "iso": "EST"
-          },
-          {
-            "id": 246,
-            "name": "Finland",
-            "iso": "FIN"
-          },
-          {
-            "id": 251,
-            "name": "France",
-            "iso": "FRA"
-          },
-          {
-            "id": 276,
-            "name": "Germany",
-            "iso": "DEU"
-          },
-          {
-            "id": 300,
-            "name": "Greece",
-            "iso": "GRC"
-          },
-          {
-            "id": 348,
-            "name": "Hungary",
-            "iso": "HUN"
-          },
-          {
-            "id": 372,
-            "name": "Ireland",
-            "iso": "IRL"
-          },
-          {
-            "id": 381,
-            "name": "Italy",
-            "iso": "ITA"
-          },
+            "id": 840,
+            "name": "United States of America",
+            "iso": "USA"
+          }
+        ],
+        "affected_jurisdictions": [
           {
             "id": 428,
             "name": "Latvia",
             "iso": "LVA"
           },
           {
-            "id": 440,
-            "name": "Lithuania",
-            "iso": "LTU"
+            "id": 578,
+            "name": "Norway",
+            "iso": "NOR"
           },
           {
-            "id": 442,
-            "name": "Luxembourg",
-            "iso": "LUX"
-          },
-          {
-            "id": 470,
-            "name": "Malta",
-            "iso": "MLT"
-          },
-          {
-            "id": 528,
-            "name": "Netherlands",
-            "iso": "NLD"
-          },
-          {
-            "id": 616,
-            "name": "Poland",
-            "iso": "POL"
-          },
-          {
-            "id": 620,
-            "name": "Portugal",
-            "iso": "PRT"
-          },
-          {
-            "id": 642,
-            "name": "Romania",
-            "iso": "ROU"
-          },
-          {
-            "id": 703,
-            "name": "Slovakia",
-            "iso": "SVK"
-          },
-          {
-            "id": 705,
-            "name": "Slovenia",
-            "iso": "SVN"
+            "id": 826,
+            "name": "United Kingdom",
+            "iso": "GBR"
           },
           {
             "id": 724,
@@ -10238,42 +10943,380 @@
             "iso": "ESP"
           },
           {
+            "id": 76,
+            "name": "Brazil",
+            "iso": "BRA"
+          },
+          {
+            "id": 124,
+            "name": "Canada",
+            "iso": "CAN"
+          },
+          {
+            "id": 360,
+            "name": "Indonesia",
+            "iso": "IDN"
+          },
+          {
+            "id": 392,
+            "name": "Japan",
+            "iso": "JPN"
+          },
+          {
+            "id": 458,
+            "name": "Malaysia",
+            "iso": "MYS"
+          },
+          {
             "id": 752,
             "name": "Sweden",
             "iso": "SWE"
-          }
-        ],
-        "affected_jurisdictions": [
+          },
+          {
+            "id": 705,
+            "name": "Slovenia",
+            "iso": "SVN"
+          },
+          {
+            "id": 703,
+            "name": "Slovakia",
+            "iso": "SVK"
+          },
+          {
+            "id": 704,
+            "name": "Vietnam",
+            "iso": "VNM"
+          },
           {
             "id": 643,
             "name": "Russia",
             "iso": "RUS"
+          },
+          {
+            "id": 276,
+            "name": "Germany",
+            "iso": "DEU"
+          },
+          {
+            "id": 246,
+            "name": "Finland",
+            "iso": "FIN"
+          },
+          {
+            "id": 36,
+            "name": "Australia",
+            "iso": "AUS"
+          },
+          {
+            "id": 410,
+            "name": "Republic of Korea",
+            "iso": "KOR"
+          },
+          {
+            "id": 251,
+            "name": "France",
+            "iso": "FRA"
+          },
+          {
+            "id": 484,
+            "name": "Mexico",
+            "iso": "MEX"
+          },
+          {
+            "id": 40,
+            "name": "Austria",
+            "iso": "AUT"
+          },
+          {
+            "id": 604,
+            "name": "Peru",
+            "iso": "PER"
+          },
+          {
+            "id": 688,
+            "name": "Serbia",
+            "iso": "SRB"
+          },
+          {
+            "id": 528,
+            "name": "Netherlands",
+            "iso": "NLD"
+          },
+          {
+            "id": 818,
+            "name": "Egypt",
+            "iso": "EGY"
+          },
+          {
+            "id": 156,
+            "name": "China",
+            "iso": "CHN"
+          },
+          {
+            "id": 699,
+            "name": "India",
+            "iso": "IND"
+          },
+          {
+            "id": 32,
+            "name": "Argentina",
+            "iso": "ARG"
+          },
+          {
+            "id": 512,
+            "name": "Oman",
+            "iso": "OMN"
+          },
+          {
+            "id": 214,
+            "name": "Dominican Republic",
+            "iso": "DOM"
+          },
+          {
+            "id": 203,
+            "name": "Czechia",
+            "iso": "CZE"
+          },
+          {
+            "id": 381,
+            "name": "Italy",
+            "iso": "ITA"
+          },
+          {
+            "id": 170,
+            "name": "Colombia",
+            "iso": "COL"
+          },
+          {
+            "id": 764,
+            "name": "Thailand",
+            "iso": "THA"
+          },
+          {
+            "id": 642,
+            "name": "Romania",
+            "iso": "ROU"
+          },
+          {
+            "id": 340,
+            "name": "Honduras",
+            "iso": "HND"
+          },
+          {
+            "id": 710,
+            "name": "South Africa",
+            "iso": "ZAF"
+          },
+          {
+            "id": 792,
+            "name": "Turkiye",
+            "iso": "TUR"
+          },
+          {
+            "id": 702,
+            "name": "Singapore",
+            "iso": "SGP"
+          },
+          {
+            "id": 616,
+            "name": "Poland",
+            "iso": "POL"
+          },
+          {
+            "id": 96,
+            "name": "Brunei Darussalam",
+            "iso": "BRN"
+          },
+          {
+            "id": 56,
+            "name": "Belgium",
+            "iso": "BEL"
+          },
+          {
+            "id": 804,
+            "name": "Ukraine",
+            "iso": "UKR"
+          },
+          {
+            "id": 554,
+            "name": "New Zealand",
+            "iso": "NZL"
+          },
+          {
+            "id": 784,
+            "name": "United Arab Emirates",
+            "iso": "ARE"
+          },
+          {
+            "id": 608,
+            "name": "Philippines",
+            "iso": "PHL"
+          },
+          {
+            "id": 152,
+            "name": "Chile",
+            "iso": "CHL"
+          },
+          {
+            "id": 682,
+            "name": "Saudi Arabia",
+            "iso": "SAU"
+          },
+          {
+            "id": 233,
+            "name": "Estonia",
+            "iso": "EST"
+          },
+          {
+            "id": 586,
+            "name": "Pakistan",
+            "iso": "PAK"
+          },
+          {
+            "id": 376,
+            "name": "Israel",
+            "iso": "ISR"
+          },
+          {
+            "id": 208,
+            "name": "Denmark",
+            "iso": "DNK"
+          },
+          {
+            "id": 756,
+            "name": "Switzerland",
+            "iso": "CHE"
+          },
+          {
+            "id": 104,
+            "name": "Myanmar",
+            "iso": "MMR"
+          },
+          {
+            "id": 188,
+            "name": "Costa Rica",
+            "iso": "CRI"
+          },
+          {
+            "id": 116,
+            "name": "Cambodia",
+            "iso": "KHM"
+          },
+          {
+            "id": 348,
+            "name": "Hungary",
+            "iso": "HUN"
+          },
+          {
+            "id": 440,
+            "name": "Lithuania",
+            "iso": "LTU"
+          },
+          {
+            "id": 112,
+            "name": "Belarus",
+            "iso": "BLR"
+          },
+          {
+            "id": 442,
+            "name": "Luxembourg",
+            "iso": "LUX"
+          },
+          {
+            "id": 100,
+            "name": "Bulgaria",
+            "iso": "BGR"
+          },
+          {
+            "id": 620,
+            "name": "Portugal",
+            "iso": "PRT"
+          },
+          {
+            "id": 300,
+            "name": "Greece",
+            "iso": "GRC"
+          },
+          {
+            "id": 372,
+            "name": "Ireland",
+            "iso": "IRL"
+          },
+          {
+            "id": 320,
+            "name": "Guatemala",
+            "iso": "GTM"
+          },
+          {
+            "id": 12,
+            "name": "Algeria",
+            "iso": "DZA"
           }
         ],
-        "implementation_level": "Supranational",
-        "eligible_firm": "all",
-        "intervention_type": "Import ban",
-        "mast_chapter": "E: Non-automatic licensing, quotas etc.",
+        "implementation_level": "National",
+        "eligible_firm": "firm-specific",
+        "intervention_type": "Public procurement localisation",
+        "mast_chapter": "M: Government procurement restrictions",
         "affected_sectors": [
           {
-            "sector_id": 163,
-            "name": "Precious and semi-pr..."
+            "sector_id": 311,
+            "name": "Wood, sawn or chippe..."
           },
           {
-            "sector_id": 345,
-            "name": "Miscellaneous basic ..."
+            "sector_id": 313,
+            "name": "Wood in the rough, t..."
           },
           {
-            "sector_id": 382,
-            "name": "Jewellery and relate..."
+            "sector_id": 315,
+            "name": "Veneer sheets; sheet..."
           },
           {
-            "sector_id": 484,
-            "name": "Watches and clocks, ..."
+            "sector_id": 316,
+            "name": "Builders' joinery an..."
+          },
+          {
+            "sector_id": 347,
+            "name": "Plastics in primary ..."
+          },
+          {
+            "sector_id": 363,
+            "name": "Semi-manufactures of..."
+          },
+          {
+            "sector_id": 371,
+            "name": "Glass and glass prod..."
+          },
+          {
+            "sector_id": 375,
+            "name": "Articles of concrete..."
+          },
+          {
+            "sector_id": 411,
+            "name": "Basic iron and steel..."
+          },
+          {
+            "sector_id": 412,
+            "name": "Products of iron or ..."
+          },
+          {
+            "sector_id": 414,
+            "name": "Copper, nickel, alum..."
+          },
+          {
+            "sector_id": 415,
+            "name": "Semi-finished produc..."
+          },
+          {
+            "sector_id": 416,
+            "name": "Other non-ferrous me..."
+          },
+          {
+            "sector_id": 429,
+            "name": "Other fabricated met..."
           }
         ],
-        "date_announced": "2023-12-18",
-        "date_implemented": "2024-01-01",
+        "date_announced": "2022-12-06",
+        "date_implemented": "2022-12-06",
         "date_removed": null,
         "is_in_force": 1
       },

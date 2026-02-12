@@ -1,6 +1,6 @@
 # Multi-Pass Workflow Evaluation Report
 
-**Generated:** 2026-02-12 20:33:49
+**Generated:** 2026-02-12 20:57:02
 **API endpoint:** `https://api.globaltradealert.org/api/v2/gta/data/`
 **Overview keys:** 8 fields
 **Standard keys:** 18 fields
@@ -10,15 +10,15 @@
 | # | Prompt | Type | Pass 1 Results | Pass 1 Size | Pass 2 OK | Verdict |
 |---|--------|------|----------------|-------------|-----------|---------|
 | 1 | What tariffs has the US imposed on China since Jan 2025... | search | 71 | 34.4 KB | Yes | OK |
-| 2 | Which countries have imposed tariffs affecting US expor... | search | 500 | 246.8 KB | Yes | OK |
+| 2 | Which countries have imposed tariffs affecting US expor... | search | 623 | 303.4 KB | Yes | OK |
 | 3 | What export controls has China imposed on rare earth el... | search | 36 | 15.7 KB | Yes | OK |
 | 4 | Which countries have restricted exports of lithium or c... | search | 0 | 0.0 KB | N/A (0 results) | No results |
-| 5 | What measures currently affect semiconductor manufactur... | search | 500 | 249.7 KB | Yes | OK |
+| 5 | What measures currently affect semiconductor manufactur... | search | 747 | 360.8 KB | Yes | OK |
 | 6 | What subsidies are governments providing for critical m... | search | 191 | 88.7 KB | Yes | OK |
-| 7 | Which countries subsidise their domestic semiconductor ... | search | 500 | 249.7 KB | Yes | OK |
+| 7 | Which countries subsidise their domestic semiconductor ... | search | 747 | 360.8 KB | Yes | OK |
 | 8 | Which G20 countries have increased state aid to EV manu... | search | 391 | 181.3 KB | Yes | OK |
 | 9 | What harmful measures has the EU imposed on US exports ... | search | 412 | 309.3 KB | Yes | OK |
-| 10 | What measures has Brazil implemented affecting US agric... | search | 500 | 227.8 KB | Yes | OK |
+| 10 | What measures has Brazil implemented affecting US agric... | search | 1000 | 453.7 KB | Yes | OK |
 | 11 | Find all anti-dumping investigations targeting Chinese ... | search | 98 | 58.7 KB | Yes | OK |
 | 12 | What safeguard measures are currently in force on solar... | search | 2 | 0.9 KB | Yes | OK |
 | 13 | What local content requirements affect automotive produ... | search | 47 | 21.3 KB | Yes | OK |
@@ -28,7 +28,7 @@
 | 17 | Which interventions target state-owned enterprises spec... | search | 158 | 70.7 KB | Yes | OK |
 | 18 | What subnational measures has the US implemented since ... | search | 355 | 176.9 KB | Yes | OK |
 | 19 | What FDI screening measures target Chinese investments ... | search | 5 | 3.5 KB | Yes | OK |
-| 20 | What measures have G7 countries coordinated against Rus... | search | 500 | 390.0 KB | Yes | OK |
+| 20 | What measures have G7 countries coordinated against Rus... | search | 1000 | 710.3 KB | Yes | OK |
 
 ## Per-Prompt Details
 
@@ -37,7 +37,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 71 interventions
 - Response size: 34.4 KB (35,205 bytes)
-- Elapsed: 801 ms
+- Elapsed: 6202 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America: Reclassification of certain vehicles for transport of goods and consequent increase in MFN Duty
@@ -52,7 +52,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 29.6 KB
-- Elapsed: 240 ms
+- Elapsed: 175 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 142485):
   - Title: United States of America: Reclassification of a men’s vest and consequent modification in the MFN duties
@@ -68,9 +68,9 @@
 ### Prompt 2: Which countries have imposed tariffs affecting US exports in 2025?
 
 **Pass 1 -- Overview (auto-detected for broad search)**
-- Results: 500 interventions
-- Response size: 246.8 KB (252,752 bytes)
-- Elapsed: 901 ms
+- Results: 623 interventions
+- Response size: 303.4 KB (310,712 bytes)
+- Elapsed: 6458 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - Mexico: Removal of several products from the "basic basket" products list temporarily exempted from import duties (December 2025)
@@ -80,21 +80,21 @@
   - EU: Changes to the list of agricultural and industrial products subject to a reduction of import duties (December 2025)
 
 **Pass 2 -- Standard Detail (auto-detected for specific IDs)**
-- IDs requested: [151413, 150651, 148496, 145773, 144207]
-- IDs returned: [144207, 145773, 148496, 150651, 151413]
+- IDs requested: [151413, 150009, 146646, 144562, 141640]
+- IDs returned: [141640, 144562, 146646, 150009, 151413]
 - All IDs present: Yes
 - Num returned: 5
-- Response size: 10.0 KB
-- Elapsed: 170 ms
+- Response size: 11.4 KB
+- Elapsed: 487 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
-- Sample record (ID 144207):
-  - Title: Vietnam: Government reduces import tariff rates on certain products in response to geopolitical developments
+- Sample record (ID 141640):
+  - Title: Australia: Customs tariff amendments in a Tariff Concession Order published on 8 January 2025
   - Type: Import tariff
   - Evaluation: Green
-  - Date announced: 2025-03-31
+  - Date announced: 2025-01-08
   - In force: 1
 
-**Multi-pass value:** Prompt returned 500 results vs old ceiling of 50. Overview pass reveals 900% more data.
+**Multi-pass value:** Prompt returned 623 results vs old ceiling of 50. Overview pass reveals 1146% more data.
 
 ---
 
@@ -103,7 +103,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 36 interventions
 - Response size: 15.7 KB (16,042 bytes)
-- Elapsed: 287 ms
+- Elapsed: 586 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - China: Government grants export license to Ningbo Jintian Copper
@@ -118,7 +118,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 16.7 KB
-- Elapsed: 199 ms
+- Elapsed: 171 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 20137):
   - Title: China: Government approves the second batch of export quotas on rare earth metals for 2013
@@ -136,7 +136,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 0 interventions
 - Response size: 0.0 KB (2 bytes)
-- Elapsed: 463 ms
+- Elapsed: 531 ms
 - Keys returned: []
 
 **Pass 2:** Skipped (no results from Pass 1)
@@ -148,9 +148,9 @@
 ### Prompt 5: What measures currently affect semiconductor manufacturing equipment trade?
 
 **Pass 1 -- Overview (auto-detected for broad search)**
-- Results: 500 interventions
-- Response size: 249.7 KB (255,701 bytes)
-- Elapsed: 836 ms
+- Results: 747 interventions
+- Response size: 360.8 KB (369,466 bytes)
+- Elapsed: 8848 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
@@ -160,21 +160,21 @@
   - United Kingdom: British Business Bank commits GBP 50 million to IQ Capital Fund V for deeptech investments
 
 **Pass 2 -- Standard Detail (auto-detected for specific IDs)**
-- IDs requested: [152717, 142858, 138004, 129504, 107530]
-- IDs returned: [107530, 129504, 138004, 142858, 152717]
+- IDs requested: [152717, 139615, 113918, 135365, 19697]
+- IDs returned: [19697, 113918, 135365, 139615, 152717]
 - All IDs present: Yes
 - Num returned: 5
-- Response size: 21.0 KB
-- Elapsed: 131 ms
+- Response size: 12.6 KB
+- Elapsed: 400 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
-- Sample record (ID 107530):
-  - Title: United States of America: U.S. Administration enacts the CHIPS and Science Act of 2022
-  - Type: State aid, unspecified
-  - Evaluation: Red
-  - Date announced: 2022-08-09
+- Sample record (ID 19697):
+  - Title: United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor
+  - Type: Tax or social insurance relief
+  - Evaluation: Amber
+  - Date announced: 2008-12-01
   - In force: 1
 
-**Multi-pass value:** Prompt returned 500 results vs old ceiling of 50. Overview pass reveals 900% more data.
+**Multi-pass value:** Prompt returned 747 results vs old ceiling of 50. Overview pass reveals 1394% more data.
 
 ---
 
@@ -183,7 +183,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 191 interventions
 - Response size: 88.7 KB (90,781 bytes)
-- Elapsed: 408 ms
+- Elapsed: 2748 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America: EXIM approves loan to establish a Strategic Critical Minerals Reserve
@@ -198,7 +198,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 13.8 KB
-- Elapsed: 165 ms
+- Elapsed: 145 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 88906):
   - Title: Germany: Introduction of state loan and financial grant scheme to support critical minerals sector
@@ -214,9 +214,9 @@
 ### Prompt 7: Which countries subsidise their domestic semiconductor industry?
 
 **Pass 1 -- Overview (auto-detected for broad search)**
-- Results: 500 interventions
-- Response size: 249.7 KB (255,701 bytes)
-- Elapsed: 880 ms
+- Results: 747 interventions
+- Response size: 360.8 KB (369,466 bytes)
+- Elapsed: 1141 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
@@ -226,21 +226,21 @@
   - United Kingdom: British Business Bank commits GBP 50 million to IQ Capital Fund V for deeptech investments
 
 **Pass 2 -- Standard Detail (auto-detected for specific IDs)**
-- IDs requested: [152717, 142858, 138004, 129504, 107530]
-- IDs returned: [107530, 129504, 138004, 142858, 152717]
+- IDs requested: [152717, 139615, 113918, 135365, 19697]
+- IDs returned: [19697, 113918, 135365, 139615, 152717]
 - All IDs present: Yes
 - Num returned: 5
-- Response size: 21.0 KB
-- Elapsed: 133 ms
+- Response size: 12.6 KB
+- Elapsed: 289 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
-- Sample record (ID 107530):
-  - Title: United States of America: U.S. Administration enacts the CHIPS and Science Act of 2022
-  - Type: State aid, unspecified
-  - Evaluation: Red
-  - Date announced: 2022-08-09
+- Sample record (ID 19697):
+  - Title: United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor
+  - Type: Tax or social insurance relief
+  - Evaluation: Amber
+  - Date announced: 2008-12-01
   - In force: 1
 
-**Multi-pass value:** Prompt returned 500 results vs old ceiling of 50. Overview pass reveals 900% more data.
+**Multi-pass value:** Prompt returned 747 results vs old ceiling of 50. Overview pass reveals 1394% more data.
 
 ---
 
@@ -249,7 +249,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 391 interventions
 - Response size: 181.3 KB (185,680 bytes)
-- Elapsed: 632 ms
+- Elapsed: 2220 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - Canada: New measures to support the automobile industry
@@ -264,7 +264,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 9.5 KB
-- Elapsed: 130 ms
+- Elapsed: 143 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 101010):
   - Title: Hungary: Introduction of EUR 24 million measure to support Volta Energy Solutions
@@ -282,7 +282,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 412 interventions
 - Response size: 309.3 KB (316,729 bytes)
-- Elapsed: 801 ms
+- Elapsed: 4546 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - EU: Action plan on drone and counter-drone security to support the development of homegrown technologies
@@ -297,7 +297,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 14.7 KB
-- Elapsed: 131 ms
+- Elapsed: 170 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 115979):
   - Title: Germany: EUR 920 million grant to support Infineon Technologies AG's construction project of a semiconductor and integrated circuit factory
@@ -313,9 +313,9 @@
 ### Prompt 10: What measures has Brazil implemented affecting US agricultural exports?
 
 **Pass 1 -- Overview (auto-detected for broad search)**
-- Results: 500 interventions
-- Response size: 227.8 KB (233,222 bytes)
-- Elapsed: 637 ms
+- Results: 1000 interventions
+- Response size: 453.7 KB (464,620 bytes)
+- Elapsed: 7041 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)
@@ -325,21 +325,21 @@
   - Brazil: Changes to import duties and import tariff-rate quotas for multiple products (January 2026)
 
 **Pass 2 -- Standard Detail (auto-detected for specific IDs)**
-- IDs requested: [152527, 146600, 140661, 136190, 121951]
-- IDs returned: [121951, 136190, 140661, 146600, 152527]
+- IDs requested: [152527, 140661, 121968, 119655, 112303]
+- IDs returned: [112303, 119655, 121968, 140661, 152527]
 - All IDs present: Yes
 - Num returned: 5
-- Response size: 15.2 KB
-- Elapsed: 135 ms
+- Response size: 15.4 KB
+- Elapsed: 486 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
-- Sample record (ID 121951):
-  - Title: Brazil: Removal of several products from the capital goods and IT and telecommunications Ex-Tarifário lists (August 2023)
-  - Type: Import tariff
+- Sample record (ID 112303):
+  - Title: Brazil: BNDES provides USD 13.94 million loan to an undisclosed agricultural undertaking under the <i>MODERFROTA</i> scheme (August 2020)
+  - Type: Local content incentive
   - Evaluation: Red
-  - Date announced: 2023-08-16
+  - Date announced: 2020-08-31
   - In force: 1
 
-**Multi-pass value:** Prompt returned 500 results vs old ceiling of 50. Overview pass reveals 900% more data.
+**Multi-pass value:** Prompt returned 1000 results vs old ceiling of 50. Overview pass reveals 1900% more data.
 
 ---
 
@@ -348,7 +348,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 98 interventions
 - Response size: 58.7 KB (60,089 bytes)
-- Elapsed: 334 ms
+- Elapsed: 882 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - SACU: Initiation of anti-dumping investigation on imports of flat-rolled products of iron or non-alloy steel, of a width of 600 mm or more, clad, plated or coated, painted, varnished or coated with plastics from China
@@ -363,7 +363,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 6.4 KB
-- Elapsed: 137 ms
+- Elapsed: 176 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 80502):
   - Title: Brazil: Definitive antidumping duty on imports of CNG cylinders from China
@@ -381,7 +381,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 2 interventions
 - Response size: 0.9 KB (919 bytes)
-- Elapsed: 146 ms
+- Elapsed: 580 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America: Safeguard measure on imports large residential washing machines
@@ -393,7 +393,7 @@
 - All IDs present: Yes
 - Num returned: 2
 - Response size: 4.9 KB
-- Elapsed: 150 ms
+- Elapsed: 140 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 58242):
   - Title: United States of America: Safeguard measure on imports large residential washing machines
@@ -411,7 +411,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 47 interventions
 - Response size: 21.3 KB (21,814 bytes)
-- Elapsed: 240 ms
+- Elapsed: 570 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - Thailand: Government introduced a less restrictive requirement of a 2 to 1 domestic corn absorption rate for wheat import permit
@@ -426,7 +426,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 8.0 KB
-- Elapsed: 153 ms
+- Elapsed: 151 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 62791):
   - Title: Indonesia: Localisation restrictions in the telecommunications sector
@@ -444,7 +444,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 1 interventions
 - Response size: 0.4 KB (449 bytes)
-- Elapsed: 138 ms
+- Elapsed: 404 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - India: Import of certain organic chemicals and waste pharmaceuticals liberalised
@@ -455,7 +455,7 @@
 - All IDs present: Yes
 - Num returned: 1
 - Response size: 2.0 KB
-- Elapsed: 128 ms
+- Elapsed: 170 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 64871):
   - Title: India: Import of certain organic chemicals and waste pharmaceuticals liberalised
@@ -474,7 +474,7 @@
 - Status: 200
 - Groups: 20
 - Total count: 20
-- Elapsed: 1329 ms
+- Elapsed: 1172 ms
 - Data (first 10 rows):
   - {'value': 1100, 'date_announced_year': '2022'}
   - {'value': 945, 'date_announced_year': '2020'}
@@ -495,7 +495,7 @@
 - **2025:**
   - Status: 200
   - Total count: 6
-  - Elapsed: 2397 ms
+  - Elapsed: 2611 ms
     - {'value': 3903, 'date_implemented_year': '2025'}
     - {'value': 2760, 'date_implemented_year': 'No implementation date'}
     - {'value': 4, 'date_implemented_year': '2026'}
@@ -504,7 +504,7 @@
 - **2024:**
   - Status: 200
   - Total count: 6
-  - Elapsed: 2419 ms
+  - Elapsed: 2398 ms
     - {'value': 4439, 'date_implemented_year': '2024'}
     - {'value': 2760, 'date_implemented_year': 'No implementation date'}
     - {'value': 7, 'date_implemented_year': '2025'}
@@ -518,7 +518,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 158 interventions
 - Response size: 70.7 KB (72,381 bytes)
-- Elapsed: 389 ms
+- Elapsed: 1188 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - India: Customs duty amendments announced as part of 2026-2027 budget
@@ -533,7 +533,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 8.3 KB
-- Elapsed: 128 ms
+- Elapsed: 266 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 56245):
   - Title: Republic of Moldova: VAT-exempted imports of certain medical equipment
@@ -551,7 +551,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 355 interventions
 - Response size: 176.9 KB (181,118 bytes)
-- Elapsed: 457 ms
+- Elapsed: 2387 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
@@ -566,7 +566,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 9.3 KB
-- Elapsed: 161 ms
+- Elapsed: 217 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 129116):
   - Title: United States (Wisconsin): Prohibition on the use of certain foreign digital products and technologies in the state IT systems
@@ -584,7 +584,7 @@
 **Pass 1 -- Overview (auto-detected for broad search)**
 - Results: 5 interventions
 - Response size: 3.5 KB (3,536 bytes)
-- Elapsed: 298 ms
+- Elapsed: 1036 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - EU: Commission publishes its new approach to economic security
@@ -599,7 +599,7 @@
 - All IDs present: Yes
 - Num returned: 5
 - Response size: 26.8 KB
-- Elapsed: 226 ms
+- Elapsed: 276 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
 - Sample record (ID 11938):
   - Title: Germany: Review of foreign investments on national security and public policy grounds
@@ -615,9 +615,9 @@
 ### Prompt 20: What measures have G7 countries coordinated against Russia since February 2022?
 
 **Pass 1 -- Overview (auto-detected for broad search)**
-- Results: 500 interventions
-- Response size: 390.0 KB (399,326 bytes)
-- Elapsed: 814 ms
+- Results: 1000 interventions
+- Response size: 710.3 KB (727,297 bytes)
+- Elapsed: 16029 ms
 - Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
 - Sample titles:
   - Italy: EUR 390 million rescue loan to Acciaierie d'Italia
@@ -627,21 +627,21 @@
   - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
 
 **Pass 2 -- Standard Detail (auto-detected for specific IDs)**
-- IDs requested: [152697, 148527, 143369, 138013, 131542]
-- IDs returned: [131542, 138013, 143369, 148527, 152697]
+- IDs requested: [152697, 143351, 131593, 120315, 113879]
+- IDs returned: [113879, 120315, 131593, 143351, 152697]
 - All IDs present: Yes
 - Num returned: 5
-- Response size: 18.2 KB
-- Elapsed: 136 ms
+- Response size: 14.4 KB
+- Elapsed: 412 ms
 - Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
-- Sample record (ID 131542):
-  - Title: EU: New sanctions package targeting Russia includes diamond import ban and other trade and economic measures
-  - Type: Import ban
+- Sample record (ID 113879):
+  - Title: United States of America: Department of Transportation provides TIFIA loan worth USD 48.1 million for a rural highway project in Minnesota
+  - Type: Public procurement localisation
   - Evaluation: Red
-  - Date announced: 2023-12-18
+  - Date announced: 2022-12-06
   - In force: 1
 
-**Multi-pass value:** Prompt returned 500 results vs old ceiling of 50. Overview pass reveals 900% more data.
+**Multi-pass value:** Prompt returned 1000 results vs old ceiling of 50. Overview pass reveals 1900% more data.
 
 ---
 
@@ -650,13 +650,13 @@
 ### Result Volume
 - **12** of 18 search prompts exceeded the old 50-result ceiling
 - **6** search prompts returned 50 or fewer results
-- **Max results:** 500 (from a single overview query)
+- **Max results:** 1000 (from a single overview query)
 - **Min results (non-zero):** 1
-- **Average results:** 237
+- **Average results:** 327
 
 ### Response Sizes (Overview Pass)
-- **Average:** 129.2 KB
-- **Max:** 390.0 KB
+- **Average:** 175.0 KB
+- **Max:** 710.3 KB
 - **Min:** 0.0 KB
 - **Fits in LLM context (<100KB):** 10 of 18
 
