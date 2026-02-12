@@ -6,7 +6,7 @@ Query 78,000+ trade policy interventions through Claude — tariffs, subsidies, 
 
 Global Trade Alert (GTA) is a transparency initiative by the St Gallen Endowment for Prosperity through Trade (SGEPT) that tracks government trade policy changes worldwide since November 2008. Unlike trade databases that rely on government self-reporting, GTA independently documents and verifies policy interventions using primary sources — official gazettes, ministry announcements, legislative records, and press releases.
 
-GTA covers all types of trade measures: not just tariffs, but subsidies, export restrictions, FDI barriers, public procurement rules, localisation requirements and more. Each intervention is classified by color: Red (harmful/discriminatory), Amber (likely harmful but uncertain), or Green (liberalising). The database contains over 78,000 documented interventions across 200+ jurisdictions.
+GTA covers all types of trade measures: not just tariffs, but subsidies, export restrictions, FDI barriers, public procurement rules, localisation requirements and more. Each intervention is classified by color: Red (harmful/discriminatory), Amber (likely harmful but uncertain), or Green (liberalising). The database contains over 78,000 documented interventions across 60+ jurisdictions.
 
 This breadth distinguishes GTA from the WTO's trade monitoring system, which captures only measures that governments voluntarily report. GTA reveals the full landscape of state intervention in markets — including measures governments prefer not to highlight.
 
