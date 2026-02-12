@@ -111,6 +111,10 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     Key parameters: implementing_jurisdictions, intervention_types, affected_products,
     date_announced_gte, query (entity names only). See parameter descriptions for full details.
 
+    Note: gta_evaluation accepts 'Red', 'Amber', or 'Green' for individual values. Use 'Harmful'
+    as shorthand for Red+Amber (most common analytical definition of 'harmful'). Individual
+    intervention records always have Red, Amber, or Green — never 'Harmful' or 'Liberalizing'.
+
     Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
     and dates.
 
@@ -290,6 +294,9 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
              as formatted. Do NOT modify or reformat the reference list. It provides essential
              clickable links to all mentioned interventions.
 
+    Note: GTA entries are created by analysts after policy implementation. Recent entries may not
+    yet appear. Use overlapping scan windows (e.g., 8-day window for weekly monitoring) to avoid gaps.
+
     Examples:
         - Get updates from the last week
         - Track changes to US trade measures
@@ -440,6 +447,11 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     - implementer: By implementing country
     - mast_chapter: By broad policy category
     - affected: By affected country
+
+    ⚠️ When counting by sector or product (count_by includes 'sector', 'product', etc.), results
+    show intervention-sector/product COMBINATIONS, not unique interventions. A single intervention
+    affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
+    that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
 
     Examples:
         - US harmful interventions by year:

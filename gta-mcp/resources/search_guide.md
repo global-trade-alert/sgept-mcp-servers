@@ -136,6 +136,25 @@ Valid fields for sorting:
 - No prefix for ascending (oldest/lowest first): `date_announced`
 - Combine multiple fields with commas: `date_announced,intervention_id`
 
+## Using Evaluation Filters
+
+The `gta_evaluation` parameter filters interventions by their trade impact assessment:
+
+**Individual values (appear in actual records):**
+- `"Red"` — Certainly harmful, discriminatory measures
+- `"Amber"` — Likely harmful but uncertain outcome (includes all trade defence investigations)
+- `"Green"` — Liberalizing measures
+
+**Filter-only convenience values (for searching):**
+- `"Harmful"` — Shorthand for Red + Amber combined (most common analytical definition)
+- `"Liberalizing"` — Same as Green
+
+⚠️ Note: Individual intervention records always contain "Red", "Amber", or "Green". You will never
+see "Harmful" or "Liberalizing" in actual records — these are filter shortcuts only.
+
+**Recommendation:** Use `gta_evaluation: ["Red", "Amber"]` instead of relying on the convenience
+value to make your intent explicit.
+
 ## Best Practices Summary
 
 ✅ **DO:**
@@ -143,10 +162,12 @@ Valid fields for sorting:
 - Specify date ranges with `date_announced_gte/lte` when searching specific time periods
 - Start broad and add filters incrementally
 - Check the most recent data first to understand what's available
+- Use `gta_evaluation: ["Red", "Amber"]` to filter for harmful measures
 
 ❌ **DON'T:**
 - Search without date filters or sorting if you want recent data
 - Use future dates in your filters
+- Expect to see "Harmful" or "Liberalizing" in intervention records (filter-only values)
 - Assume the first results are the most recent (without sorting)
 - Use only `date_implemented` for recent searches (many measures have no implementation date yet)
 

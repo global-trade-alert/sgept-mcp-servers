@@ -673,11 +673,13 @@ mast_chapters=['Capital control measures', 'FDI measures']
 
 ### Letter-to-ID Mapping Table
 
+⚠️ **Important**: MAST chapter IDs are NON-ALPHABETICAL. The mapping is NOT A=1, B=2, C=3.
+
 | Letter | ID | Chapter Name |
 |--------|----|--------------|
 | A | 1 | Sanitary and phytosanitary measures |
 | B | 2 | Technical barriers to trade |
-| C | 17 | Pre-shipment inspection |
+| C | **17** | Pre-shipment inspection ⚠️ |
 | D | 3 | Contingent trade-protective measures |
 | E | 4 | Non-automatic licensing, quotas, prohibitions |
 | F | 5 | Price-control measures |
@@ -685,7 +687,7 @@ mast_chapters=['Capital control measures', 'FDI measures']
 | H | 7 | Anti-competitive measures |
 | I | 8 | Trade-related investment measures |
 | J | 9 | Distribution restrictions |
-| K | 18 | Restrictions on post-sales services |
+| K | **18** | Restrictions on post-sales services ⚠️ |
 | L | 10 | Subsidies and other forms of support |
 | M | 11 | Government procurement restrictions |
 | N | 12 | Intellectual property |

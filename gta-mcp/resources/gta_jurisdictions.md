@@ -1,3 +1,36 @@
+# GTA Jurisdictions Reference
+
+## Important Notes
+
+### India Code Anomaly
+
+⚠️ **India uses GTA jurisdiction code 699, NOT the standard UN M49 code 356.**
+
+The MCP server handles this automatically via ISO code conversion (IND → 699), but agents using
+raw UN M49 codes must be aware of this discrepancy. Always use ISO code "IND" when calling MCP tools.
+
+### EU Jurisdiction Handling
+
+The European Union presents special jurisdiction assignment rules:
+
+- **EU Regulations** → implementing_jurisdiction = "European Union" (applies EU-wide immediately)
+- **EU Directives** → each member state transposes separately (implementing_jurisdiction = individual member state)
+- **EU State Aid decisions** → implementing_jurisdiction = the beneficiary member state, NOT "European Union"
+
+When analyzing EU measures, check the intervention type and legal instrument to determine correct jurisdiction assignment.
+
+### IFI/NFI Jurisdiction Assignment
+
+When an international financial institution (World Bank, EIB, EBRD, etc.) or national financial
+institution provides a loan, grant, or guarantee:
+
+- **Implementing jurisdiction** = beneficiary country (where the funds are used)
+- **NOT** the IFI headquarters location
+
+Example: A World Bank loan to Kenya for infrastructure → implementing_jurisdiction = "Kenya", not "United States".
+
+## Jurisdiction Table
+
 |jurisdiction_id|jurisdiction_name|gta_jurisdiction_id|iso_code|jurisdiction_name_short|jurisdiction_name_adj|slug|name_short|name_adj|web_id|
 |---------------|-----------------|-------------------|--------|-----------------------|---------------------|----|----------|--------|------|
 |4|Afghanistan|1|AFG|Afghanistan|Afghan|afghanistan|Afghanistan|Afghan|AF|

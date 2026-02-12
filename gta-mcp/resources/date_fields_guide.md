@@ -24,6 +24,11 @@ The announcement date represents the first official disclosure of a trade policy
 - Markets and trading partners become aware of upcoming changes
 - Policy uncertainty begins to affect commercial decisions
 
+⚠️ **Publication lag:** GTA entries are created by analysts after policy implementation. A measure
+implemented on January 1 may not appear in the database until February. Recent data is always
+incomplete. For monitoring workflows, use overlapping scan windows (e.g., 8-day window for weekly
+scans) to avoid missing entries that appeared late.
+
 ### When to Use Announcement Date
 
 ✅ **USE announcement date when you want to:**
@@ -97,6 +102,11 @@ This means searching by `date_implemented` will **miss many recent announcements
 ### Important Notes
 
 ⚠️ **Most active policies have no removal date** - they are still in force
+
+⚠️ **Year-only dates use conservative defaults:**
+- Inception dates with only a year default to December 31 of that year
+- Removal dates with only a year default to January 1 of that year
+- This ensures date range queries don't miss interventions with imprecise dates
 
 ## 4. Last Update Date (date_modified)
 
