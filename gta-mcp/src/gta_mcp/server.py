@@ -19,6 +19,7 @@ from .auth import JWTAuthManager
 from .formatters import (
     format_interventions_markdown,
     format_interventions_json,
+    format_interventions_overview,
     format_intervention_detail_markdown,
     format_ticker_markdown,
     format_counts_markdown,
@@ -44,7 +45,9 @@ from .resources_loader import (
     load_exclusion_filters,
     load_data_model_guide,
     load_analytical_caveats,
-    load_common_mistakes
+    load_common_mistakes,
+    load_glossary,
+    load_search_strategy
 )
 
 
@@ -61,6 +64,29 @@ def get_api_client() -> GTAAPIClient:
             "Please set your API key: export GTA_API_KEY='your-key-here'"
         )
     return GTAAPIClient(api_key)
+
+
+# Key profiles for show_keys — controls which fields the API returns per intervention.
+# "overview" is compact (~0.3KB/record) for broad triage; "standard" is analysis-ready
+# (~2-5KB/record); "full" returns everything including large product/description arrays.
+KEY_PROFILES = {
+    "overview": [
+        "intervention_id", "state_act_title", "intervention_type",
+        "gta_evaluation", "date_announced", "is_in_force",
+        "implementing_jurisdictions", "intervention_url"
+    ],
+    "standard": [
+        "intervention_id", "state_act_id", "state_act_title",
+        "intervention_type", "mast_chapter", "gta_evaluation",
+        "implementation_level", "eligible_firm",
+        "date_announced", "date_implemented", "date_removed",
+        "is_in_force",
+        "implementing_jurisdictions", "affected_jurisdictions",
+        "affected_sectors",
+        "intervention_url", "state_act_url", "is_official_source"
+    ],
+    "full": None  # No show_keys = API returns everything
+}
 
 
 # JWT auth manager - DEPRECATED (kept for backward compatibility)
@@ -152,35 +178,80 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
         client = get_api_client()
 
         # Build filter dictionary and get informational messages
-        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
+        filters, filter_messages = build_filters(params.model_dump(exclude={
+            'limit', 'offset', 'sorting', 'response_format',
+            'detail_level', 'show_keys'
+        }))
+
+        # Resolve show_keys from detail_level or explicit show_keys
+        #
+        # Auto-detection logic (when user doesn't set detail_level):
+        # - Specific intervention_id lookup → standard keys (detail pass)
+        # - Broad search (no intervention_id) → overview keys + limit=500 (triage pass)
+        #
+        # This enables the multi-pass workflow automatically:
+        # 1. Any broad search returns a compact overview table (up to 500 results)
+        # 2. The LLM triages and identifies relevant interventions
+        # 3. The LLM calls again with intervention_id=[...] for full detail
+        show_keys = None
+        effective_limit = params.limit
+        use_overview_format = False
+
+        if params.show_keys:
+            # Explicit show_keys overrides everything
+            show_keys = params.show_keys
+        elif params.detail_level:
+            show_keys = KEY_PROFILES.get(params.detail_level)
+            if params.detail_level == "overview":
+                use_overview_format = True
+                if params.limit == 50:
+                    effective_limit = 500
+            elif params.detail_level == "standard":
+                pass  # standard keys, user's limit
+            # detail_level="full" → show_keys=None (API returns everything)
+        elif params.intervention_id:
+            # Fetching specific IDs — use standard detail (this is the detail pass)
+            show_keys = KEY_PROFILES["standard"]
+        else:
+            # Broad search with no explicit detail_level — auto-select overview
+            # This ensures the LLM always sees the full picture before drilling down
+            show_keys = KEY_PROFILES["overview"]
+            use_overview_format = True
+            if params.limit == 50:
+                effective_limit = 500
 
         # Make API request
         results = await client.search_interventions(
             filters=filters,
-            limit=params.limit,
+            limit=effective_limit,
             offset=params.offset,
-            sorting=params.sorting
+            sorting=params.sorting,
+            show_keys=show_keys
         )
 
         # Wrap list response in expected format for formatters
         data = {
             "results": results,
             "count": len(results),
-            "next": None if len(results) < params.limit else f"Use offset={params.offset + params.limit}",
-            "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - params.limit)}"
+            "next": None if len(results) < effective_limit else f"Use offset={params.offset + effective_limit}",
+            "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - effective_limit)}"
         }
 
-        # Format response
-        if params.response_format == ResponseFormat.MARKDOWN:
+        # Format response — overview mode uses compact table
+        if use_overview_format and params.response_format == ResponseFormat.MARKDOWN:
+            formatted_response = format_interventions_overview(data)
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
+        elif params.response_format == ResponseFormat.MARKDOWN:
             formatted_response = format_interventions_markdown(data)
-            # Prepend filter messages if any
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
             return formatted_response
         else:
             response_json = format_interventions_json(data)
-            # Add filter messages to JSON response
             if filter_messages:
                 response_json["filter_messages"] = filter_messages
             return response_json
@@ -817,6 +888,36 @@ def get_common_mistakes() -> str:
 		Markdown document with DO/DON'T checklist
 	"""
 	return load_common_mistakes()
+
+
+@mcp.resource(
+	"gta://reference/glossary",
+	name="Reference: GTA Glossary",
+	description="Definitions of key GTA terminology for non-expert users. Covers: Red/Amber/Green evaluations, interventions vs state acts, MAST chapters, HS codes vs CPC sectors, implementation levels, eligible firms, publication lag, date semantics, and more. Essential for understanding GTA data without prior trade policy expertise.",
+	mime_type="text/markdown"
+)
+def get_glossary() -> str:
+	"""Return GTA glossary for non-expert users.
+
+	Returns:
+		Markdown document defining key GTA terms
+	"""
+	return load_glossary()
+
+
+@mcp.resource(
+	"gta://guide/search-strategy",
+	name="Guide: Multi-Pass Search Strategy",
+	description="How to use detail_level and show_keys for efficient searching. Explains the overview→triage→detail workflow for handling large result sets, monitoring with update_period, and choosing the right detail level for different query types.",
+	mime_type="text/markdown"
+)
+def get_search_strategy() -> str:
+	"""Return search strategy guide for multi-pass workflow.
+
+	Returns:
+		Markdown guide explaining detail levels and search workflow
+	"""
+	return load_search_strategy()
 
 
 def main():

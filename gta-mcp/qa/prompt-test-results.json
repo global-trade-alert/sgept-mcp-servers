@@ -1,0 +1,775 @@
+[
+  {
+    "id": 1,
+    "prompt": "What tariffs has the US imposed on China since Jan 2025?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "USA"
+      ],
+      "affected_jurisdictions": [
+        "CHN"
+      ],
+      "date_announced_gte": "2025-01-01",
+      "intervention_types": [
+        "Import tariff"
+      ]
+    },
+    "filters_used": {
+      "implementer": [
+        840
+      ],
+      "affected": [
+        156
+      ],
+      "intervention_types": [
+        47
+      ],
+      "announcement_period": [
+        "2025-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America: Reclassification of certain vehicles for transport of goods and consequent increase in MFN Duty",
+      "United States of America: Reclassification of decorative storage baskets and consequent increase in MFN Duty",
+      "United States of America: Reclassification of underwater remotely-operated vehicles and consequent increase in MFN Duty"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 2,
+    "prompt": "Which countries have retaliated against US tariffs in 2025?",
+    "type": "search",
+    "params_sent": {
+      "affected_jurisdictions": [
+        "USA"
+      ],
+      "date_announced_gte": "2025-01-01",
+      "gta_evaluation": [
+        "Red",
+        "Amber"
+      ]
+    },
+    "filters_used": {
+      "affected": [
+        840
+      ],
+      "gta_evaluation": [
+        1,
+        2
+      ],
+      "announcement_period": [
+        "2025-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "EU: Action plan on drone and counter-drone security to support the development of homegrown technologies",
+      "Italy: EUR 390 million rescue loan to Acciaierie d'Italia",
+      "Bangladesh: Commitments announced under United States-Bangladesh Agreement on Reciprocal Trade"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 3,
+    "prompt": "What Section 232 measures has the US implemented since 2025?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "USA"
+      ],
+      "query": "Section 232",
+      "date_announced_gte": "2025-01-01"
+    },
+    "filters_used": {
+      "implementer": [
+        840
+      ],
+      "announcement_period": [
+        "2025-01-01",
+        "2099-12-31"
+      ],
+      "query": "Section 232"
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America: US Administration's commitments under the U.S.-India agreement regarding reciprocal and mutually beneficial trade",
+      "United States of America: US Administration's commitments under the U.S.-India agreement regarding reciprocal and mutually beneficial trade",
+      "United States of America: US Administration's commitments under the U.S.-Chinese Taipei Agreement on Trade & Investment"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 4,
+    "prompt": "What export controls has China imposed on rare earth elements?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "CHN"
+      ],
+      "mast_chapters": [
+        "P"
+      ],
+      "query": "rare earth"
+    },
+    "filters_used": {
+      "implementer": [
+        156
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "query": "rare earth",
+      "mast_chapters": [
+        14
+      ]
+    },
+    "http_status": 200,
+    "num_results": 36,
+    "first_titles": [
+      "China: Government grants export license to Ningbo Jintian Copper",
+      "China: Government grants rare earth export license to several Chinese companies",
+      "China: Temporary suspension of additional export controls for rare earth-related technologies and  foreign entities that export Chinese-origin rare-earth materials"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 5,
+    "prompt": "What subsidies are governments providing for critical mineral processing?",
+    "type": "search",
+    "params_sent": {
+      "mast_chapters": [
+        "L"
+      ],
+      "query": "critical mineral"
+    },
+    "filters_used": {
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "query": "critical mineral",
+      "mast_chapters": [
+        10
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America: EXIM approves loan to establish a Strategic Critical Minerals Reserve",
+      "Australia: National Reconstruction Fund Corporation (NRFC) invests AUD 75 million to Alpha HPA",
+      "United Kingdom: National Wealth Fund releases its five-year strategic plan"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 6,
+    "prompt": "Has the use of export restrictions increased since 2020?",
+    "type": "count",
+    "params_sent": {
+      "mast_chapters": [
+        "P"
+      ],
+      "date_announced_gte": "2020-01-01",
+      "gta_evaluation": [
+        4
+      ]
+    },
+    "filters_used": {
+      "gta_evaluation": [
+        4
+      ],
+      "announcement_period": [
+        "2020-01-01",
+        "2099-12-31"
+      ],
+      "mast_chapters": [
+        14
+      ]
+    },
+    "http_status": 200,
+    "count_groups": [
+      {
+        "value": 894,
+        "date_announced_year": "2022"
+      },
+      {
+        "value": 872,
+        "date_announced_year": "2020"
+      },
+      {
+        "value": 812,
+        "date_announced_year": "2021"
+      },
+      {
+        "value": 718,
+        "date_announced_year": "2023"
+      },
+      {
+        "value": 597,
+        "date_announced_year": "2025"
+      },
+      {
+        "value": 505,
+        "date_announced_year": "2024"
+      },
+      {
+        "value": 28,
+        "date_announced_year": "2026"
+      },
+      {
+        "value": 4,
+        "date_announced_year": "1970"
+      }
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 7,
+    "prompt": "What measures currently affect semiconductor manufacturing equipment trade?",
+    "type": "search",
+    "params_sent": {
+      "query": "semiconductor",
+      "is_in_force": true
+    },
+    "filters_used": {
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "in_force_on_date": "2026-02-12",
+      "keep_in_force_on_date": true,
+      "query": "semiconductor"
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund",
+      "China: Government reportedly allows several Chinese firms to import of Nvidia H200 AI chips",
+      "Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 8,
+    "prompt": "Which countries subsidise their domestic semiconductor industry?",
+    "type": "search",
+    "params_sent": {
+      "query": "semiconductor",
+      "mast_chapters": [
+        "L"
+      ]
+    },
+    "filters_used": {
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "query": "semiconductor",
+      "mast_chapters": [
+        10
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund",
+      "United Kingdom: National Wealth Fund releases its five-year strategic plan",
+      "Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 9,
+    "prompt": "What harmful measures has the EU imposed on US exports since 2024?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "EU"
+      ],
+      "affected_jurisdictions": [
+        "USA"
+      ],
+      "gta_evaluation": [
+        "Red",
+        "Amber"
+      ],
+      "date_announced_gte": "2024-01-01"
+    },
+    "filters_used": {
+      "implementer": [
+        1049
+      ],
+      "affected": [
+        840
+      ],
+      "gta_evaluation": [
+        1,
+        2
+      ],
+      "announcement_period": [
+        "2024-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "EU: Action plan on drone and counter-drone security to support the development of homegrown technologies",
+      "Italy: EUR 390 million rescue loan to Acciaierie d'Italia",
+      "Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 10,
+    "prompt": "What measures has Brazil implemented affecting US agricultural exports?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "BRA"
+      ],
+      "affected_jurisdictions": [
+        "USA"
+      ]
+    },
+    "filters_used": {
+      "implementer": [
+        76
+      ],
+      "affected": [
+        840
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)",
+      "Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)",
+      "Brazil: BNDES and WEG sign loan to renovate and build a factory for battery energy storage systems in Itaja\u00ed"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 11,
+    "prompt": "Compare trade barriers imposed by ASEAN members on EU services",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "IDN",
+        "THA",
+        "VNM",
+        "MYS",
+        "PHL",
+        "SGP",
+        "BRN",
+        "KHM",
+        "LAO",
+        "MMR"
+      ],
+      "affected_jurisdictions": [
+        "EU"
+      ],
+      "gta_evaluation": [
+        "Red",
+        "Amber"
+      ]
+    },
+    "filters_used": {
+      "implementer": [
+        360,
+        764,
+        704,
+        458,
+        608,
+        702,
+        96,
+        116,
+        418,
+        104
+      ],
+      "affected": [
+        1049
+      ],
+      "gta_evaluation": [
+        1,
+        2
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "Philippines: Initiation of safeguard investigation on imports of ceramic tiles",
+      "Indonesia: Export benchmark and reference prices for copper and gold increased (29 January 2026)",
+      "Indonesia: Temporary changes in export benchmark prices for crude palm oil and agricultural and forestry products (29 January 2026)"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 12,
+    "prompt": "What local content requirements affect automotive production in Southeast Asia?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "IDN",
+        "THA",
+        "VNM",
+        "MYS",
+        "PHL"
+      ],
+      "intervention_types": [
+        "Local content requirement"
+      ]
+    },
+    "filters_used": {
+      "implementer": [
+        360,
+        764,
+        704,
+        458,
+        608
+      ],
+      "intervention_types": [
+        28
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "num_results": 47,
+    "first_titles": [
+      "Thailand: Government introduced a less restrictive requirement of a 2 to 1 domestic corn absorption rate for wheat import permit",
+      "Indonesia: Government established several restrictions on shipping and port companies",
+      "Indonesia: Government provided fiscal incentives for the importation of and changed the local content requirements for the manufacturing of electric vehicles"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 13,
+    "prompt": "Find all anti-dumping investigations targeting Chinese steel since 2020",
+    "type": "search",
+    "params_sent": {
+      "affected_jurisdictions": [
+        "CHN"
+      ],
+      "query": "steel",
+      "intervention_types": [
+        "Anti-dumping"
+      ],
+      "date_announced_gte": "2020-01-01"
+    },
+    "filters_used": {
+      "affected": [
+        156
+      ],
+      "intervention_types": [
+        51
+      ],
+      "announcement_period": [
+        "2020-01-01",
+        "2099-12-31"
+      ],
+      "query": "steel"
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "SACU: Initiation of anti-dumping investigation on imports of flat-rolled products of iron or non-alloy steel, of a width of 600 mm or more, clad, plated or coated, painted, varnished or coated with plastics from China",
+      "EU: Initiation of anti-dumping investigation on imports of certain wires of silicomanganese steel from China",
+      "Republic of Korea: Initiation of antidumping investigation on imports of zinc and zinc-alloy surface-treated cold-rolled products from China"
+    ],
+    "messages": [
+      "Query Analysis: Detected broad category query (keyword: 'steel'). CPC sectors provide broader product range coverage than specific HS codes."
+    ],
+    "error": null,
+    "note": "Original 'steel anti-dumping' phrase returned 0. Split into query='steel' + intervention_type=Anti-dumping."
+  },
+  {
+    "id": 14,
+    "prompt": "What safeguard measures are currently in force on solar panels?",
+    "type": "search",
+    "params_sent": {
+      "query": "solar",
+      "intervention_types": [
+        "Safeguard"
+      ],
+      "is_in_force": true
+    },
+    "filters_used": {
+      "intervention_types": [
+        52
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "in_force_on_date": "2026-02-12",
+      "keep_in_force_on_date": true,
+      "query": "solar"
+    },
+    "http_status": 200,
+    "num_results": 2,
+    "first_titles": [
+      "United States of America: Safeguard measure on imports large residential washing machines",
+      "United States of America: Safeguard measure on imports of crystalline silicon photovoltaic cells"
+    ],
+    "messages": [],
+    "error": null,
+    "note": "Original 'solar panel safeguard' phrase returned 0. Split into query='solar' + intervention_type=Safeguard."
+  },
+  {
+    "id": 15,
+    "prompt": "What import licensing requirements affect pharmaceutical products in India?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "IND"
+      ],
+      "query": "pharmaceutical",
+      "intervention_types": [
+        "Import licensing requirement"
+      ]
+    },
+    "filters_used": {
+      "implementer": [
+        699
+      ],
+      "intervention_types": [
+        36
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "query": "pharmaceutical"
+    },
+    "http_status": 200,
+    "num_results": 1,
+    "first_titles": [
+      "India: Import of certain organic chemicals and waste pharmaceuticals liberalised"
+    ],
+    "messages": [],
+    "error": null,
+    "note": "Original 'pharmaceutical import licen' returned 0. Split into query='pharmaceutical' + intervention_type."
+  },
+  {
+    "id": 16,
+    "prompt": "What technical barriers to trade affect medical device imports in the EU?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "EU"
+      ],
+      "query": "medical device"
+    },
+    "filters_used": {
+      "implementer": [
+        1049
+      ],
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "query": "medical device"
+    },
+    "http_status": 200,
+    "num_results": 34,
+    "first_titles": [
+      "Germany: EIB and Fresenius signed a EUR 400 million loan for R&D, innovation and capacity expansion across the EU",
+      "EU: 5 Member States set up EUR 403 million scheme to finance innovation projects for medical devices (IPCEI Tech4Cure)",
+      "EU: Procurement restrictions against China under the International Procurement Instrument (IPI) regulation"
+    ],
+    "messages": [
+      "Query Analysis: Detected service-related query (keyword: 'medical'). Services are classified using CPC sectors (ID >= 500), not HS codes."
+    ],
+    "error": null
+  },
+  {
+    "id": 17,
+    "prompt": "Which G20 countries have increased state aid to EV manufacturers since 2022?",
+    "type": "search",
+    "params_sent": {
+      "mast_chapters": [
+        "L"
+      ],
+      "query": "electric vehicle",
+      "date_announced_gte": "2022-01-01"
+    },
+    "filters_used": {
+      "announcement_period": [
+        "2022-01-01",
+        "2099-12-31"
+      ],
+      "query": "electric vehicle",
+      "mast_chapters": [
+        10
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "Canada: New measures to support the automobile industry",
+      "Canada: New measures to support the automobile industry",
+      "Russia: Industry Development Fund discloses a RUB 8.2 billion loan to Avtotor"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 18,
+    "prompt": "Which interventions target state-owned enterprises specifically?",
+    "type": "search",
+    "params_sent": {
+      "eligible_firms": [
+        "state-controlled"
+      ]
+    },
+    "filters_used": {
+      "announcement_period": [
+        "1900-01-01",
+        "2099-12-31"
+      ],
+      "eligible_firms": [
+        4
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "India: Customs duty amendments announced as part of 2026-2027 budget",
+      "Thailand: BOI provided investment incentives for certain hospital businesses",
+      "Italy: EIB provides financing for 'CDP Italian Regions De-Linked Rs II'"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 19,
+    "prompt": "What subnational measures has the US implemented since 2023?",
+    "type": "search",
+    "params_sent": {
+      "implementing_jurisdictions": [
+        "USA"
+      ],
+      "implementation_levels": [
+        "subnational"
+      ],
+      "date_announced_gte": "2023-01-01"
+    },
+    "filters_used": {
+      "implementer": [
+        840
+      ],
+      "announcement_period": [
+        "2023-01-01",
+        "2099-12-31"
+      ],
+      "implementation_level": [
+        3
+      ]
+    },
+    "http_status": 200,
+    "num_results": 50,
+    "first_titles": [
+      "United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund",
+      "United States of America (Texas): USD 15.2 million grant to Tekscend Photomask Round Rock Inc under Texas Semiconductor Innovation Fund",
+      "United States (State of Indiana): USD 10 million in EDGE tax credit to Roche Diagnostics Operations Inc"
+    ],
+    "messages": [],
+    "error": null
+  },
+  {
+    "id": 20,
+    "prompt": "How many harmful interventions were implemented globally in 2025 versus 2024?",
+    "type": "count",
+    "params_sent": {
+      "gta_evaluation": [
+        4
+      ],
+      "date_implemented_gte": "2024-01-01"
+    },
+    "filters_used": {
+      "gta_evaluation": [
+        4
+      ],
+      "implementation_period": [
+        "2024-01-01",
+        "2099-12-31"
+      ]
+    },
+    "http_status": 200,
+    "count_groups": [
+      {
+        "value": 4439,
+        "date_implemented_year": "2024"
+      },
+      {
+        "value": 3903,
+        "date_implemented_year": "2025"
+      },
+      {
+        "value": 2761,
+        "date_implemented_year": "No implementation date"
+      },
+      {
+        "value": 437,
+        "date_implemented_year": "2026"
+      },
+      {
+        "value": 91,
+        "date_implemented_year": "2028"
+      },
+      {
+        "value": 67,
+        "date_implemented_year": "2027"
+      },
+      {
+        "value": 12,
+        "date_implemented_year": "2029"
+      },
+      {
+        "value": 4,
+        "date_implemented_year": "2030"
+      },
+      {
+        "value": 1,
+        "date_implemented_year": "2032"
+      },
+      {
+        "value": 1,
+        "date_implemented_year": "2020"
+      }
+    ],
+    "messages": [],
+    "error": null
+  }
+]
