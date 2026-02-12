@@ -1,4 +1,10 @@
-"""JWT authentication manager for GTA counts endpoint."""
+"""JWT authentication manager - DEPRECATED.
+
+As of GTA API v0.3+, all endpoints including data-counts now support API key authentication.
+This module is kept for backward compatibility but is no longer used by the MCP server.
+
+All GTA API tools now use the GTA_API_KEY environment variable exclusively.
+"""
 
 import base64
 import json
@@ -13,10 +19,12 @@ _EXPIRY_BUFFER_SECONDS = 300  # 5 minutes
 
 
 class JWTAuthManager:
-    """Manages JWT Bearer tokens for the GTA counts endpoint.
+    """[DEPRECATED] Manages JWT Bearer tokens for GTA authentication.
 
-    Obtains tokens from /auth/get_token/, caches them in memory,
-    and transparently refreshes before expiry.
+    This class is no longer used as all GTA API endpoints now support API key auth.
+    Kept for backward compatibility only.
+
+    Migration: Use GTA_API_KEY environment variable instead of GTA_AUTH_EMAIL/GTA_AUTH_PASSWORD.
     """
 
     BASE_URL = "https://api.globaltradealert.org"

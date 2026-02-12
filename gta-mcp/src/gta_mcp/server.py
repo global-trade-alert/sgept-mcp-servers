@@ -63,12 +63,17 @@ def get_api_client() -> GTAAPIClient:
     return GTAAPIClient(api_key)
 
 
-# JWT auth manager for counts endpoint (lazy-initialized singleton)
+# JWT auth manager - DEPRECATED (kept for backward compatibility)
+# As of API v0.3+, all endpoints including counts now support API key auth.
+# JWT auth is no longer required or used.
 _auth_manager: Optional[JWTAuthManager] = None
 
 
 def get_auth_manager() -> JWTAuthManager:
-    """Get or create the JWT auth manager for the counts endpoint.
+    """[DEPRECATED] Get or create the JWT auth manager.
+
+    This function is kept for backward compatibility but is no longer used.
+    All GTA API endpoints now use API key authentication.
 
     Raises:
         ValueError: If GTA_AUTH_EMAIL or GTA_AUTH_PASSWORD not configured.
@@ -79,9 +84,9 @@ def get_auth_manager() -> JWTAuthManager:
         password = os.getenv("GTA_AUTH_PASSWORD")
         if not email or not password:
             raise ValueError(
-                "GTA counts endpoint requires JWT authentication.\n"
-                "Set GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables.\n"
-                "The other GTA tools (search, get, ticker, impact chains) still work with API key only."
+                "[DEPRECATED] JWT authentication is no longer required.\n"
+                "All GTA endpoints now use API key authentication via GTA_API_KEY.\n"
+                "GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD are optional and not needed."
             )
         _auth_manager = JWTAuthManager(email=email, password=password)
     return _auth_manager
@@ -468,12 +473,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
           count_by=['implementer'], mast_chapters=['L']
     """
     try:
-        # Get API client (for base URL) and auth manager
+        # Get API client
         client = get_api_client()
-        auth_mgr = get_auth_manager()
-
-        # Get JWT bearer token
-        bearer_token = await auth_mgr.get_token()
 
         # Build count-specific filters
         filter_params = params.model_dump(
@@ -481,9 +482,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
         )
         filters, filter_messages = build_count_filters(filter_params)
 
-        # Make API request
+        # Make API request (now uses API key auth via self.headers)
         data = await client.count_interventions(
-            bearer_token=bearer_token,
             count_by=list(params.count_by),
             count_variable=params.count_variable,
             filters=filters,
@@ -510,8 +510,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
             return (
-                "❌ Authentication Error: JWT token invalid or expired.\n\n"
-                "Check GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables."
+                "❌ Authentication Error: Invalid or expired API key.\n\n"
+                "Please check your GTA_API_KEY environment variable."
             )
         elif "timeout" in error_msg.lower():
             return (

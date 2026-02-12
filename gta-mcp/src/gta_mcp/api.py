@@ -711,15 +711,13 @@ class GTAAPIClient:
     
     async def count_interventions(
         self,
-        bearer_token: str,
         count_by: List[str],
         count_variable: str,
         filters: Dict[str, Any],
     ) -> Any:
-        """Call /v1/gta-counts/ with JWT Bearer auth for aggregation.
+        """Call /api/v1/gta/data-counts/ with API key auth for aggregation.
 
         Args:
-            bearer_token: JWT access token for authentication.
             count_by: List of dimensions to group by.
             count_variable: What to count ('intervention_id' or 'state_act_id').
             filters: Dictionary of filter parameters.
@@ -730,11 +728,8 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails.
         """
-        endpoint = f"{self.BASE_URL}/v1/gta-counts/"
-        headers = {
-            "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/json",
-        }
+        endpoint = f"{self.BASE_URL}/api/v1/gta/data-counts/"
+
         # count_by and count_variable go inside request_data alongside filters
         request_data = dict(filters)
         request_data["count_by"] = count_by
@@ -747,7 +742,7 @@ class GTAAPIClient:
             response = await client.post(
                 endpoint,
                 json=payload,
-                headers=headers,
+                headers=self.headers,
             )
             response.raise_for_status()
             data = response.json()
