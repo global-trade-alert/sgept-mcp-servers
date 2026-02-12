@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Sequence
 from datetime import datetime
 
 
-CHARACTER_LIMIT = 25000  # Maximum response size in characters
+CHARACTER_LIMIT = 100000  # Maximum response size in characters
 
 
 def extract_text(field: Any, join_multiple: bool = False) -> str:
@@ -140,12 +140,67 @@ def make_ticker_references_section(updates: List[Dict[str, Any]]) -> str:
 	return "\n".join(references)
 
 
-def format_interventions_markdown(data: Dict[str, Any]) -> str:
-    """Format intervention search results as markdown.
-    
+def format_interventions_overview(data: Dict[str, Any]) -> str:
+    """Format intervention search results as a compact overview table.
+
+    Used with detail_level="overview" for broad searches. Returns a condensed
+    table with one row per intervention, allowing the LLM to triage a large
+    result set before requesting full details for specific IDs.
+
     Args:
         data: API response data containing interventions
-        
+
+    Returns:
+        Compact markdown table within CHARACTER_LIMIT
+    """
+    results = data.get("results", [])
+    count = data.get("count", len(results))
+
+    if not results:
+        return "No interventions found matching the specified filters."
+
+    lines = [
+        f"**Found {count} interventions.** Compact overview below.",
+        "*To get full details, call again with `intervention_id=[selected IDs]` "
+        "and `detail_level=\"standard\"`.*",
+        "",
+        "| # | ID | Title | Type | Eval | Date | Status |",
+        "|---|-----|-------|------|------|------|--------|"
+    ]
+
+    for i, intervention in enumerate(results, 1):
+        iid = intervention.get('intervention_id', '?')
+        title = (intervention.get('state_act_title', '') or '?')[:80]
+        # Escape pipe characters in title to avoid breaking markdown table
+        title = title.replace('|', '/')
+        itype = intervention.get('intervention_type', '?')
+        eval_ = intervention.get('gta_evaluation', '?')
+        date = intervention.get('date_announced', '?')
+        status = "Active" if intervention.get('is_in_force') else "Removed"
+        url = make_gta_url(iid)
+        lines.append(f"| {i} | [{iid}]({url}) | {title} | {itype} | {eval_} | {date} | {status} |")
+
+        # Truncate if approaching character limit
+        current_size = sum(len(line) for line in lines)
+        if current_size > CHARACTER_LIMIT - 500:
+            remaining = count - i
+            lines.append(f"\n*... truncated. {remaining} more interventions. "
+                        f"Use `offset={i}` to see the next page.*")
+            break
+
+    # Pagination guidance
+    if data.get("next"):
+        lines.append(f"\n*More results available: {data['next']}*")
+
+    return "\n".join(lines)
+
+
+def format_interventions_markdown(data: Dict[str, Any]) -> str:
+    """Format intervention search results as markdown.
+
+    Args:
+        data: API response data containing interventions
+
     Returns:
         Markdown-formatted string
     """

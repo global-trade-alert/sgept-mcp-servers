@@ -1,37 +1,69 @@
 # GTA MCP Server
 
-Model Context Protocol server providing access to the Global Trade Alert (GTA) database. This server exposes trade policy interventions, enabling LLMs to search and analyze government trade measures worldwide.
+Query 78,000+ trade policy interventions through Claude — tariffs, subsidies, export bans, and more from 200+ countries.
 
-## Version
+## What is Global Trade Alert?
 
-**Current Version:** 0.3.0 (November 9, 2025)
+Global Trade Alert (GTA) is a transparency initiative by the St Gallen Endowment for Prosperity through Trade (SGEPT) that tracks government trade policy changes worldwide since November 2008. Unlike trade databases that rely on government self-reporting, GTA independently documents and verifies policy interventions using primary sources — official gazettes, ministry announcements, legislative records, and press releases.
 
-⚠️ **Experimental Release** - This server is under active development. Feedback and feature requests welcome.
+GTA covers all types of trade measures: not just tariffs, but subsidies, export restrictions, FDI barriers, public procurement rules, localisation requirements and more. Each intervention is classified by color: Red (harmful/discriminatory), Amber (likely harmful but uncertain), or Green (liberalising). The database contains over 78,000 documented interventions across 200+ jurisdictions.
 
-See [Version History & Changelog](#version-history--changelog) below for details.
+This breadth distinguishes GTA from the WTO's trade monitoring system, which captures only measures that governments voluntarily report. GTA reveals the full landscape of state intervention in markets — including measures governments prefer not to highlight.
 
-## Overview
+## What can you ask?
 
-**Purpose:** This MCP server translates natural language queries into precise API requests for the Global Trade Alert database, enabling flexible interrogation of 75,000+ trade policy interventions worldwide. It handles the complex task of identifying and retrieving relevant intervention records with their complete GTA information.
+**Tariffs and trade barriers:**
+- "What tariffs has the United States imposed on China since January 2025?"
+- "Which countries have imposed tariffs affecting US exports in 2025?"
 
-**How It Works:**
-1. The server converts your natural language request into optimized API calls with appropriate filters
-2. It retrieves relevant intervention IDs and their complete information from GTA (including full descriptions and sources if your API key permits)
-3. The LLM receives this raw data for analysis and interpretation
+**Critical minerals and supply chains:**
+- "What export controls has China imposed on rare earth elements?"
+- "Has the use of export restrictions increased since 2020?"
 
-**Important:** The MCP server's role ends at data retrieval. How the LLM interprets, summarizes, and analyzes the returned interventions depends entirely on your prompts (client-side instructions).
+**Subsidies and state aid:**
+- "Which countries subsidise their domestic semiconductor industry?"
+- "Which G20 countries have increased state aid to EV manufacturers since 2022?"
 
-**Best Practice for Detailed Queries:** For questions requiring careful analysis, explicitly instruct your LLM to examine the returned intervention set thoroughly and methodically. Think of it as giving instructions to a lawyerly specific about what aspects to analyze, what to compare, and what conclusions to draw.
+**Trade negotiations:**
+- "What harmful measures has the EU imposed on US exports since 2024?"
+- "What measures has Brazil implemented affecting US agricultural exports?"
 
-**Status:** Ongoing development to continuously improve query precision and result optimization. Send feedback or requests to Johannes Fritz.
+**Trade defence:**
+- "Find all anti-dumping investigations targeting Chinese steel since 2020"
+
+**Monitoring:**
+- "How many harmful interventions were implemented globally in 2025 versus 2024?"
 
 ## Quick Start
 
-You need a GTA API key from SGEPT ([request access](https://globaltradealert.org/api-access)).
+### Prerequisites
 
-### Option 1: Claude Desktop
+You need **uv** (a Python package manager) installed on your system. If you don't have it:
 
-Add to `claude_desktop_config.json` (`~/Library/Application Support/Claude/` on macOS, `%APPDATA%\Claude\` on Windows):
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+After installing, restart your terminal. Verify it works by running `uvx --version` — you should see a version number.
+
+### Getting an API key
+
+You need a GTA API key from SGEPT. Request access at https://globaltradealert.org/api-access — you'll receive your demo key direcly; request support for full access credentials.
+
+### For Claude Desktop (recommended)
+
+Add to your Claude Desktop config file:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+If this file doesn't exist yet, create it with the content below. If it already exists and contains other MCP servers, add the `"gta"` entry inside the existing `"mcpServers"` object.
 
 ```json
 {
@@ -47,499 +79,225 @@ Add to `claude_desktop_config.json` (`~/Library/Application Support/Claude/` on 
 }
 ```
 
-Restart Claude Desktop. The server auto-updates on each launch.
+Then **completely quit and restart Claude Desktop** (not just close the window — fully quit from the menu bar/system tray).
 
-### Option 2: Claude Code
+### For Claude Code
 
 ```bash
 claude mcp add --transport stdio gta -e GTA_API_KEY=your-key -- uvx sgept-gta-mcp
 ```
 
-### Option 3: Any MCP Client
+### For any MCP client
 
 ```bash
 pip install sgept-gta-mcp
 GTA_API_KEY=your-key gta-mcp
 ```
 
-### Development Install (Contributors)
+## Is it working?
 
-```bash
-git clone https://github.com/global-trade-alert/sgept-mcp-servers.git
-cd sgept-mcp-servers/gta-mcp
-uv sync
-export GTA_API_KEY='your-api-key-here'
-uv run gta-mcp --help
-```
+After restarting Claude Desktop, try this prompt:
+
+> Show me 3 recent trade interventions implemented by the United States.
+
+**If it works:** You'll see a formatted list of US trade measures with titles, dates, and links to the GTA website.
+
+**If you see "tool not found":** The server isn't connected. Check that:
+1. Your `claude_desktop_config.json` is valid JSON (no trailing commas, all quotes matched)
+2. You completely quit and restarted Claude Desktop
+3. Your API key is correctly set in the `env` section
+
+**If you see "Authentication Error":** Your API key is invalid or expired. Verify it at https://globaltradealert.org/api-access.
+
+## Use Cases
+
+See [USE_CASES.md](USE_CASES.md) for 40+ example prompts organized by professional use case — from competitive subsidy intelligence to trade negotiation prep.
 
 ## Available Tools
 
 ### 1. `gta_search_interventions`
-Search and filter trade interventions with comprehensive parameters.
 
-**Key Parameters:**
-- `implementing_jurisdictions`: ISO codes of implementing countries (e.g., `["USA", "CHN"]`)
-- `affected_jurisdictions`: ISO codes of affected countries
-- `affected_products`: HS product codes (6-digit integers, e.g., `[292149]`)
-- `intervention_types`: Filter by type using names (e.g., `["Import tariff", "Export ban"]`) or IDs. Supports exact matches, case-insensitive matching, and partial matches. Use `gta://reference/intervention-types-list` resource to see all available types.
-- `gta_evaluation`: Filter by assessment (`["Red", "Amber", "Green"]`)
-- `date_announced_gte/lte`: Filter by announcement date (`"YYYY-MM-DD"`)
-- `date_implemented_gte/lte`: Filter by implementation date
-- `is_in_force`: Current status (`true` or `false`)
-- `limit`: Results per query (1-1000, default 50)
-- `offset`: Pagination offset (default 0)
-- `sorting`: Sort order (default `"-date_announced"` for newest first)
-- `response_format`: Output format (`"markdown"` or `"json"`)
+Search and filter trade interventions by country, type, date, sector, and evaluation.
 
-**Example Queries:**
-- "Find all US import tariffs on Chinese products announced in 2024"
-- "Search for harmful EU subsidies affecting semiconductor products"
-- "Get recent export restrictions implemented by any country"
+**Key parameters:**
+- `implementing_jurisdictions`: Countries implementing measures (e.g., ["USA", "CHN", "DEU"])
+- `intervention_types`: Filter by measure type (e.g., ["Import tariff", "Export subsidy", "Export ban"])
+- `date_announced_gte` / `date_announced_lte`: Filter by announcement date range
+- `evaluation`: Red (harmful), Amber (likely harmful), or Green (liberalising)
+- `limit`: Maximum results to return (default 100)
+
+**Example:** "What tariffs has India imposed on steel imports since 2024?"
 
 ### 2. `gta_get_intervention`
-Retrieve complete details for a specific intervention by ID.
 
-**Parameters:**
-- `intervention_id`: The GTA intervention ID (integer, required)
-- `response_format`: `"markdown"` or `"json"`
+Get full details for a specific intervention by ID (identification number from search results).
 
-**Returns:** Full description, all sources, complete lists of affected jurisdictions and products, implementation timeline.
+**Key parameters:**
+- `intervention_id`: The unique GTA intervention ID
+
+**Example:** "Show me the full details for intervention 123456"
 
 ### 3. `gta_list_ticker_updates`
-Monitor recent text updates to existing interventions.
 
-**Parameters:**
-- `implementing_jurisdictions`: Filter by country ISO codes
-- `intervention_types`: Filter by intervention type
-- `date_modified_gte`: Updates since this date (`"YYYY-MM-DD"`)
-- `limit`: Results per query (1-1000, default 50)
-- `offset`: Pagination offset
-- `response_format`: `"markdown"` or `"json"`
+Monitor recent changes to existing interventions — removals, extensions, modifications.
 
-**Use Cases:**
-- Track changes to existing measures
-- Monitor policy evolution over time
-- Identify recent amendments or updates
+**Key parameters:**
+- `published_gte` / `published_lte`: Filter by when the update was published
+- `implementing_jurisdictions`: Filter by country
+- `limit`: Maximum results to return
+
+**Example:** "What changes to existing trade measures were published in the last 30 days?"
 
 ### 4. `gta_get_impact_chains`
-Extract granular implementing-product/sector-affected jurisdiction relationships.
 
-**Parameters:**
-- `granularity`: `"product"` for HS codes or `"sector"` for broader categories (required)
-- `implementing_jurisdictions`: Filter by implementing countries
-- `affected_jurisdictions`: Filter by affected countries
-- `limit`: Results per query (1-1000, default 50)
-- `offset`: Pagination offset
-- `response_format`: `"markdown"` or `"json"`
+Analyze implementing-product-affected jurisdiction relationships — which countries impose measures on which products affecting which other countries.
 
-**Use Cases:**
-- Bilateral trade flow analysis
-- Product-level impact assessment
-- Sector-specific intervention mapping
+**Key parameters:**
+- `implementing_jurisdictions`: Countries implementing measures
+- `affected_jurisdictions`: Countries affected by measures
+- `mast_chapters`: Product categories (MAST classification system)
 
-## Data Fields
+**Example:** "Show me how US measures on semiconductors affect China and Taiwan"
 
-All intervention results include:
-- **Intervention ID**: Unique identifier
-- **Title**: Short description of the measure
-- **Description**: Detailed explanation (full access only)
-- **Sources**: Official documentation links
-- **Implementing Jurisdictions**: Countries/groups implementing the measure
-- **Affected Jurisdictions**: Countries impacted
-- **Affected Products**: HS product codes with tariff levels (full access)
-- **Intervention Type**: Classification (tariff, subsidy, etc.)
-- **GTA Evaluation**: Red (harmful), Amber (mixed), Green (liberalizing)
-- **Dates**: Announced, published, implemented, removed
-- **Status**: Whether currently in force
-- **URLs**: Links to GTA website for more details
+### 5. `gta_count_interventions`
 
-## Citation and References
+Get aggregated counts across 24 dimensions including year, country, type, sector, and evaluation.
 
-All intervention results include proper citations and references to facilitate verification and further research.
+**Key parameters:**
+- `group_by`: Dimension to count by (e.g., "year", "implementing_jurisdiction", "intervention_type")
+- Filters: Same as `gta_search_interventions`
 
-### Inline Citations
+**Example:** "How many harmful trade interventions did G20 countries implement each year from 2020 to 2025?"
 
-Each intervention mentioned in results includes an inline citation:
-- **Format**: `[ID [123456](https://globaltradealert.org/intervention/123456)]`
-- Appears next to the intervention title
-- Clicking the ID opens the intervention page on globaltradealert.org
+### 6. `gta_lookup_hs_codes`
 
-Example:
-```
-## 1. China: Launch of CNY 344 billion fund [ID [122819](https://globaltradealert.org/intervention/122819)]
-```
+Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix. Use this before `gta_search_interventions` when asking about specific commodities or products.
 
-### Reference List
+**Key parameters:**
+- `search_term`: Product keyword (e.g., "lithium"), chapter number (e.g., "28"), or code prefix (e.g., "8541")
+- `max_results`: Maximum codes to return (default 50)
 
-At the end of each response, a "Reference List (in reverse chronological order)" section lists all cited interventions:
-- **Format**: `YYYY-MM-DD: Title [ID [intervention_id](link)].`
-- Sorted by announcement date (newest first, reverse chronological)
-- Provides quick overview of all interventions discussed
-- Intervention IDs are clickable links
+**Example:** "Look up HS codes for steel" returns codes like 7206-7229 which you can then pass to `gta_search_interventions` as `affected_products`.
 
-**Example:**
-```markdown
-## Reference List (in reverse chronological order)
+### 7. `gta_lookup_sectors`
 
-- 2024-07-04: EU: Temporary customs duty suspension extended [ID [138295](https://globaltradealert.org/intervention/138295)].
-- 2024-05-24: China: Launch of CNY 344 billion fund [ID [122819](https://globaltradealert.org/intervention/122819)].
-```
+Search CPC (Central Product Classification) sector codes by keyword or code prefix. Use this before `gta_search_interventions` when asking about services or broad economic sectors.
 
-This citation format ensures all claims about trade interventions can be verified directly on the GTA website.
+**Key parameters:**
+- `search_term`: Sector keyword (e.g., "financial", "transport") or code prefix (e.g., "71")
+- `max_results`: Maximum sectors to return (default 50)
 
-## Sorting and Finding Recent Data
-
-**IMPORTANT:** The GTA API returns results **sorted by intervention ID (oldest first) by default**. To find recent interventions:
-
-### Default Sorting Behavior (Changed in v1.1)
-
-As of version 1.1, the MCP server **defaults to `sorting: "-date_announced"`** (newest first) to provide a better user experience. This means:
-
-✅ Searches without explicit sorting will return recent interventions first
-✅ You'll see October 2025 data when searching without date filters
-✅ The most recent policy developments appear at the top of results
-
-### Customizing Sort Order
-
-You can override the default sorting by specifying the `sorting` parameter:
-
-```
-sorting: "-date_announced"  # Newest announcements first (default)
-sorting: "date_announced"   # Oldest announcements first
-sorting: "-intervention_id" # Highest ID first
-```
-
-Valid sort fields: `date_announced`, `date_published`, `date_implemented`, `date_removed`, `intervention_id`
-
-### Best Practices for Finding Recent Data
-
-1. **Use date filters for specific periods:**
-   ```
-   date_announced_gte: "2025-01-01"  # Data from 2025 onwards
-   ```
-
-2. **Rely on default sorting for recent data:**
-   ```
-   # No sorting parameter needed - defaults to newest first
-   limit: 20
-   ```
-
-3. **Combine filters with sorting:**
-   ```
-   implementing_jurisdictions: ["USA"]
-   date_announced_gte: "2025-10-01"
-   sorting: "-date_announced"
-   ```
-
-See `gta://guide/searching` resource for comprehensive search guidance.
-
-## Using Intervention Types
-
-The `intervention_types` parameter supports flexible matching to make searches more intuitive:
-
-### Matching Options
-
-1. **Exact Name Match**
-   ```
-   intervention_types: ["Export ban", "Import tariff"]
-   ```
-
-2. **Case-Insensitive**
-   ```
-   intervention_types: ["export ban", "IMPORT TARIFF"]
-   ```
-
-3. **Partial Match** (when unique)
-   ```
-   intervention_types: ["Export licensing"]  # Matches "Export licensing requirement"
-   ```
-
-4. **Integer IDs** (advanced)
-   ```
-   intervention_types: [19, 47]  # Export ban, Import tariff
-   ```
-
-### Common Intervention Types
-
-- **Export controls**: "Export ban", "Export licensing requirement", "Export quota"
-- **Import barriers**: "Import ban", "Import tariff", "Import quota", "Import licensing requirement"
-- **Subsidies**: "State loan", "Financial grant", "Production subsidy", "Export subsidy"
-- **FDI restrictions**: "FDI: Entry and ownership rule", "FDI: Treatment and operations, nes"
-- **Local requirements**: "Local content requirement", "Local operations requirement"
-- **Trade remedies**: "Anti-dumping", "Safeguard", "Anti-subsidy"
-- **Standards**: "Sanitary and phytosanitary measure", "Technical barrier to trade"
-
-### Finding Intervention Types
-
-Use the `gta://reference/intervention-types-list` resource to see all 79 available intervention types with their IDs.
-
-### Ambiguous Matches
-
-If your search term matches multiple types (e.g., "export restriction" matches both "Port restriction" and "Distribution restriction"), you'll receive an error with suggestions. Be more specific in your query.
+**Example:** "Look up sectors related to financial services" returns CPC codes like 711, 715, 717 which you can pass as `affected_sectors`.
 
 ## Available Resources
 
-The GTA MCP server exposes reference data as resources that Claude can read to improve response accuracy and reduce hallucination. Resources are automatically available once the server is connected.
+Resources provide reference data and documentation through the MCP resource system (accessible via prompts like "Show me the GTA glossary").
 
-### Reference Tables (Static Resources)
+| Resource | URI | Purpose |
+|----------|-----|---------|
+| Jurisdictions | `gta://reference/jurisdictions` | Country codes, names, ISO/UN mapping |
+| Jurisdiction Groups | `gta://reference/jurisdiction-groups` | G7, G20, EU-27, BRICS, ASEAN, CPTPP, RCEP member codes |
+| Intervention Types | `gta://reference/intervention-types` | Definitions, examples, MAST mapping |
+| MAST Chapters | `gta://reference/mast-chapters` | Product classification system |
+| Sectors | `gta://reference/sectors` | Economic sector taxonomy |
+| Glossary | `gta://reference/glossary` | Key GTA terms explained for non-experts |
+| Data Model | `gta://guide/data-model` | How interventions, products, and jurisdictions relate |
+| Date Fields | `gta://guide/date-fields` | Announced vs implemented dates |
+| CPC vs HS | `gta://guide/cpc-vs-hs` | When to use sector codes vs product codes |
+| Analytical Caveats | `gta://guide/analytical-caveats` | Data limitations and interpretation guidance |
+| Query Intent Mapping | `gta://guide/query-intent-mapping` | Natural language terms to structured GTA filters |
+| Query Patterns | `gta://guide/query-patterns` | Common analysis workflows |
 
-#### `gta://reference/jurisdictions`
-Complete jurisdiction lookup table with UN codes, ISO codes, and names for all countries and jurisdictions tracked by GTA.
+## Understanding GTA Data
 
-**Use this to:**
-- Look up UN country codes from ISO codes
-- Find correct jurisdiction names
-- Convert between ISO and UN code formats
+**Evaluation colors:** Red = harmful/discriminatory, Amber = likely harmful but uncertain, Green = liberalising. See `gta://reference/glossary` for detailed definitions.
 
-#### `gta://reference/intervention-types`
-Comprehensive descriptions of all GTA intervention types including:
-- Detailed definitions and explanations
-- Real-world examples with links to GTA database
-- MAST (Multilateral Agreement on Services and Trade) classifications
-- Guidance on when to use each type
+**Date fields:** `date_announced` (when disclosed) vs `date_implemented` (when takes effect). Implementation dates may be months or years after announcement. See `gta://guide/date-fields`.
 
-**Use this to:**
-- Understand what different intervention types mean
-- Learn how to classify trade measures
-- Find examples of each intervention type
+**Publication lag:** Recent data is always incomplete due to a 2-4 week verification process. Counts from the last month should be considered preliminary. See `gta://guide/analytical-caveats`.
 
-#### `gta://reference/intervention-types-list`
-Quick reference list of all available intervention type names with their slugs.
+**Counting:** One intervention can affect many products and countries. Counting by product or affected jurisdiction inflates numbers — count by intervention for accurate totals. See `gta://guide/data-model`.
 
-**Use this to:**
-- Discover what intervention types exist
-- Get the correct slug for looking up specific types
+## Troubleshooting
 
-### Search Guidance Resources
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| "uvx: command not found" | uv is not installed | Install uv first — see [Prerequisites](#prerequisites) above |
+| "GTA_API_KEY not set" | Environment variable missing | Set it in Claude Desktop config `env` section, or `export GTA_API_KEY=...` for CLI |
+| "Authentication Error" | Invalid or expired key | Verify at globaltradealert.org/api-access, check for typos |
+| "Response truncated" | Too many results for context window | Use `limit` parameter (e.g., 10) or add more specific filters |
+| Server not appearing in Claude | Config issue | Check JSON syntax, verify path, quit+restart Claude fully |
+| No results returned | Filters too narrow or wrong date field | Try `date_announced_gte` instead of `date_implemented_gte`, broaden jurisdiction filter |
+| Timeout errors | Query too broad | Add country or date filters to narrow results |
+| Invalid jurisdiction code | Wrong format | Use ISO 3-letter codes (USA, CHN, DEU), not 2-letter or numeric |
+| Rate limit (429) | Too many queries | Wait 30 seconds and retry |
 
-#### `gta://guide/searching`
-Comprehensive guide to searching the GTA database effectively.
+## For Developers
 
-**Covers:**
-- Default sorting behavior and how to override it
-- Finding recent interventions (the #1 issue users face)
-- Common search patterns with examples
-- Troubleshooting "no recent data found" issues
-- Best practices for date filters and sorting
-
-**⚠️ READ THIS if you're having trouble finding recent data!**
-
-#### `gta://guide/date-fields`
-Detailed explanation of GTA date fields and when to use each one.
-
-**Explains:**
-- `date_announced` - When policy was announced (use for recent searches)
-- `date_implemented` - When policy took effect (often missing for recent data)
-- `date_removed` - When policy was withdrawn
-- `date_modified` - When database entry was updated
-- Which date field to use for different questions
-- Common mistakes and how to avoid them
-
-**⚠️ READ THIS to understand why `date_announced` ≠ `date_implemented`**
-
-### Dynamic Lookups (Template Resources)
-
-#### `gta://jurisdiction/{iso_code}`
-Look up detailed information for a specific jurisdiction using its ISO 3-letter code.
-
-**Examples:**
-- `gta://jurisdiction/USA` - United States details
-- `gta://jurisdiction/CHN` - China details
-- `gta://jurisdiction/DEU` - Germany details
-
-**Returns:**
-- UN country code (for API queries)
-- Full jurisdiction name
-- Short name and adjective forms
-
-#### `gta://intervention-type/{type_slug}`
-Look up detailed information about a specific intervention type using its slug.
-
-**Examples:**
-- `gta://intervention-type/export-ban` - Export ban details
-- `gta://intervention-type/import-tariff` - Import tariff details
-- `gta://intervention-type/state-loan` - State loan details
-
-**Returns:**
-- Complete description and definition
-- Real-world examples from GTA database
-- MAST classification
-- Usage guidance
-
-### When to Use Resources
-
-**Use resources when you need to:**
-- ✅ Convert ISO codes to UN codes for API queries
-- ✅ Understand what an intervention type means
-- ✅ Find examples of specific intervention types
-- ✅ Verify correct jurisdiction or intervention type names
-- ✅ Learn about MAST classifications
-
-**Don't use resources for:**
-- ❌ Searching for actual interventions (use `gta_search_interventions` tool instead)
-- ❌ Getting real-time data (resources are static reference data)
-
-## Response Formats
-
-### Markdown
-- **Human-readable** format optimized for presentation
-- Clean formatting with headers, lists, and emphasis
-- Truncates long descriptions for readability
-- Limits large lists (e.g., first 10 countries)
-- Includes clickable links to GTA website
-
-### JSON
-- **Machine-readable** structured data
-- Complete API response with all fields
-- Suitable for programmatic processing
-- Preserves all metadata and nested structures
-
-## Character Limits
-
-Responses are limited to **25,000 characters** to prevent overwhelming LLM context windows. When limits are exceeded:
-- Results are automatically truncated
-- Clear truncation messages provided
-- Guidance given on using pagination or filters
-- Pagination metadata helps retrieve remaining results
-
-## Error Handling
-
-Clear, actionable error messages for:
-- **Authentication failures**: Invalid or missing API key
-- **Invalid parameters**: Constraint violations with guidance
-- **API timeouts**: Suggestions to reduce result sets
-- **Not found errors**: Specific intervention IDs
-- **Rate limits**: Retry guidance
-
-## Architecture
+### Architecture
 
 ```
-gta_mcp/
-├── pyproject.toml          # Project configuration and dependencies
-├── README.md               # This file
-└── src/
-    └── gta_mcp/
-        ├── __init__.py     # Package initialization
-        ├── server.py       # MCP server and tool implementations
-        ├── api.py          # GTA API client with authentication
-        ├── models.py       # Pydantic input validation models
-        └── formatters.py   # Response formatting (markdown/JSON)
+Claude Desktop
+    ↓
+MCP Protocol (stdio)
+    ↓
+GTA MCP Server (FastMCP)
+    ↓
+GTA API v2.0 (REST)
+    ↓
+PostgreSQL Database
 ```
 
-### Key Design Principles
+### Development Install
 
-1. **Code Reusability**: Shared formatters, API client, and utilities
-2. **Input Validation**: Comprehensive Pydantic models with constraints
-3. **Error Resilience**: Graceful handling with educational messages
-4. **LLM Optimization**: 
-   - Human-readable identifiers (country names vs IDs)
-   - Concise markdown for readability
-   - Pagination guidance in responses
-   - Context-efficient truncation strategies
-
-## Development
+```bash
+git clone https://github.com/sgept/sgept-mcp-servers.git
+cd sgept-mcp-servers/gta-mcp
+pip install -e ".[dev]"
+export GTA_API_KEY=your-key
+mcp dev gta_mcp/server.py
+```
 
 ### Running Tests
 
 ```bash
-# Verify server starts
-uv run gta-mcp --help
+# All tests
+pytest
 
-# Check imports
-uv run python -c "from gta_mcp import server; print('OK')"
+# With coverage
+pytest --cov=gta_mcp --cov-report=term-missing
+
+# Specific test file
+pytest tests/test_tools.py
 ```
 
 ### Code Quality
 
-- **Type hints** throughout
-- **Pydantic v2** for input validation
-- **Async/await** for all I/O operations
-- **DRY principle**: No code duplication
-- **Tool annotations**: Proper MCP metadata
+- Python 3.12+
+- Type hints on all functions
+- FastMCP for MCP protocol handling
+- httpx for async API requests
+- pytest for testing
+- Black for formatting
+- Ruff for linting
 
-## Troubleshooting
+### Contributing
 
-### "GTA_API_KEY not set"
-Set the environment variable before running:
-```bash
-export GTA_API_KEY='your-key-here'
-```
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
 
-### "Authentication Error"
-Check your API key is valid and has appropriate permissions.
+## Version and License
 
-### "Response truncated"
-Use pagination (`offset` parameter) or add more specific filters to reduce result set size.
+**Current version:** 0.4.0 (February 2026)
 
-### Server not appearing in Claude Desktop
-1. Verify the absolute path in `claude_desktop_config.json`
-2. Ensure `GTA_API_KEY` is set in the `env` section
-3. Completely quit and restart Claude Desktop (not just close the window)
+**License:** MIT
 
-## API Documentation
+**Support:**
+- API access: Contact SGEPT at support@sgept.org
+- Server bugs: File issues on GitHub at https://github.com/sgept/sgept-mcp-servers
+- Full changelog: [CHANGELOG.md](CHANGELOG.md)
 
-Full GTA API documentation: https://api.globaltradealert.org/api/doc/
-
-## License
-
-This MCP server implementation is provided for use with the Global Trade Alert database.
-API access requires valid credentials from SGEPT.
-
-## Version History & Changelog
-
-### Version 0.3.0 (November 9, 2025)
-
-**Added: Expanded Resource Support**
-- Complete MAST chapter taxonomy reference with A-P classifications for non-tariff measures
-- Query syntax and strategy guide with 3-step cascade approach
-- CPC sectors vs HS codes decision guide
-- Comprehensive exclusion filters guide for keep_* parameters
-- Parameter selection and combination reference
-- Query examples library with 35+ categorized patterns
-
-**Added: MAST Chapter Support**
-- Broader taxonomic querying for general policy categories (e.g., "all subsidies", "trade defense measures")
-- Supports letters (A-P), integer IDs (1-20), and special categories (FDI, Capital controls)
-- Full taxonomy resource at `gta://reference/mast-chapters`
-
-**Added: Advanced Filter Parameters**
-- CPC sector filtering for services and broader product categories
-- Eligible firms filtering (SMEs, firm-specific, state-controlled, etc.)
-- Implementation level filtering (National, Subnational, IFI, NFI, etc.)
-- Inclusion/exclusion logic via keep_* parameters for "everything EXCEPT" queries
-
-**Performance Optimizations**
-- Reduced schema documentation overhead by 72% (~2,200 tokens saved per conversation)
-- Field descriptions streamlined from 2,297 to 640 words while maintaining full functionality
-- Documentation moved to on-demand resources for efficient context usage
-- All parameter descriptions now <60 words with comprehensive resource references
-
----
-
-### Version 0.2.0 (November 8, 2025)
-
-**Added: Text Search**
-
-MCP can now search intervention descriptions and titles using keywords. Used for queries including company and entity names.
-
----
-
-### Version 0.1.0 (Initial Release)
-
-**Core Features:**
-- Comprehensive intervention search with field-based filtering
-- Citation and reference management
-- Intervention type flexible matching
-- Reference resources for jurisdictions and intervention types
-- Search guidance documentation
-
----
-
-**Note:** Pre-1.0 versions indicate experimental status. We welcome feedback and feature requests to improve the server.
-
-## Support
-
-For issues with:
-- **This MCP server**: Contact Johannes Fritz at SGEPT
-- **GTA API access**: Contact SGEPT for API credentials: https://globaltradealert.org/api-access 
-- **MCP protocol**: See https://modelcontextprotocol.io/
+**About SGEPT:** Learn more at https://sgept.org

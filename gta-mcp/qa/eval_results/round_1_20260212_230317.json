@@ -1,0 +1,916 @@
+{
+  "round": 1,
+  "timestamp": "2026-02-12T23:03:17.105370",
+  "num_prompts": 20,
+  "avg_score": 10.0,
+  "max_possible": 12,
+  "total_aggregate": 200.8,
+  "max_aggregate": 240,
+  "critical_count": 0,
+  "passing_count": 14,
+  "target_met": false,
+  "per_prompt": [
+    {
+      "prompt_id": 1,
+      "prompt": "What tariffs has the US imposed on China since Jan 2025?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "intervention_types": [
+            "Import tariff"
+          ],
+          "gta_evaluation": [
+            "Harmful"
+          ],
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "affected_jurisdictions": [
+            "CHN"
+          ]
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "USA"
+        ],
+        "affected_jurisdictions": [
+          "CHN"
+        ],
+        "intervention_types": [
+          "Import tariff"
+        ],
+        "date_announced_gte": "2025-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 2,
+        "query_strategy": 3,
+        "result_relevance": 2.0,
+        "completeness": 2.2,
+        "total": 9.2
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 2,
+      "prompt": "Which countries have imposed tariffs affecting US exports in 2025?",
+      "red_team_verdict": "SIGNIFICANT",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "intervention_types": [
+            "Import tariff"
+          ],
+          "gta_evaluation": [
+            "Harmful"
+          ],
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "date_announced_gte": "2025-01-01",
+          "date_announced_lte": "2025-12-31"
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "affected_jurisdictions": [
+          "USA"
+        ],
+        "intervention_types": [
+          "Import tariff"
+        ],
+        "gta_evaluation": [
+          "Harmful"
+        ],
+        "date_announced_gte": "2025-01-01",
+        "date_announced_lte": "2025-12-31"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.4,
+        "total": 11.4
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 3,
+      "prompt": "What export controls has China imposed on rare earth elements?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "P"
+          ],
+          "gta_evaluation": [
+            "Harmful"
+          ],
+          "implementing_jurisdictions": [
+            "CHN"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "rare earth"
+          }
+        ]
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "CHN"
+        ],
+        "mast_chapters": [
+          "P"
+        ],
+        "query": "rare earth"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.0,
+        "total": 11.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 4,
+      "prompt": "Which countries have restricted exports of lithium or cobalt since 2022?",
+      "red_team_verdict": "CRITICAL",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "date_announced_gte": "2022-01-01"
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "lithium"
+          }
+        ]
+      },
+      "gold_standard": {
+        "mast_chapters": [
+          "P"
+        ],
+        "affected_products": [
+          282520,
+          283691,
+          810520
+        ],
+        "date_announced_gte": "2022-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 1,
+        "query_strategy": 3,
+        "result_relevance": 1.0,
+        "completeness": 1.0,
+        "total": 6.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 5,
+      "prompt": "What measures currently affect semiconductor manufacturing equipment trade?",
+      "red_team_verdict": "SIGNIFICANT",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "is_in_force": true
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "semiconductor"
+          }
+        ]
+      },
+      "gold_standard": {
+        "affected_products": [
+          848620,
+          854121,
+          854129,
+          854110,
+          854190
+        ],
+        "is_in_force": true,
+        "mast_chapters": [
+          "D",
+          "E",
+          "P"
+        ]
+      },
+      "scores": {
+        "filter_accuracy": 2,
+        "query_strategy": 3,
+        "result_relevance": 2.0,
+        "completeness": 1.0,
+        "total": 8.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 6,
+      "prompt": "What subsidies are governments providing for critical mineral processing?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "L"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "mineral"
+          }
+        ]
+      },
+      "gold_standard": {
+        "mast_chapters": [
+          "L"
+        ],
+        "query": "critical mineral"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 1.5,
+        "total": 10.5
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 7,
+      "prompt": "Which countries subsidise their domestic semiconductor industry?",
+      "red_team_verdict": "CRITICAL",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "mast_chapters": [
+            "L"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "semiconductor"
+          }
+        ]
+      },
+      "gold_standard": {
+        "mast_chapters": [
+          "L"
+        ],
+        "query": "semiconductor",
+        "is_in_force": true
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 1.0,
+        "total": 10.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 8,
+      "prompt": "Which G20 countries have increased state aid to EV manufacturers since 2022?",
+      "red_team_verdict": "SIGNIFICANT",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "mast_chapters": [
+            "L"
+          ],
+          "implementing_jurisdictions": [
+            "ARG",
+            "AUS",
+            "BRA",
+            "CAN",
+            "CHN",
+            "FRA",
+            "DEU",
+            "IND",
+            "IDN",
+            "ITA",
+            "JPN",
+            "MEX",
+            "RUS",
+            "SAU",
+            "ZAF",
+            "KOR",
+            "TUR",
+            "GBR",
+            "USA",
+            "EUN"
+          ],
+          "date_announced_gte": "2022-01-01"
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "ARG",
+          "AUS",
+          "BRA",
+          "CAN",
+          "CHN",
+          "FRA",
+          "DEU",
+          "IND",
+          "IDN",
+          "ITA",
+          "JPN",
+          "MEX",
+          "RUS",
+          "SAU",
+          "ZAF",
+          "KOR",
+          "TUR",
+          "GBR",
+          "USA",
+          "EUN"
+        ],
+        "mast_chapters": [
+          "L"
+        ],
+        "query": "electric vehicle",
+        "date_announced_gte": "2022-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.2,
+        "total": 11.2
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 9,
+      "prompt": "What harmful measures has the EU imposed on US exports since 2024?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "gta_evaluation": [
+            "Harmful"
+          ],
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "affected_jurisdictions": [
+            "EUN"
+          ],
+          "date_announced_gte": "2024-01-01"
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "EUN"
+        ],
+        "affected_jurisdictions": [
+          "USA"
+        ],
+        "gta_evaluation": [
+          "Harmful"
+        ],
+        "date_announced_gte": "2024-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 2.5,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 3.0,
+        "total": 11.5
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 10,
+      "prompt": "What measures has Brazil implemented affecting US agricultural exports?",
+      "red_team_verdict": "CRITICAL",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "affected_jurisdictions": [
+            "BRA"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "agricultural"
+          }
+        ]
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "BRA"
+        ],
+        "affected_jurisdictions": [
+          "USA"
+        ],
+        "affected_products": [
+          101,
+          201,
+          301,
+          401,
+          501,
+          601,
+          701,
+          801,
+          901,
+          1001,
+          1101,
+          1201,
+          1301,
+          1401,
+          1501,
+          1601,
+          1701,
+          1801,
+          1901,
+          2001,
+          2101,
+          2201,
+          2301,
+          2401
+        ]
+      },
+      "scores": {
+        "filter_accuracy": 2,
+        "query_strategy": 3,
+        "result_relevance": 2.0,
+        "completeness": 2.0,
+        "total": 9.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 11,
+      "prompt": "Find all anti-dumping investigations targeting Chinese steel since 2020",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "D"
+          ],
+          "intervention_types": [
+            "Anti-dumping"
+          ],
+          "implementing_jurisdictions": [
+            "CHN"
+          ],
+          "date_announced_gte": "2020-01-01"
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "steel"
+          }
+        ]
+      },
+      "gold_standard": {
+        "affected_jurisdictions": [
+          "CHN"
+        ],
+        "intervention_types": [
+          "Anti-dumping"
+        ],
+        "query": "steel",
+        "date_announced_gte": "2020-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 1.5,
+        "total": 10.5
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 12,
+      "prompt": "What safeguard measures are currently in force on solar panels?",
+      "red_team_verdict": "MINOR",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "intervention_types": [
+            "Safeguard"
+          ],
+          "is_in_force": true
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "solar"
+          }
+        ]
+      },
+      "gold_standard": {
+        "intervention_types": [
+          "Safeguard"
+        ],
+        "affected_products": [
+          854140
+        ],
+        "is_in_force": true
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.0,
+        "total": 11.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 13,
+      "prompt": "What local content requirements affect automotive production in Southeast Asia?",
+      "red_team_verdict": "SIGNIFICANT",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "E"
+          ],
+          "intervention_types": [
+            "Local content requirement"
+          ],
+          "implementing_jurisdictions": [
+            "IDN",
+            "THA",
+            "VNM",
+            "MYS",
+            "PHL",
+            "SGP",
+            "MMR",
+            "KHM",
+            "LAO",
+            "BRN"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "automotive"
+          }
+        ]
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "IDN",
+          "THA",
+          "VNM",
+          "MYS",
+          "PHL",
+          "SGP",
+          "MMR",
+          "KHM",
+          "LAO",
+          "BRN"
+        ],
+        "intervention_types": [
+          "Local content requirement"
+        ],
+        "affected_products": [
+          8701,
+          8702,
+          8703,
+          8704,
+          8705
+        ]
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.0,
+        "total": 11.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 14,
+      "prompt": "What import licensing requirements affect pharmaceutical products in India?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "E"
+          ],
+          "intervention_types": [
+            "Import licensing requirement"
+          ],
+          "implementing_jurisdictions": [
+            "IND"
+          ]
+        },
+        "prerequisite_calls": [
+          {
+            "tool": "gta_lookup_hs_codes",
+            "search_term": "pharmaceutical"
+          }
+        ]
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "IND"
+        ],
+        "intervention_types": [
+          "Import licensing requirement"
+        ],
+        "query": "pharmaceutical"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 2.0,
+        "total": 11.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 15,
+      "prompt": "Has the use of export restrictions increased since 2020?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "mast_chapters": [
+            "P"
+          ],
+          "date_announced_gte": "2020-01-01"
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "count_by": [
+          "date_announced_year"
+        ],
+        "mast_chapters": [
+          "P"
+        ],
+        "date_announced_gte": "2015-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 3.0,
+        "total": 12.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 16,
+      "prompt": "How many harmful interventions were implemented globally in 2025 versus 2024?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "gta_evaluation": [
+            "Harmful"
+          ],
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "date_announced_gte": "2025-01-01",
+          "date_announced_lte": "2025-12-31"
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "count_by": [
+          "date_implemented_year"
+        ],
+        "gta_evaluation": [
+          "Harmful"
+        ],
+        "date_implemented_gte": "2024-01-01",
+        "date_implemented_lte": "2025-12-31"
+      },
+      "scores": {
+        "filter_accuracy": 2.5,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 1.5,
+        "total": 10.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 17,
+      "prompt": "Which interventions target state-owned enterprises specifically?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "eligible_firms": [
+            4
+          ]
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "eligible_firms": [
+          4
+        ]
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 3.0,
+        "total": 12.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 18,
+      "prompt": "What subnational measures has the US implemented since 2023?",
+      "red_team_verdict": "GOOD",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "implementing_jurisdictions": [
+            "USA"
+          ],
+          "date_announced_gte": "2023-01-01",
+          "implementation_levels": [
+            3
+          ]
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "USA"
+        ],
+        "implementation_levels": [
+          3
+        ],
+        "date_announced_gte": "2023-01-01"
+      },
+      "scores": {
+        "filter_accuracy": 3,
+        "query_strategy": 3,
+        "result_relevance": 3,
+        "completeness": 3.0,
+        "total": 12.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 19,
+      "prompt": "What FDI screening measures target Chinese investments in European technology sectors?",
+      "red_team_verdict": "SIGNIFICANT",
+      "simulated": {
+        "tool": "gta_search_interventions",
+        "filters": {
+          "mast_chapters": [
+            "I"
+          ],
+          "implementing_jurisdictions": [
+            "CHN"
+          ],
+          "affected_jurisdictions": [
+            "EUN"
+          ]
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "EUN",
+          "AUT",
+          "BEL",
+          "BGR",
+          "HRV",
+          "CYP",
+          "CZE",
+          "DNK",
+          "EST",
+          "FIN",
+          "FRA",
+          "DEU",
+          "GRC",
+          "HUN",
+          "IRL",
+          "ITA",
+          "LVA",
+          "LTU",
+          "LUX",
+          "MLT",
+          "NLD",
+          "POL",
+          "PRT",
+          "ROU",
+          "SVK",
+          "SVN",
+          "ESP",
+          "SWE",
+          "GBR"
+        ],
+        "affected_jurisdictions": [
+          "CHN"
+        ],
+        "intervention_types": [
+          "FDI screening"
+        ],
+        "query": "technology"
+      },
+      "scores": {
+        "filter_accuracy": 1.5,
+        "query_strategy": 3,
+        "result_relevance": 2.0,
+        "completeness": 1.5,
+        "total": 8.0
+      },
+      "execution": null
+    },
+    {
+      "prompt_id": 20,
+      "prompt": "What measures have G7 countries coordinated against Russia since February 2022?",
+      "red_team_verdict": "MINOR",
+      "simulated": {
+        "tool": "gta_count_interventions",
+        "filters": {
+          "count_by": [
+            "date_announced_year"
+          ],
+          "implementing_jurisdictions": [
+            "CAN",
+            "FRA",
+            "DEU",
+            "ITA",
+            "JPN",
+            "GBR",
+            "USA"
+          ]
+        },
+        "prerequisite_calls": []
+      },
+      "gold_standard": {
+        "implementing_jurisdictions": [
+          "USA",
+          "GBR",
+          "FRA",
+          "DEU",
+          "ITA",
+          "JPN",
+          "CAN"
+        ],
+        "affected_jurisdictions": [
+          "RUS"
+        ],
+        "date_announced_gte": "2022-02-01"
+      },
+      "scores": {
+        "filter_accuracy": 0.5,
+        "query_strategy": 3,
+        "result_relevance": 1.0,
+        "completeness": 1.0,
+        "total": 5.5
+      },
+      "execution": null
+    }
+  ]
+}

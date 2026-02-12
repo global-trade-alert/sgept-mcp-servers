@@ -1,0 +1,680 @@
+# Multi-Pass Workflow Evaluation Report
+
+**Generated:** 2026-02-12 23:52:51
+**API endpoint:** `https://api.globaltradealert.org/api/v2/gta/data/`
+**Overview keys:** 8 fields
+**Standard keys:** 18 fields
+
+## Summary
+
+| # | Prompt | Type | Pass 1 Results | Pass 1 Size | Pass 2 OK | Verdict |
+|---|--------|------|----------------|-------------|-----------|---------|
+| 1 | What tariffs has the US imposed on China since Jan 2025... | search | 71 | 34.4 KB | Yes | OK |
+| 2 | Which countries have imposed tariffs affecting US expor... | search | 623 | 303.4 KB | Yes | OK |
+| 3 | What export controls has China imposed on rare earth el... | search | 36 | 15.7 KB | Yes | OK |
+| 4 | Which countries have restricted exports of lithium or c... | search | 0 | 0.0 KB | N/A (0 results) | No results |
+| 5 | What measures currently affect semiconductor manufactur... | search | 747 | 360.8 KB | Yes | OK |
+| 6 | What subsidies are governments providing for critical m... | search | 191 | 88.7 KB | Yes | OK |
+| 7 | Which countries subsidise their domestic semiconductor ... | search | 747 | 360.8 KB | Yes | OK |
+| 8 | Which G20 countries have increased state aid to EV manu... | search | 391 | 181.3 KB | Yes | OK |
+| 9 | What harmful measures has the EU imposed on US exports ... | search | 412 | 309.3 KB | Yes | OK |
+| 10 | What measures has Brazil implemented affecting US agric... | search | 1000 | 453.7 KB | Yes | OK |
+| 11 | Find all anti-dumping investigations targeting Chinese ... | search | 98 | 58.7 KB | Yes | OK |
+| 12 | What safeguard measures are currently in force on solar... | search | 2 | 0.9 KB | Yes | OK |
+| 13 | What local content requirements affect automotive produ... | search | 47 | 21.3 KB | Yes | OK |
+| 14 | What import licensing requirements affect pharmaceutica... | search | 1 | 0.4 KB | Yes | OK |
+| 15 | Has the use of export restrictions increased since 2020... | count | 20 groups | - | - | OK |
+| 16 | How many harmful interventions were implemented globall... | count_pair | 2025: 6; 2024: 6 | - | - | OK |
+| 17 | Which interventions target state-owned enterprises spec... | search | 158 | 70.7 KB | Yes | OK |
+| 18 | What subnational measures has the US implemented since ... | search | 355 | 176.9 KB | Yes | OK |
+| 19 | What FDI screening measures target Chinese investments ... | search | 5 | 3.5 KB | Yes | OK |
+| 20 | What measures have G7 countries coordinated against Rus... | search | 1000 | 710.3 KB | Yes | OK |
+
+## Per-Prompt Details
+
+### Prompt 1: What tariffs has the US imposed on China since Jan 2025?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 71 interventions
+- Response size: 34.4 KB (35,205 bytes)
+- Elapsed: 5481 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America: Reclassification of certain vehicles for transport of goods and consequent increase in MFN Duty
+  - United States of America: Reclassification of decorative storage baskets and consequent increase in MFN Duty
+  - United States of America: Reclassification of underwater remotely-operated vehicles and consequent increase in MFN Duty
+  - United States of America: Reclassification of certain spa covers and spa cover lifters and consequent decrease in MFN duty
+  - United States of America: Reclassification of men’s outerwear jackets from China and consequent decrease in MFN duty
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152110, 148999, 145040, 144298, 142485]
+- IDs returned: [142485, 144298, 145040, 148999, 152110]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 29.6 KB
+- Elapsed: 778 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 142485):
+  - Title: United States of America: Reclassification of a men’s vest and consequent modification in the MFN duties
+  - Type: Import tariff
+  - Evaluation: Red
+  - Date announced: 2025-01-08
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 71 results vs old ceiling of 50. Overview pass reveals 42% more data.
+
+---
+
+### Prompt 2: Which countries have imposed tariffs affecting US exports in 2025?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 623 interventions
+- Response size: 303.4 KB (310,712 bytes)
+- Elapsed: 5308 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - Mexico: Removal of several products from the "basic basket" products list temporarily exempted from import duties (December 2025)
+  - Brazil: Modification of import tariff-rate quotas and import duties for 15 products (December 2025)
+  - Iraq: Government implements new customs tariffs on hybrid vehicles and gold starting from 1 January 2026
+  - EU: Changes to the list of agricultural and industrial products subject to a reduction of import duties (December 2025)
+  - EU: Changes to the list of agricultural and industrial products subject to a reduction of import duties (December 2025)
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [151413, 150009, 146646, 144562, 141640]
+- IDs returned: [141640, 144562, 146646, 150009, 151413]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 11.4 KB
+- Elapsed: 526 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 141640):
+  - Title: Australia: Customs tariff amendments in a Tariff Concession Order published on 8 January 2025
+  - Type: Import tariff
+  - Evaluation: Green
+  - Date announced: 2025-01-08
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 623 results vs old ceiling of 50. Overview pass reveals 1146% more data.
+
+---
+
+### Prompt 3: What export controls has China imposed on rare earth elements?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 36 interventions
+- Response size: 15.7 KB (16,042 bytes)
+- Elapsed: 518 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - China: Government grants export license to Ningbo Jintian Copper
+  - China: Government grants rare earth export license to several Chinese companies
+  - China: Temporary suspension of additional export controls for rare earth-related technologies and  foreign entities that export Chinese-origin rare-earth materials
+  - China: Temporary suspension of additional export controls for rare earth-related technologies and  foreign entities that export Chinese-origin rare-earth materials
+  - China: Chinese commitments under a trade and economic agreement with the US (October 2025)
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [151266, 149796, 20137, 20170, 20166]
+- IDs returned: [20137, 20166, 20170, 149796, 151266]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 16.7 KB
+- Elapsed: 360 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 20137):
+  - Title: China: Government approves the second batch of export quotas on rare earth metals for 2013
+  - Type: Export quota
+  - Evaluation: Red
+  - Date announced: 2013-06-18
+  - In force: 0
+
+**Multi-pass value:** Only 36 results (within old 50-result ceiling). Overview mode still useful for compact triage at 15.7 KB.
+
+---
+
+### Prompt 4: Which countries have restricted exports of lithium or cobalt since 2022?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 0 interventions
+- Response size: 0.0 KB (2 bytes)
+- Elapsed: 533 ms
+- Keys returned: []
+
+**Pass 2:** Skipped (no results from Pass 1)
+
+**Multi-pass value:** No results returned -- query may be too narrow.
+
+---
+
+### Prompt 5: What measures currently affect semiconductor manufacturing equipment trade?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 747 interventions
+- Response size: 360.8 KB (369,466 bytes)
+- Elapsed: 8155 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
+  - China: Government reportedly allows several Chinese firms to import of Nvidia H200 AI chips
+  - Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry
+  - Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry
+  - United Kingdom: British Business Bank commits GBP 50 million to IQ Capital Fund V for deeptech investments
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152717, 139615, 113918, 135365, 19697]
+- IDs returned: [19697, 113918, 135365, 139615, 152717]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 12.6 KB
+- Elapsed: 358 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 19697):
+  - Title: United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor
+  - Type: Tax or social insurance relief
+  - Evaluation: Amber
+  - Date announced: 2008-12-01
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 747 results vs old ceiling of 50. Overview pass reveals 1394% more data.
+
+---
+
+### Prompt 6: What subsidies are governments providing for critical mineral processing?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 191 interventions
+- Response size: 88.7 KB (90,781 bytes)
+- Elapsed: 2812 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America: EXIM approves loan to establish a Strategic Critical Minerals Reserve
+  - Australia: National Reconstruction Fund Corporation (NRFC) invests AUD 75 million to Alpha HPA
+  - United Kingdom: National Wealth Fund releases its five-year strategic plan
+  - Canada: Canada Growth Fund Provides USD 25 million in funding to Cyclic Materials
+  - United States of America: "SECURE Minerals Act of 2026 " introduced in Congress
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152570, 142715, 136228, 116666, 88906]
+- IDs returned: [88906, 116666, 136228, 142715, 152570]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 13.8 KB
+- Elapsed: 370 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 88906):
+  - Title: Germany: Introduction of state loan and financial grant scheme to support critical minerals sector
+  - Type: Financial grant
+  - Evaluation: Red
+  - Date announced: 2012-10-03
+  - In force: 0
+
+**Multi-pass value:** Prompt returned 191 results vs old ceiling of 50. Overview pass reveals 282% more data.
+
+---
+
+### Prompt 7: Which countries subsidise their domestic semiconductor industry?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 747 interventions
+- Response size: 360.8 KB (369,466 bytes)
+- Elapsed: 695 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
+  - China: Government reportedly allows several Chinese firms to import of Nvidia H200 AI chips
+  - Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry
+  - Republic of Korea: Eximbank announces KRW 22 trillion program to support AI industry
+  - United Kingdom: British Business Bank commits GBP 50 million to IQ Capital Fund V for deeptech investments
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152717, 139615, 113918, 135365, 19697]
+- IDs returned: [19697, 113918, 135365, 139615, 152717]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 12.6 KB
+- Elapsed: 792 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 19697):
+  - Title: United States of America/State of Tennessee/Montgomery County: Incentives granted to Hemlock Semiconductor
+  - Type: Tax or social insurance relief
+  - Evaluation: Amber
+  - Date announced: 2008-12-01
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 747 results vs old ceiling of 50. Overview pass reveals 1394% more data.
+
+---
+
+### Prompt 8: Which G20 countries have increased state aid to EV manufacturers since 2022?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 391 interventions
+- Response size: 181.3 KB (185,680 bytes)
+- Elapsed: 2577 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - Canada: New measures to support the automobile industry
+  - Canada: New measures to support the automobile industry
+  - Russia: Industry Development Fund discloses a RUB 8.2 billion loan to Avtotor
+  - Australia: National Reconstruction Fund Corporation (NRFC) invests AUD 30.7 million to Applied Electric Vehicles
+  - United Kingdom: National Wealth Fund releases its five-year strategic plan
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152705, 139988, 130042, 116184, 101010]
+- IDs returned: [101010, 116184, 130042, 139988, 152705]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 9.5 KB
+- Elapsed: 491 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 101010):
+  - Title: Hungary: Introduction of EUR 24 million measure to support Volta Energy Solutions
+  - Type: Financial grant
+  - Evaluation: Red
+  - Date announced: 2022-01-07
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 391 results vs old ceiling of 50. Overview pass reveals 682% more data.
+
+---
+
+### Prompt 9: What harmful measures has the EU imposed on US exports since 2024?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 412 interventions
+- Response size: 309.3 KB (316,729 bytes)
+- Elapsed: 3863 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - EU: Action plan on drone and counter-drone security to support the development of homegrown technologies
+  - Italy: EUR 390 million rescue loan to Acciaierie d'Italia
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152737, 150785, 115979, 138596, 131859]
+- IDs returned: [115979, 131859, 138596, 150785, 152737]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 14.7 KB
+- Elapsed: 373 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 115979):
+  - Title: Germany: EUR 920 million grant to support Infineon Technologies AG's construction project of a semiconductor and integrated circuit factory
+  - Type: Financial grant
+  - Evaluation: Red
+  - Date announced: 2025-02-20
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 412 results vs old ceiling of 50. Overview pass reveals 724% more data.
+
+---
+
+### Prompt 10: What measures has Brazil implemented affecting US agricultural exports?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 1000 interventions
+- Response size: 453.7 KB (464,620 bytes)
+- Elapsed: 6502 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)
+  - Brazil: Modifications of the import tariff of 1'249 products under the LEBIT/BK list (February 2026)
+  - Brazil: BNDES and WEG sign loan to renovate and build a factory for battery energy storage systems in Itajaí
+  - Brazil: Modification of in-quota volume for electric motors (February 2026)
+  - Brazil: Changes to import duties and import tariff-rate quotas for multiple products (January 2026)
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152527, 140661, 121968, 119655, 112303]
+- IDs returned: [112303, 119655, 121968, 140661, 152527]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 15.4 KB
+- Elapsed: 435 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 112303):
+  - Title: Brazil: BNDES provides USD 13.94 million loan to an undisclosed agricultural undertaking under the <i>MODERFROTA</i> scheme (August 2020)
+  - Type: Local content incentive
+  - Evaluation: Red
+  - Date announced: 2020-08-31
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 1000 results vs old ceiling of 50. Overview pass reveals 1900% more data.
+
+---
+
+### Prompt 11: Find all anti-dumping investigations targeting Chinese steel since 2020
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 98 interventions
+- Response size: 58.7 KB (60,089 bytes)
+- Elapsed: 632 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - SACU: Initiation of anti-dumping investigation on imports of flat-rolled products of iron or non-alloy steel, of a width of 600 mm or more, clad, plated or coated, painted, varnished or coated with plastics from China
+  - EU: Initiation of anti-dumping investigation on imports of certain wires of silicomanganese steel from China
+  - Republic of Korea: Initiation of antidumping investigation on imports of zinc and zinc-alloy surface-treated cold-rolled products from China
+  - Australia: Initiation of antidumping investigation on imports of certain welded steel mesh sheets from China and Malaysia
+  - Australia: Initiation of antidumping investigation on imports of certain flat rolled steel products from China and the Republic of Korea
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [151457, 141380, 132223, 85753, 80502]
+- IDs returned: [80502, 85753, 132223, 141380, 151457]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 6.4 KB
+- Elapsed: 456 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 80502):
+  - Title: Brazil: Definitive antidumping duty on imports of CNG cylinders from China
+  - Type: Anti-dumping
+  - Evaluation: Red
+  - Date announced: 2020-01-31
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 98 results vs old ceiling of 50. Overview pass reveals 96% more data.
+
+---
+
+### Prompt 12: What safeguard measures are currently in force on solar panels?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 2 interventions
+- Response size: 0.9 KB (919 bytes)
+- Elapsed: 368 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America: Safeguard measure on imports large residential washing machines
+  - United States of America: Safeguard measure on imports of crystalline silicon photovoltaic cells
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [58242, 90120]
+- IDs returned: [58242, 90120]
+- All IDs present: Yes
+- Num returned: 2
+- Response size: 4.9 KB
+- Elapsed: 368 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 58242):
+  - Title: United States of America: Safeguard measure on imports large residential washing machines
+  - Type: Safeguard
+  - Evaluation: Red
+  - Date announced: 2017-06-13
+  - In force: 1
+
+**Multi-pass value:** Only 2 results (within old 50-result ceiling). Overview mode still useful for compact triage at 0.9 KB.
+
+---
+
+### Prompt 13: What local content requirements affect automotive production in Southeast Asia?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 47 interventions
+- Response size: 21.3 KB (21,814 bytes)
+- Elapsed: 494 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - Thailand: Government introduced a less restrictive requirement of a 2 to 1 domestic corn absorption rate for wheat import permit
+  - Indonesia: Government established several restrictions on shipping and port companies
+  - Indonesia: Government provided fiscal incentives for the importation of and changed the local content requirements for the manufacturing of electric vehicles
+  - Indonesia: Government provided fiscal incentives for the importation of and changed the local content requirements for the manufacturing of electric vehicles
+  - Indonesia: Government provided fiscal incentives for the importation of and changed the local content requirements for the manufacturing of electric vehicles
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [142050, 142454, 117623, 106535, 62791]
+- IDs returned: [62791, 106535, 117623, 142050, 142454]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 8.0 KB
+- Elapsed: 368 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 62791):
+  - Title: Indonesia: Localisation restrictions in the telecommunications sector
+  - Type: Local content requirement
+  - Evaluation: Red
+  - Date announced: 2009-01-19
+  - In force: 1
+
+**Multi-pass value:** Only 47 results (within old 50-result ceiling). Overview mode still useful for compact triage at 21.3 KB.
+
+---
+
+### Prompt 14: What import licensing requirements affect pharmaceutical products in India?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 1 interventions
+- Response size: 0.4 KB (449 bytes)
+- Elapsed: 350 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - India: Import of certain organic chemicals and waste pharmaceuticals liberalised
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [64871]
+- IDs returned: [64871]
+- All IDs present: Yes
+- Num returned: 1
+- Response size: 2.0 KB
+- Elapsed: 358 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 64871):
+  - Title: India: Import of certain organic chemicals and waste pharmaceuticals liberalised
+  - Type: Import licensing requirement
+  - Evaluation: Green
+  - Date announced: 2018-10-03
+  - In force: 1
+
+**Multi-pass value:** Only 1 results (within old 50-result ceiling). Overview mode still useful for compact triage at 0.4 KB.
+
+---
+
+### Prompt 15: Has the use of export restrictions increased since 2020?
+
+**Count query (no multi-pass needed)**
+- Status: 200
+- Groups: 20
+- Total count: 20
+- Elapsed: 1080 ms
+- Data (first 10 rows):
+  - {'value': 1100, 'date_announced_year': '2022'}
+  - {'value': 945, 'date_announced_year': '2020'}
+  - {'value': 928, 'date_announced_year': '2012'}
+  - {'value': 896, 'date_announced_year': '2023'}
+  - {'value': 887, 'date_announced_year': '2021'}
+  - {'value': 858, 'date_announced_year': '2013'}
+  - {'value': 855, 'date_announced_year': '2015'}
+  - {'value': 810, 'date_announced_year': '2011'}
+  - {'value': 803, 'date_announced_year': '2025'}
+  - {'value': 769, 'date_announced_year': '2010'}
+
+---
+
+### Prompt 16: How many harmful interventions were implemented globally in 2025 versus 2024?
+
+**Count pair (no multi-pass needed)**
+- **2025:**
+  - Status: 200
+  - Total count: 6
+  - Elapsed: 2885 ms
+    - {'value': 3903, 'date_implemented_year': '2025'}
+    - {'value': 2760, 'date_implemented_year': 'No implementation date'}
+    - {'value': 4, 'date_implemented_year': '2026'}
+    - {'value': 1, 'date_implemented_year': '2020'}
+    - {'value': 1, 'date_implemented_year': '2024'}
+- **2024:**
+  - Status: 200
+  - Total count: 6
+  - Elapsed: 2534 ms
+    - {'value': 4439, 'date_implemented_year': '2024'}
+    - {'value': 2760, 'date_implemented_year': 'No implementation date'}
+    - {'value': 7, 'date_implemented_year': '2025'}
+    - {'value': 4, 'date_implemented_year': '2026'}
+    - {'value': 1, 'date_implemented_year': '2013'}
+
+---
+
+### Prompt 17: Which interventions target state-owned enterprises specifically?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 158 interventions
+- Response size: 70.7 KB (72,381 bytes)
+- Elapsed: 1618 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - India: Customs duty amendments announced as part of 2026-2027 budget
+  - Thailand: BOI provided investment incentives for certain hospital businesses
+  - Italy: EIB provides financing for 'CDP Italian Regions De-Linked Rs II'
+  - India: Equity participation by north-eastern states in hydroelectric projects
+  - India: Scheme approved for the promotion of coal or lignite gasification projects
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152435, 70740, 57354, 56245, 61394]
+- IDs returned: [56245, 57354, 61394, 70740, 152435]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 8.3 KB
+- Elapsed: 356 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 56245):
+  - Title: Republic of Moldova: VAT-exempted imports of certain medical equipment
+  - Type: Internal taxation of imports
+  - Evaluation: Green
+  - Date announced: 2014-07-10
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 158 results vs old ceiling of 50. Overview pass reveals 216% more data.
+
+---
+
+### Prompt 18: What subnational measures has the US implemented since 2023?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 355 interventions
+- Response size: 176.9 KB (181,118 bytes)
+- Elapsed: 1069 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - United States of America (Texas): USD 14.1 million grant to Coherent Corp under Texas Semiconductor Innovation Fund
+  - United States of America (Texas): USD 15.2 million grant to Tekscend Photomask Round Rock Inc under Texas Semiconductor Innovation Fund
+  - United States (State of Indiana): USD 10 million in EDGE tax credit to Roche Diagnostics Operations Inc
+  - United States (State of Indiana): USD 10 million in redevelopment tax credit to Roche Diagnostics Operations Inc
+  - United States of America (State of California): Film production tax credit worth USD 14.1 million for Apple Studios LLC
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152717, 149212, 140225, 133431, 129116]
+- IDs returned: [129116, 133431, 140225, 149212, 152717]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 9.3 KB
+- Elapsed: 370 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 129116):
+  - Title: United States (Wisconsin): Prohibition on the use of certain foreign digital products and technologies in the state IT systems
+  - Type: Public procurement, nes
+  - Evaluation: Red
+  - Date announced: 2023-01-08
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 355 results vs old ceiling of 50. Overview pass reveals 610% more data.
+
+---
+
+### Prompt 19: What FDI screening measures target Chinese investments in European technology sectors?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 5 interventions
+- Response size: 3.5 KB (3,536 bytes)
+- Elapsed: 412 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - EU: Commission publishes its new approach to economic security
+  - United States of America: Presidential order that Beijing Shiji Information Technology Co., Ltd. divest StayNTouch, Inc
+  - United States of America: Executive Order on Securing the Information and Communications Technology and Services Supply Chain
+  - India: Trade and investment implications of the 2015-16 budget
+  - Germany: Review of foreign investments on national security and public policy grounds
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [151187, 78695, 71882, 12599, 11938]
+- IDs returned: [11938, 12599, 71882, 78695, 151187]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 26.8 KB
+- Elapsed: 476 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 11938):
+  - Title: Germany: Review of foreign investments on national security and public policy grounds
+  - Type: FDI: Entry and ownership rule
+  - Evaluation: Red
+  - Date announced: 2009-04-18
+  - In force: 1
+
+**Multi-pass value:** Only 5 results (within old 50-result ceiling). Overview mode still useful for compact triage at 3.5 KB.
+
+---
+
+### Prompt 20: What measures have G7 countries coordinated against Russia since February 2022?
+
+**Pass 1 -- Overview (auto-detected for broad search)**
+- Results: 1000 interventions
+- Response size: 710.3 KB (727,297 bytes)
+- Elapsed: 11680 ms
+- Keys returned: ['date_announced', 'gta_evaluation', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'state_act_title']
+- Sample titles:
+  - Italy: EUR 390 million rescue loan to Acciaierie d'Italia
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+  - Germany: EUR 3 billion state aid scheme for cleantech manufacturing capacity
+
+**Pass 2 -- Standard Detail (auto-detected for specific IDs)**
+- IDs requested: [152697, 143369, 131543, 120315, 113884]
+- IDs returned: [113884, 120315, 131543, 143369, 152697]
+- All IDs present: Yes
+- Num returned: 5
+- Response size: 17.4 KB
+- Elapsed: 481 ms
+- Keys returned: ['affected_jurisdictions', 'affected_sectors', 'date_announced', 'date_implemented', 'date_removed', 'eligible_firm', 'gta_evaluation', 'implementation_level', 'implementing_jurisdictions', 'intervention_id', 'intervention_type', 'intervention_url', 'is_in_force', 'is_official_source', 'mast_chapter', 'state_act_id', 'state_act_title', 'state_act_url']
+- Sample record (ID 113884):
+  - Title: United States of America (State of Maryland): The State of Maryland prohibits the use of China and Russia-based products and platforms in state government
+  - Type: Public procurement, nes
+  - Evaluation: Red
+  - Date announced: 2022-12-06
+  - In force: 1
+
+**Multi-pass value:** Prompt returned 1000 results vs old ceiling of 50. Overview pass reveals 1900% more data.
+
+---
+
+## Key Findings
+
+### Result Volume
+- **12** of 18 search prompts exceeded the old 50-result ceiling
+- **6** search prompts returned 50 or fewer results
+- **Max results:** 1000 (from a single overview query)
+- **Min results (non-zero):** 1
+- **Average results:** 327
+
+### Response Sizes (Overview Pass)
+- **Average:** 175.0 KB
+- **Max:** 710.3 KB
+- **Min:** 0.0 KB
+- **Fits in LLM context (<100KB):** 10 of 18
+
+### Pass 2 (Detail) Success Rate
+- **17** of 17 detail passes returned all requested IDs
+
+### Count Queries
+- **2** count prompts tested
+  - Prompt 15: OK
+  - Prompt 16 (2025): OK
+  - Prompt 16 (2024): OK
+
+### Prompts Where Overview Provides Limited Benefit (<= 50 results)
+- Prompt 3: 36 results -- What export controls has China imposed on rare earth element
+- Prompt 12: 2 results -- What safeguard measures are currently in force on solar pane
+- Prompt 13: 47 results -- What local content requirements affect automotive production
+- Prompt 14: 1 results -- What import licensing requirements affect pharmaceutical pro
+- Prompt 19: 5 results -- What FDI screening measures target Chinese investments in Eu
+
+### Prompts With Zero Results
+- Prompt 4: Which countries have restricted exports of lithium or cobalt

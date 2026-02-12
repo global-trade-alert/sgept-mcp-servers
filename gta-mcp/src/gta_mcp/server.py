@@ -19,6 +19,7 @@ from .auth import JWTAuthManager
 from .formatters import (
     format_interventions_markdown,
     format_interventions_json,
+    format_interventions_overview,
     format_intervention_detail_markdown,
     format_ticker_markdown,
     format_counts_markdown,
@@ -44,8 +45,14 @@ from .resources_loader import (
     load_exclusion_filters,
     load_data_model_guide,
     load_analytical_caveats,
-    load_common_mistakes
+    load_common_mistakes,
+    load_glossary,
+    load_search_strategy,
+    load_jurisdiction_groups,
+    load_query_intent_mapping,
 )
+from .hs_lookup import search_hs_codes
+from .sector_lookup import search_sectors
 
 
 # Initialize MCP server
@@ -63,12 +70,40 @@ def get_api_client() -> GTAAPIClient:
     return GTAAPIClient(api_key)
 
 
-# JWT auth manager for counts endpoint (lazy-initialized singleton)
+# Key profiles for show_keys — controls which fields the API returns per intervention.
+# "overview" is compact (~0.3KB/record) for broad triage; "standard" is analysis-ready
+# (~2-5KB/record); "full" returns everything including large product/description arrays.
+KEY_PROFILES = {
+    "overview": [
+        "intervention_id", "state_act_title", "intervention_type",
+        "gta_evaluation", "date_announced", "is_in_force",
+        "implementing_jurisdictions", "intervention_url"
+    ],
+    "standard": [
+        "intervention_id", "state_act_id", "state_act_title",
+        "intervention_type", "mast_chapter", "gta_evaluation",
+        "implementation_level", "eligible_firm",
+        "date_announced", "date_implemented", "date_removed",
+        "is_in_force",
+        "implementing_jurisdictions", "affected_jurisdictions",
+        "affected_sectors",
+        "intervention_url", "state_act_url", "is_official_source"
+    ],
+    "full": None  # No show_keys = API returns everything
+}
+
+
+# JWT auth manager - DEPRECATED (kept for backward compatibility)
+# As of API v0.3+, all endpoints including counts now support API key auth.
+# JWT auth is no longer required or used.
 _auth_manager: Optional[JWTAuthManager] = None
 
 
 def get_auth_manager() -> JWTAuthManager:
-    """Get or create the JWT auth manager for the counts endpoint.
+    """[DEPRECATED] Get or create the JWT auth manager.
+
+    This function is kept for backward compatibility but is no longer used.
+    All GTA API endpoints now use API key authentication.
 
     Raises:
         ValueError: If GTA_AUTH_EMAIL or GTA_AUTH_PASSWORD not configured.
@@ -79,9 +114,9 @@ def get_auth_manager() -> JWTAuthManager:
         password = os.getenv("GTA_AUTH_PASSWORD")
         if not email or not password:
             raise ValueError(
-                "GTA counts endpoint requires JWT authentication.\n"
-                "Set GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables.\n"
-                "The other GTA tools (search, get, ticker, impact chains) still work with API key only."
+                "[DEPRECATED] JWT authentication is no longer required.\n"
+                "All GTA endpoints now use API key authentication via GTA_API_KEY.\n"
+                "GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD are optional and not needed."
             )
         _auth_manager = JWTAuthManager(email=email, password=password)
     return _auth_manager
@@ -98,84 +133,113 @@ def get_auth_manager() -> JWTAuthManager:
     }
 )
 async def gta_search_interventions(params: GTASearchInput) -> str:
-    """Search and filter trade policy interventions from the Global Trade Alert database.
+    """Search trade policy interventions from the Global Trade Alert database.
 
-    This tool allows comprehensive searching of government trade interventions. Use structured
-    filters FIRST (countries, products, intervention types, dates), then add 'query' parameter
-    ONLY for entity names (companies, programs) not captured by standard filters.
+    Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
 
-    Use this tool to:
-    - Find trade barriers and restrictions by specific countries
-    - Analyze interventions affecting particular products or sectors
-    - Track policy changes over time periods
-    - Identify liberalizing vs. harmful measures
-    - Search for specific companies or programs by name
+    BEFORE calling this tool:
+    - For commodity/product queries → use `gta_lookup_hs_codes` to find HS product codes
+    - For service/sector queries → use `gta_lookup_sectors` to find CPC sector codes
+    - For country groups (G20, EU, BRICS) → see gta://reference/jurisdiction-groups
+    - For mapping concepts to filters → see gta://guide/query-intent-mapping
 
-    Key parameters: implementing_jurisdictions, intervention_types, affected_products,
-    date_announced_gte, query (entity names only). See parameter descriptions for full details.
+    Key filters: implementing_jurisdictions, affected_products, mast_chapters, intervention_types,
+    gta_evaluation, date_announced_gte. Use 'query' ONLY for named entities (companies, programs).
 
-    Note: gta_evaluation accepts 'Red', 'Amber', or 'Green' for individual values. Use 'Harmful'
-    as shorthand for Red+Amber (most common analytical definition of 'harmful'). Individual
-    intervention records always have Red, Amber, or Green — never 'Harmful' or 'Liberalizing'.
+    gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
+    Use 'Harmful' as shorthand for Red+Amber.
 
-    Returns: Intervention summaries with ID, title, description, sources, jurisdictions, products,
-    and dates.
+    ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
+    as formatted. Do NOT modify or reformat — it provides clickable citations.
 
-    ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)" section
-    at the end. You MUST include this complete reference list in your response to the user EXACTLY
-    as formatted. The reference list format is:
-    - {date}: {title} [ID [{intervention_id}](url)].
-    Do NOT modify or reformat the reference list. It provides essential clickable citations.
-
-    Common examples:
-        - US tariffs on China in 2024:
-          implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
+    Examples:
+        - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
+        - Subsidies: mast_chapters=['L']
+        - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
+          then mast_chapters=['P'], affected_products=[282520, 283691, ...]
 
-        - All subsidies (broad search):
-          mast_chapters=['L']
-
-        - Tesla-specific subsidies:
-          query='Tesla', mast_chapters=['L'], implementing_jurisdictions=['USA']
-
-    For parameter reference: gta://guide/parameters
-    For comprehensive examples: gta://guide/query-examples
-    For query syntax: gta://guide/query-syntax
-    For MAST chapters: gta://reference/mast-chapters
+    Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
+    gta://reference/mast-chapters, gta://reference/jurisdiction-groups
     """
     try:
         client = get_api_client()
 
         # Build filter dictionary and get informational messages
-        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'sorting', 'response_format'}))
+        filters, filter_messages = build_filters(params.model_dump(exclude={
+            'limit', 'offset', 'sorting', 'response_format',
+            'detail_level', 'show_keys'
+        }))
+
+        # Resolve show_keys from detail_level or explicit show_keys
+        #
+        # Auto-detection logic (when user doesn't set detail_level):
+        # - Specific intervention_id lookup → standard keys (detail pass)
+        # - Broad search (no intervention_id) → overview keys + limit=500 (triage pass)
+        #
+        # This enables the multi-pass workflow automatically:
+        # 1. Any broad search returns a compact overview table (up to 500 results)
+        # 2. The LLM triages and identifies relevant interventions
+        # 3. The LLM calls again with intervention_id=[...] for full detail
+        show_keys = None
+        effective_limit = params.limit
+        use_overview_format = False
+
+        if params.show_keys:
+            # Explicit show_keys overrides everything
+            show_keys = params.show_keys
+        elif params.detail_level:
+            show_keys = KEY_PROFILES.get(params.detail_level)
+            if params.detail_level == "overview":
+                use_overview_format = True
+                if params.limit == 50:
+                    effective_limit = 1000
+            elif params.detail_level == "standard":
+                pass  # standard keys, user's limit
+            # detail_level="full" → show_keys=None (API returns everything)
+        elif params.intervention_id:
+            # Fetching specific IDs — use standard detail (this is the detail pass)
+            show_keys = KEY_PROFILES["standard"]
+        else:
+            # Broad search with no explicit detail_level — auto-select overview
+            # This ensures the LLM always sees the full picture before drilling down
+            show_keys = KEY_PROFILES["overview"]
+            use_overview_format = True
+            if params.limit == 50:
+                effective_limit = 1000
 
         # Make API request
         results = await client.search_interventions(
             filters=filters,
-            limit=params.limit,
+            limit=effective_limit,
             offset=params.offset,
-            sorting=params.sorting
+            sorting=params.sorting,
+            show_keys=show_keys
         )
 
         # Wrap list response in expected format for formatters
         data = {
             "results": results,
             "count": len(results),
-            "next": None if len(results) < params.limit else f"Use offset={params.offset + params.limit}",
-            "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - params.limit)}"
+            "next": None if len(results) < effective_limit else f"Use offset={params.offset + effective_limit}",
+            "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - effective_limit)}"
         }
 
-        # Format response
-        if params.response_format == ResponseFormat.MARKDOWN:
+        # Format response — overview mode uses compact table
+        if use_overview_format and params.response_format == ResponseFormat.MARKDOWN:
+            formatted_response = format_interventions_overview(data)
+            if filter_messages:
+                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+                formatted_response = f"{message_section}\n\n{formatted_response}"
+            return formatted_response
+        elif params.response_format == ResponseFormat.MARKDOWN:
             formatted_response = format_interventions_markdown(data)
-            # Prepend filter messages if any
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
             return formatted_response
         else:
             response_json = format_interventions_json(data)
-            # Add filter messages to JSON response
             if filter_messages:
                 response_json["filter_messages"] = filter_messages
             return response_json
@@ -468,12 +532,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
           count_by=['implementer'], mast_chapters=['L']
     """
     try:
-        # Get API client (for base URL) and auth manager
+        # Get API client
         client = get_api_client()
-        auth_mgr = get_auth_manager()
-
-        # Get JWT bearer token
-        bearer_token = await auth_mgr.get_token()
 
         # Build count-specific filters
         filter_params = params.model_dump(
@@ -481,9 +541,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
         )
         filters, filter_messages = build_count_filters(filter_params)
 
-        # Make API request
+        # Make API request (now uses API key auth via self.headers)
         data = await client.count_interventions(
-            bearer_token=bearer_token,
             count_by=list(params.count_by),
             count_variable=params.count_variable,
             filters=filters,
@@ -510,8 +569,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
             return (
-                "❌ Authentication Error: JWT token invalid or expired.\n\n"
-                "Check GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD environment variables."
+                "❌ Authentication Error: Invalid or expired API key.\n\n"
+                "Please check your GTA_API_KEY environment variable."
             )
         elif "timeout" in error_msg.lower():
             return (
@@ -520,6 +579,189 @@ async def gta_count_interventions(params: GTACountInput) -> str:
             )
         else:
             return f"❌ API Error: {error_msg}\n\nTry adjusting your count parameters or filters."
+
+
+# ============================================================================
+# Lookup Tools - Product & Sector Code Discovery
+# ============================================================================
+
+
+@mcp.tool(
+    name="gta_lookup_hs_codes",
+    annotations={
+        "title": "Look Up HS Product Codes",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def gta_lookup_hs_codes(search_term: str, max_results: int = 50) -> str:
+    """Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix.
+
+    Use BEFORE gta_search_interventions when the user asks about specific commodities or products.
+    Returns matching codes across all 3 levels (chapters, headings, subheadings) with the numeric
+    IDs needed for the affected_products filter.
+
+    Examples:
+        - search_term='lithium' → finds HS 282520, 283691, etc.
+        - search_term='28' → lists all codes in chapter 28 (inorganic chemicals)
+        - search_term='8541' → lists subheadings under heading 8541 (semiconductors)
+        - search_term='steel' → finds relevant iron/steel HS codes
+
+    Returns a markdown table with codes and a ready-to-use affected_products list.
+    """
+    try:
+        return search_hs_codes(search_term, max_results)
+    except FileNotFoundError as e:
+        return f"❌ {str(e)}"
+    except Exception as e:
+        return f"❌ Error searching HS codes: {str(e)}"
+
+
+@mcp.tool(
+    name="gta_lookup_sectors",
+    annotations={
+        "title": "Look Up CPC Sector Codes",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def gta_lookup_sectors(search_term: str, max_results: int = 50) -> str:
+    """Search CPC (Central Product Classification) sector codes by keyword or code prefix.
+
+    Use BEFORE gta_search_interventions when the user asks about services or broad sector
+    categories. Returns matching sectors with IDs for the affected_sectors filter.
+    CPC ID >= 500 = services, ID < 500 = goods.
+
+    Examples:
+        - search_term='financial' → finds CPC 711, 715, 717
+        - search_term='71' → lists all sectors in division 71 (financial services)
+        - search_term='transport' → finds transport-related CPC sectors
+
+    Returns a markdown table with codes and a ready-to-use affected_sectors list.
+    """
+    try:
+        return search_sectors(search_term, max_results)
+    except FileNotFoundError as e:
+        return f"❌ {str(e)}"
+    except Exception as e:
+        return f"❌ Error searching sectors: {str(e)}"
+
+
+# ============================================================================
+# MCP Prompts - Workflow Templates
+# ============================================================================
+
+
+@mcp.prompt(
+    name="analyze_subsidies",
+    description="Analyze government subsidies for a country and sector. Pre-configures MAST chapter L filter and structured search workflow."
+)
+def prompt_analyze_subsidies(country: str, sector: str) -> str:
+    return (
+        f"Analyze government subsidies by {country} in the {sector} sector.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use `gta_lookup_hs_codes` or `gta_lookup_sectors` to find codes for '{sector}'\n"
+        f"2. Use `gta_search_interventions` with:\n"
+        f"   - implementing_jurisdictions=['{country}']\n"
+        "   - mast_chapters=['L'] (subsidies)\n"
+        "   - The product/sector codes from step 1\n"
+        "   - gta_evaluation=['Harmful'] if focusing on discriminatory subsidies\n"
+        "3. Triage the overview results and drill into the most relevant interventions\n"
+        "4. Summarize: types of subsidies, scale, affected trading partners, timeline"
+    )
+
+
+@mcp.prompt(
+    name="compare_trade_barriers",
+    description="Compare trade barriers between two countries in a specific sector. Runs parallel searches for bilateral analysis."
+)
+def prompt_compare_trade_barriers(country_a: str, country_b: str, sector: str) -> str:
+    return (
+        f"Compare trade barriers between {country_a} and {country_b} in the {sector} sector.\n\n"
+        "Follow this workflow:\n"
+        f"1. Look up product/sector codes for '{sector}' using lookup tools\n"
+        f"2. Search measures {country_a} implements affecting {country_b}:\n"
+        f"   - implementing_jurisdictions=['{country_a}'], affected_jurisdictions=['{country_b}']\n"
+        "   - gta_evaluation=['Harmful']\n"
+        "   - The product/sector codes from step 1\n"
+        f"3. Search measures {country_b} implements affecting {country_a}:\n"
+        f"   - implementing_jurisdictions=['{country_b}'], affected_jurisdictions=['{country_a}']\n"
+        "   - Same filters as above\n"
+        "4. Compare: number of measures, types, severity, timeline\n"
+        "5. Identify asymmetries and escalation patterns"
+    )
+
+
+@mcp.prompt(
+    name="track_recent_changes",
+    description="Monitor recent trade policy changes for a jurisdiction. Uses date_modified_gte for change tracking."
+)
+def prompt_track_recent_changes(days: str = "7", jurisdiction: str = "") -> str:
+    jurisdiction_filter = f"\n   - implementing_jurisdictions=['{jurisdiction}']" if jurisdiction else ""
+    return (
+        f"Track trade policy changes from the last {days} days"
+        f"{f' for {jurisdiction}' if jurisdiction else ' globally'}.\n\n"
+        "Follow this workflow:\n"
+        "1. Search for recently modified interventions:\n"
+        f"   - date_modified_gte=(today minus {days} days, YYYY-MM-DD format)"
+        f"{jurisdiction_filter}\n"
+        "   - sorting='-last_updated'\n"
+        "2. Also check the ticker for text updates:\n"
+        f"   - Use `gta_list_ticker_updates` with date_modified_gte\n"
+        "3. Categorize changes: new measures, modifications, removals\n"
+        "4. Highlight the most significant changes by evaluation and type\n"
+        "5. Note any patterns (escalation, liberalization trends)"
+    )
+
+
+@mcp.prompt(
+    name="sector_impact_report",
+    description="Generate a cross-country sector impact report. Analyzes which countries impose measures affecting a sector."
+)
+def prompt_sector_impact_report(sector: str, evaluation: str = "Harmful") -> str:
+    return (
+        f"Generate a sector impact report for '{sector}' focusing on {evaluation} measures.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use lookup tools to find HS/CPC codes for '{sector}'\n"
+        "2. Get aggregate counts by implementing country:\n"
+        "   - Use `gta_count_interventions` with count_by=['implementer']\n"
+        f"   - gta_evaluation=['{evaluation}']\n"
+        "   - The product/sector codes from step 1\n"
+        "3. Get aggregate counts by year:\n"
+        "   - count_by=['date_announced_year']\n"
+        "4. Search the most recent measures for context:\n"
+        "   - Use `gta_search_interventions` with the same filters\n"
+        "5. Summarize: top implementing countries, trend over time, measure types, "
+        "key recent measures"
+    )
+
+
+@mcp.prompt(
+    name="critical_minerals_tracker",
+    description="Track trade measures affecting a specific critical mineral. Uses HS code lookup for precise product filtering."
+)
+def prompt_critical_minerals_tracker(mineral: str, evaluation: str = "Harmful") -> str:
+    return (
+        f"Track trade measures affecting {mineral}.\n\n"
+        "Follow this workflow:\n"
+        f"1. Use `gta_lookup_hs_codes` to find all HS codes related to '{mineral}'\n"
+        "2. Search export restrictions:\n"
+        "   - mast_chapters=['P'] (export measures)\n"
+        "   - affected_products=[codes from step 1]\n"
+        f"   - gta_evaluation=['{evaluation}']\n"
+        "3. Search subsidies for domestic production:\n"
+        "   - mast_chapters=['L'] (subsidies)\n"
+        "   - affected_products=[same codes]\n"
+        "4. Search import measures:\n"
+        "   - mast_chapters=['D', 'E'] (trade defence, quotas)\n"
+        "   - affected_products=[same codes]\n"
+        "5. Summarize: which countries restrict exports, which subsidize production, "
+        "which impose import barriers. Include timeline and current in-force status."
+    )
 
 
 # ============================================================================
@@ -817,6 +1059,66 @@ def get_common_mistakes() -> str:
 		Markdown document with DO/DON'T checklist
 	"""
 	return load_common_mistakes()
+
+
+@mcp.resource(
+	"gta://reference/glossary",
+	name="Reference: GTA Glossary",
+	description="Definitions of key GTA terminology for non-expert users. Covers: Red/Amber/Green evaluations, interventions vs state acts, MAST chapters, HS codes vs CPC sectors, implementation levels, eligible firms, publication lag, date semantics, and more. Essential for understanding GTA data without prior trade policy expertise.",
+	mime_type="text/markdown"
+)
+def get_glossary() -> str:
+	"""Return GTA glossary for non-expert users.
+
+	Returns:
+		Markdown document defining key GTA terms
+	"""
+	return load_glossary()
+
+
+@mcp.resource(
+	"gta://guide/search-strategy",
+	name="Guide: Multi-Pass Search Strategy",
+	description="How to use detail_level and show_keys for efficient searching. Explains the overview→triage→detail workflow for handling large result sets, monitoring with update_period, and choosing the right detail level for different query types.",
+	mime_type="text/markdown"
+)
+def get_search_strategy() -> str:
+	"""Return search strategy guide for multi-pass workflow.
+
+	Returns:
+		Markdown guide explaining detail levels and search workflow
+	"""
+	return load_search_strategy()
+
+
+@mcp.resource(
+	"gta://reference/jurisdiction-groups",
+	name="Reference: Jurisdiction Groups (G7, G20, EU, BRICS, ASEAN, CPTPP)",
+	description="ISO and UN codes for major country groups. Use when a query mentions G7, G20, EU-27, BRICS, ASEAN, CPTPP, or RCEP to get the correct implementing_jurisdictions or affected_jurisdictions list. Includes ready-to-use ISO code arrays.",
+	mime_type="text/markdown"
+)
+def get_jurisdiction_groups() -> str:
+	"""Return jurisdiction groups reference with member codes.
+
+	Returns:
+		Markdown reference with ISO/UN codes for G7, G20, EU-27, BRICS, ASEAN, CPTPP, RCEP
+	"""
+	return load_jurisdiction_groups()
+
+
+@mcp.resource(
+	"gta://guide/query-intent-mapping",
+	name="Guide: Natural Language to Structured Filters",
+	description="Maps analytical concepts from natural language queries to GTA structured filters. Covers: policy types to MAST chapters (subsidies→L, export controls→P), evaluation terms (harmful→Red+Amber), commodity terms to HS code lookup, service terms to CPC sector lookup, geographic groups to jurisdiction codes, and temporal terms to date filters. READ THIS before translating user questions into API calls.",
+	mime_type="text/markdown"
+)
+def get_query_intent_mapping() -> str:
+	"""Return query intent mapping guide for translating NL to structured filters.
+
+	Returns:
+		Markdown guide mapping natural language terms to GTA structured filters
+	"""
+	return load_query_intent_mapping()
 
 
 def main():

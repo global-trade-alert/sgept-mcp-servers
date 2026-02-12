@@ -1,0 +1,381 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "source": "Red Team Qualitative Evaluation Report + GTA Monitoring Standards",
+    "created": "2026-02-12",
+    "description": "Gold standard filters for 20 evaluation prompts. Each entry defines the 'correct' structured filters an LLM should select when translating the natural language prompt."
+  },
+  "prompts": [
+    {
+      "id": 1,
+      "prompt": "What tariffs has the US imposed on China since Jan 2025?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["USA"],
+        "affected_jurisdictions": ["CHN"],
+        "intervention_types": ["Import tariff"],
+        "date_announced_gte": "2025-01-01"
+      },
+      "critical_filters": ["implementing_jurisdictions", "intervention_types", "date_announced_gte"],
+      "notes": "All four dimensions captured. intervention_types=['Import tariff'] is correct per Monitoring Standard #1."
+    },
+    {
+      "id": 2,
+      "prompt": "Which countries have imposed tariffs affecting US exports in 2025?",
+      "red_team_verdict": "SIGNIFICANT",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "affected_jurisdictions": ["USA"],
+        "intervention_types": ["Import tariff"],
+        "gta_evaluation": ["Harmful"],
+        "date_announced_gte": "2025-01-01",
+        "date_announced_lte": "2025-12-31"
+      },
+      "critical_filters": ["gta_evaluation", "intervention_types"],
+      "notes": "Missing gta_evaluation=['Harmful'] was the key gap. 'Imposed tariffs' implies harmful measures, not liberalising tariff reductions."
+    },
+    {
+      "id": 3,
+      "prompt": "What export controls has China imposed on rare earth elements?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["CHN"],
+        "mast_chapters": ["P"],
+        "query": "rare earth"
+      },
+      "critical_filters": ["implementing_jurisdictions", "mast_chapters"],
+      "notes": "Correctly uses MAST P for export measures + query for product narrowing. Rare earths span many HS codes, so text search is acceptable here."
+    },
+    {
+      "id": 4,
+      "prompt": "Which countries have restricted exports of lithium or cobalt since 2022?",
+      "red_team_verdict": "CRITICAL",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "mast_chapters": ["P"],
+        "affected_products": [282520, 283691, 810520],
+        "date_announced_gte": "2022-01-01"
+      },
+      "alternative_approach": "Run two separate searches: one for lithium HS codes, one for cobalt HS codes",
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "critical_filters": ["mast_chapters", "affected_products"],
+      "notes": "CRITICAL failure: query='lithium cobalt' returns 0 results (AND logic). Must use HS product codes. Use gta_lookup_hs_codes first to find codes for lithium and cobalt."
+    },
+    {
+      "id": 5,
+      "prompt": "What measures currently affect semiconductor manufacturing equipment trade?",
+      "red_team_verdict": "SIGNIFICANT",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "affected_products": [848620, 854121, 854129, 854110, 854190],
+        "is_in_force": true,
+        "mast_chapters": ["D", "E", "P"]
+      },
+      "alternative_filters": {
+        "query": "semiconductor",
+        "mast_chapters": ["D", "E", "P"],
+        "is_in_force": true
+      },
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "critical_filters": ["mast_chapters"],
+      "notes": "Overly broad with just query='semiconductor'. Needs trade-related MAST chapters (D/E/P) at minimum. HS codes for semiconductor equipment preferred."
+    },
+    {
+      "id": 6,
+      "prompt": "What subsidies are governments providing for critical mineral processing?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "mast_chapters": ["L"],
+        "query": "critical mineral"
+      },
+      "critical_filters": ["mast_chapters"],
+      "notes": "Correct: mast_chapters=['L'] for subsidies + query for narrowing. Well-translated."
+    },
+    {
+      "id": 7,
+      "prompt": "Which countries subsidise their domestic semiconductor industry?",
+      "red_team_verdict": "CRITICAL",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "mast_chapters": ["L"],
+        "query": "semiconductor",
+        "is_in_force": true
+      },
+      "critical_filters": ["mast_chapters"],
+      "notes": "CRITICAL failure: identical filters to prompt 5 (no mast_chapters). 'Subsidise' must map to mast_chapters=['L']. Without it, returns all 747 semiconductor results including non-subsidies."
+    },
+    {
+      "id": 8,
+      "prompt": "Which G20 countries have increased state aid to EV manufacturers since 2022?",
+      "red_team_verdict": "SIGNIFICANT",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["ARG", "AUS", "BRA", "CAN", "CHN", "FRA", "DEU", "IND", "IDN", "ITA", "JPN", "MEX", "RUS", "SAU", "ZAF", "KOR", "TUR", "GBR", "USA", "EUN"],
+        "mast_chapters": ["L"],
+        "query": "electric vehicle",
+        "date_announced_gte": "2022-01-01"
+      },
+      "prerequisite_resources": ["gta://reference/jurisdiction-groups"],
+      "critical_filters": ["implementing_jurisdictions", "mast_chapters"],
+      "notes": "Missing G20 implementer constraint. Must use jurisdiction-groups resource to get G20 member codes."
+    },
+    {
+      "id": 9,
+      "prompt": "What harmful measures has the EU imposed on US exports since 2024?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["EUN"],
+        "affected_jurisdictions": ["USA"],
+        "gta_evaluation": ["Harmful"],
+        "date_announced_gte": "2024-01-01"
+      },
+      "critical_filters": ["implementing_jurisdictions", "gta_evaluation", "date_announced_gte"],
+      "notes": "Excellent. All four dimensions captured. gta_evaluation=['Harmful'] correctly used."
+    },
+    {
+      "id": 10,
+      "prompt": "What measures has Brazil implemented affecting US agricultural exports?",
+      "red_team_verdict": "CRITICAL",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["BRA"],
+        "affected_jurisdictions": ["USA"],
+        "affected_products": [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001, 1101, 1201, 1301, 1401, 1501, 1601, 1701, 1801, 1901, 2001, 2101, 2201, 2301, 2401]
+      },
+      "alternative_filters": {
+        "implementing_jurisdictions": ["BRA"],
+        "affected_jurisdictions": ["USA"],
+        "affected_sectors": ["11", "12", "13", "14", "15", "16", "17", "21", "22", "23", "24", "25", "26", "27", "28", "29"]
+      },
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "critical_filters": ["affected_products"],
+      "notes": "CRITICAL failure: no agricultural filter returns 1000+ noise results. Must use HS chapters 01-24 or agricultural CPC sectors."
+    },
+    {
+      "id": 11,
+      "prompt": "Find all anti-dumping investigations targeting Chinese steel since 2020",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "affected_jurisdictions": ["CHN"],
+        "intervention_types": ["Anti-dumping"],
+        "query": "steel",
+        "date_announced_gte": "2020-01-01"
+      },
+      "critical_filters": ["intervention_types", "date_announced_gte"],
+      "notes": "Follows Monitoring Standard #1 correctly. Steel spans many HS codes so text search is appropriate here."
+    },
+    {
+      "id": 12,
+      "prompt": "What safeguard measures are currently in force on solar panels?",
+      "red_team_verdict": "MINOR",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "intervention_types": ["Safeguard"],
+        "affected_products": [854140],
+        "is_in_force": true
+      },
+      "alternative_filters": {
+        "intervention_types": ["Safeguard"],
+        "query": "solar",
+        "is_in_force": true
+      },
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "critical_filters": ["intervention_types", "is_in_force"],
+      "notes": "Minor issue: query='solar' can match non-solar records. HS 854140 (photovoltaic cells) is more precise."
+    },
+    {
+      "id": 13,
+      "prompt": "What local content requirements affect automotive production in Southeast Asia?",
+      "red_team_verdict": "SIGNIFICANT",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["IDN", "THA", "VNM", "MYS", "PHL", "SGP", "MMR", "KHM", "LAO", "BRN"],
+        "intervention_types": ["Local content requirement"],
+        "affected_products": [8701, 8702, 8703, 8704, 8705]
+      },
+      "alternative_filters": {
+        "implementing_jurisdictions": ["IDN", "THA", "VNM", "MYS", "PHL"],
+        "intervention_types": ["Local content requirement"],
+        "query": "automotive"
+      },
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "prerequisite_resources": ["gta://reference/jurisdiction-groups"],
+      "critical_filters": ["implementing_jurisdictions", "intervention_types"],
+      "notes": "Missing automotive filter. Good SE Asia mapping. Should add HS chapter 87 codes or query='automotive'."
+    },
+    {
+      "id": 14,
+      "prompt": "What import licensing requirements affect pharmaceutical products in India?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["IND"],
+        "intervention_types": ["Import licensing requirement"],
+        "query": "pharmaceutical"
+      },
+      "critical_filters": ["implementing_jurisdictions", "intervention_types"],
+      "notes": "Precise. India correctly coded. Structured type + text query for product narrowing."
+    },
+    {
+      "id": 15,
+      "prompt": "Has the use of export restrictions increased since 2020?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_count_interventions",
+      "expected_filters": {
+        "count_by": ["date_announced_year"],
+        "mast_chapters": ["P"],
+        "date_announced_gte": "2015-01-01"
+      },
+      "critical_filters": ["mast_chapters", "count_by"],
+      "notes": "Count query with MAST P for export measures. Include years before 2020 for baseline comparison."
+    },
+    {
+      "id": 16,
+      "prompt": "How many harmful interventions were implemented globally in 2025 versus 2024?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_count_interventions",
+      "expected_filters": {
+        "count_by": ["date_implemented_year"],
+        "gta_evaluation": ["Harmful"],
+        "date_implemented_gte": "2024-01-01",
+        "date_implemented_lte": "2025-12-31"
+      },
+      "critical_filters": ["gta_evaluation", "count_by"],
+      "notes": "Uses gta_evaluation=['Harmful'] and implementation_period for correct date dimension."
+    },
+    {
+      "id": 17,
+      "prompt": "Which interventions target state-owned enterprises specifically?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "eligible_firms": [4]
+      },
+      "critical_filters": ["eligible_firms"],
+      "notes": "Correct structural field: eligible firms category 4 = state-controlled enterprises."
+    },
+    {
+      "id": 18,
+      "prompt": "What subnational measures has the US implemented since 2023?",
+      "red_team_verdict": "GOOD",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["USA"],
+        "implementation_levels": [3],
+        "date_announced_gte": "2023-01-01"
+      },
+      "critical_filters": ["implementing_jurisdictions", "implementation_levels"],
+      "notes": "Excellent. implementation_level=[3] for subnational."
+    },
+    {
+      "id": 19,
+      "prompt": "What FDI screening measures target Chinese investments in European technology sectors?",
+      "red_team_verdict": "SIGNIFICANT",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["EUN", "AUT", "BEL", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "FRA", "DEU", "GRC", "HUN", "IRL", "ITA", "LVA", "LTU", "LUX", "MLT", "NLD", "POL", "PRT", "ROU", "SVK", "SVN", "ESP", "SWE", "GBR"],
+        "affected_jurisdictions": ["CHN"],
+        "intervention_types": ["FDI screening"],
+        "query": "technology"
+      },
+      "alternative_filters": {
+        "implementing_jurisdictions": ["EUN"],
+        "affected_jurisdictions": ["CHN"],
+        "intervention_types": ["FDI screening"],
+        "query": "technology"
+      },
+      "prerequisite_resources": ["gta://reference/jurisdiction-groups"],
+      "critical_filters": ["implementing_jurisdictions", "intervention_types"],
+      "notes": "Missing European implementer constraint. At minimum use EUN for EU-level, or full EU-27 + GBR list."
+    },
+    {
+      "id": 20,
+      "prompt": "What measures have G7 countries coordinated against Russia since February 2022?",
+      "red_team_verdict": "MINOR",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["USA", "GBR", "FRA", "DEU", "ITA", "JPN", "CAN"],
+        "affected_jurisdictions": ["RUS"],
+        "date_announced_gte": "2022-02-01"
+      },
+      "prerequisite_resources": ["gta://reference/jurisdiction-groups"],
+      "critical_filters": ["implementing_jurisdictions", "affected_jurisdictions", "date_announced_gte"],
+      "notes": "Structurally correct but very broad (1000 result ceiling). 'Coordinated' is an analytical judgment that cannot be filtered structurally."
+    }
+  ],
+  "generalization_prompts": [
+    {
+      "id": 21,
+      "prompt": "What export controls target nickel and cobalt supply chains?",
+      "red_team_verdict": "GENERALIZATION",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "mast_chapters": ["P"],
+        "affected_products": []
+      },
+      "critical_filters": ["mast_chapters"],
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "notes": "Generalization: commodity not in original 20. Must use HS lookup for nickel + cobalt codes. affected_products left empty because they come from lookup tool."
+    },
+    {
+      "id": 22,
+      "prompt": "What investment restrictions have ASEAN countries imposed since 2023?",
+      "red_team_verdict": "GENERALIZATION",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["BRN", "KHM", "IDN", "LAO", "MYS", "MMR", "PHL", "SGP", "THA", "VNM"],
+        "mast_chapters": ["I"],
+        "date_announced_gte": "2023-01-01"
+      },
+      "critical_filters": ["implementing_jurisdictions", "mast_chapters", "date_announced_gte"],
+      "prerequisite_resources": ["gta://reference/jurisdiction-groups"],
+      "notes": "Generalization: geographic group not tested. Tests ASEAN lookup + MAST I mapping."
+    },
+    {
+      "id": 23,
+      "prompt": "What data localization requirements exist in Asian countries?",
+      "red_team_verdict": "GENERALIZATION",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["CHN", "IND", "IDN", "VNM", "THA", "MYS", "KOR", "JPN"],
+        "query": "data localization",
+        "is_in_force": true
+      },
+      "critical_filters": ["implementing_jurisdictions", "query"],
+      "notes": "Generalization: services/digital query. Tests whether LLM uses query appropriately for policy concept not in structured filters."
+    },
+    {
+      "id": 24,
+      "prompt": "Which trade policy measures were modified in the last 3 months?",
+      "red_team_verdict": "GENERALIZATION",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "date_modified_gte": "2025-11-12",
+        "sorting": "-last_updated"
+      },
+      "critical_filters": ["date_modified_gte"],
+      "notes": "Generalization: temporal/monitoring query. Tests date_modified_gte usage. Date is relative (3 months before eval date)."
+    },
+    {
+      "id": 25,
+      "prompt": "What EU anti-dumping duties target Chinese steel products since 2023?",
+      "red_team_verdict": "GENERALIZATION",
+      "expected_tool": "gta_search_interventions",
+      "expected_filters": {
+        "implementing_jurisdictions": ["EUN"],
+        "affected_jurisdictions": ["CHN"],
+        "intervention_types": ["Anti-dumping"],
+        "query": "steel",
+        "date_announced_gte": "2023-01-01"
+      },
+      "critical_filters": ["implementing_jurisdictions", "affected_jurisdictions", "intervention_types", "date_announced_gte"],
+      "prerequisite_tools": ["gta_lookup_hs_codes"],
+      "notes": "Generalization: complex multi-filter. Tests 4+ simultaneous filters."
+    }
+  ]
+}

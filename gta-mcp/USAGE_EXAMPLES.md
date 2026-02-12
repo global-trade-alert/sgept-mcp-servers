@@ -262,7 +262,7 @@ Track evolution of Chinese export controls over the last 3 years:
 {
   "affected_products": [292149, 292229, 292429],  # Multiple HS codes
   "intervention_types": ["Import tariff"],
-  "limit": 500,
+  "limit": 1000,
   "offset": 0  # Paginate if needed
 }
 ```

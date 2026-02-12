@@ -5,6 +5,10 @@ from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
+# Detail level controls how much data is returned per intervention
+DetailLevel = Literal["overview", "standard", "full"]
+
+
 # Valid count_by dimension values for the GTA counts endpoint
 CountByDimension = Literal[
     "affected",
@@ -103,8 +107,8 @@ class GTASearchInput(BaseModel):
 
     gta_evaluation: Optional[List[str]] = Field(
         default=None,
-        description="GTA evaluation colors: 'Red' (harmful), 'Amber' (mixed), or 'Green' (liberalizing). "
-                   "Filter by impact assessment."
+        description="GTA evaluation colors: 'Red' (harmful), 'Amber' (likely harmful), or 'Green' (liberalising). "
+                   "Filter by impact assessment. Use 'Harmful' as shorthand for Red+Amber."
     )
 
     eligible_firms: Optional[List[str | int]] = Field(
@@ -144,7 +148,18 @@ class GTASearchInput(BaseModel):
         default=None,
         description="Filter interventions implemented on or before this date (ISO format: YYYY-MM-DD)"
     )
-    
+
+    date_modified_gte: Optional[str] = Field(
+        default=None,
+        description="Filter interventions modified/updated on or after this date (ISO format: YYYY-MM-DD). "
+                   "Useful for monitoring: 'What changed since my last check?'"
+    )
+
+    date_modified_lte: Optional[str] = Field(
+        default=None,
+        description="Filter interventions modified/updated on or before this date (ISO format: YYYY-MM-DD)"
+    )
+
     is_in_force: Optional[bool] = Field(
         default=None,
         description="Filter by whether intervention is currently in force (True) or has been removed (False)"
@@ -180,9 +195,40 @@ class GTASearchInput(BaseModel):
         default="-date_announced",
         description=(
             "Sort order for results. Use '-' prefix for descending. "
-            "Common: '-date_announced' (newest first, recommended), 'date_announced' (oldest first). "
-            "Valid fields: date_announced, date_published, date_implemented, date_removed, intervention_id. "
+            "Common: '-date_announced' (newest first, recommended), 'date_announced' (oldest first), "
+            "'-last_updated' (most recently modified first — useful with date_modified_gte for monitoring). "
+            "Valid fields: date_announced, date_published, date_implemented, date_removed, intervention_id, last_updated. "
             "Can combine with commas."
+        )
+    )
+
+    detail_level: Optional[DetailLevel] = Field(
+        default=None,
+        description=(
+            "Controls how much data is returned per intervention. "
+            "'overview': compact triage data (ID, title, type, evaluation, date, implementer) — "
+            "auto-raises limit to 1000 for broad triage. "
+            "'standard': analysis-ready data (adds sectors, affected countries, all dates, MAST chapter) — "
+            "best for detailed work on a filtered set. "
+            "'full': everything including descriptions, sources, and product-level detail — "
+            "best for deep dives on specific interventions. "
+            "Default behaviour: broad searches auto-select 'overview' (up to 1000 compact results); "
+            "searches with specific intervention_id auto-select 'standard'. "
+            "You rarely need to set this explicitly."
+        )
+    )
+
+    show_keys: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Advanced: explicitly specify which API response keys to include. "
+            "Overrides detail_level. Use detail_level for common patterns instead. "
+            "Available keys: intervention_id, state_act_id, state_act_title, intervention_type, "
+            "gta_evaluation, mast_chapter, implementation_level, eligible_firm, "
+            "date_announced, date_implemented, date_removed, is_in_force, "
+            "implementing_jurisdictions, affected_jurisdictions, affected_sectors, "
+            "affected_products, intervention_description, state_act_source, "
+            "intervention_url, state_act_url, is_official_source."
         )
     )
 
@@ -496,7 +542,7 @@ class GTACountInput(BaseModel):
 
     gta_evaluation: Optional[List[str]] = Field(
         default=None,
-        description="GTA evaluation: 'Red' (harmful), 'Amber' (mixed), 'Green' (liberalizing)."
+        description="GTA evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising). Use 'Harmful' for Red+Amber combined."
     )
 
     eligible_firms: Optional[List[Union[str, int]]] = Field(

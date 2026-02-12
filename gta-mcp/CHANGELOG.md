@@ -5,7 +5,18 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2025-11-09
+## [0.4.0] - 2026-02-12
+
+### Added
+- **GTA Glossary Resource** (`gta://reference/glossary`): Definitions of 18 key GTA terms for non-expert users — evaluations, MAST chapters, HS codes, CPC sectors, implementation levels, and more
+- **Use Case Library** (`USE_CASES.md`): 40+ copy-paste example prompts across 8 professional categories
+- **User-First README**: Complete rewrite targeting non-developer trade professionals with "What is GTA?", example prompts, post-install verification, and error-indexed troubleshooting
+
+### Changed
+- **Expanded Resources**: data_model.md (3x larger with worked examples), common_mistakes.md (2x with concrete DO/DON'T examples), eligible_firms and implementation_levels tables with full descriptions
+- **PyPI Metadata**: Added keywords (tariffs, subsidies, trade-barriers), classifiers (Science/Research), project URLs (documentation, changelog, bug tracker)
+
+## [0.3.0] - 2026-02-12
 
 ### Added
 - **Expanded Resource Support**: MAST chapter taxonomy, query syntax guide, CPC vs HS guide, exclusion filters guide, parameters reference, query examples library (35+ patterns)
@@ -39,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.3.0** (2025-11-09): Expanded resources, MAST chapters, advanced filters, counts tool, analytical knowledge
+- **0.4.0** (2026-02-12): Public release — glossary resource, use case library, user-first README, expanded references
+- **0.3.0** (2026-02-12): Expanded resources, MAST chapters, advanced filters, counts tool, analytical knowledge, PyPI publication
 - **0.2.0** (2025-11-08): Text search for entity names
 - **0.1.0** (2025-10-23): Initial release
 

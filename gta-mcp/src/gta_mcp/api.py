@@ -594,7 +594,8 @@ class GTAAPIClient:
         filters: Dict[str, Any],
         limit: int = 50,
         offset: int = 0,
-        sorting: Optional[str] = None
+        sorting: Optional[str] = None,
+        show_keys: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Search for interventions using GTA Data V2 endpoint.
 
@@ -605,7 +606,10 @@ class GTAAPIClient:
             sorting: Sort order string, e.g., "-date_announced" for newest first,
                     "date_announced" for oldest first. If None, uses API default.
                     Valid fields: date_announced, date_published, date_implemented,
-                    date_removed, intervention_id. Prefix with '-' for descending.
+                    date_removed, intervention_id, last_updated. Prefix with '-' for descending.
+            show_keys: Optional list of response keys to include. When provided,
+                    only these fields are returned per intervention, reducing response size.
+                    Example: ["intervention_id", "state_act_title", "gta_evaluation"]
 
         Returns:
             List of intervention data
@@ -625,6 +629,10 @@ class GTAAPIClient:
         # Add sorting if specified
         if sorting:
             body["sorting"] = sorting
+
+        # Add show_keys to restrict response fields
+        if show_keys:
+            body["show_keys"] = show_keys
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -711,15 +719,13 @@ class GTAAPIClient:
     
     async def count_interventions(
         self,
-        bearer_token: str,
         count_by: List[str],
         count_variable: str,
         filters: Dict[str, Any],
     ) -> Any:
-        """Call /v1/gta-counts/ with JWT Bearer auth for aggregation.
+        """Call /api/v1/gta/data-counts/ with API key auth for aggregation.
 
         Args:
-            bearer_token: JWT access token for authentication.
             count_by: List of dimensions to group by.
             count_variable: What to count ('intervention_id' or 'state_act_id').
             filters: Dictionary of filter parameters.
@@ -730,11 +736,8 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails.
         """
-        endpoint = f"{self.BASE_URL}/v1/gta-counts/"
-        headers = {
-            "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/json",
-        }
+        endpoint = f"{self.BASE_URL}/api/v1/gta/data-counts/"
+
         # count_by and count_variable go inside request_data alongside filters
         request_data = dict(filters)
         request_data["count_by"] = count_by
@@ -747,7 +750,7 @@ class GTAAPIClient:
             response = await client.post(
                 endpoint,
                 json=payload,
-                headers=headers,
+                headers=self.headers,
             )
             response.raise_for_status()
             data = response.json()
@@ -1337,9 +1340,26 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
     if params.get('intervention_types'):
         filters['intervention_types'] = convert_intervention_types(params['intervention_types'])
 
-    # GTA evaluation - pass through
+    # GTA evaluation - convert color names to integer IDs
+    # The v2 data endpoint requires integer IDs, not string names
     if params.get('gta_evaluation'):
-        filters['gta_evaluation'] = params['gta_evaluation']
+        eval_ids = []
+        for eval_color in params['gta_evaluation']:
+            if eval_color in GTA_EVALUATION_TO_ID:
+                eval_ids.append(GTA_EVALUATION_TO_ID[eval_color])
+            elif str(eval_color).lower() == 'harmful':
+                eval_ids.extend([1, 2])  # Red + Amber
+            elif str(eval_color).lower() == 'liberalising' or str(eval_color).lower() == 'liberalizing':
+                eval_ids.append(3)  # Green
+            else:
+                try:
+                    eval_ids.append(int(eval_color))
+                except (ValueError, TypeError):
+                    raise ValueError(
+                        f"Unknown GTA evaluation: '{eval_color}'. "
+                        f"Valid values: 'Red' (1), 'Amber' (2), 'Green' (3), 'Harmful' (Red+Amber)."
+                    )
+        filters['gta_evaluation'] = list(set(eval_ids))
 
     # Handle announcement period dates
     date_announced_gte = params.get('date_announced_gte')
@@ -1362,6 +1382,15 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
             date_implemented_lte or "2099-12-31"
         ]
 
+    # Handle update_period dates (filter by last modification date)
+    date_modified_gte = params.get('date_modified_gte')
+    date_modified_lte = params.get('date_modified_lte')
+    if date_modified_gte or date_modified_lte:
+        filters['update_period'] = [
+            date_modified_gte or None,
+            date_modified_lte or None
+        ]
+
     # Is in force - convert to in_force_on_date
     if params.get('is_in_force') is not None:
         from datetime import date
@@ -1381,8 +1410,9 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
         filters['eligible_firms'] = convert_eligible_firms(params['eligible_firms'])
 
     # Implementation levels - convert names to IDs
+    # The v2 data endpoint uses singular field name 'implementation_level'
     if params.get('implementation_levels'):
-        filters['implementation_levels'] = convert_implementation_levels(params['implementation_levels'])
+        filters['implementation_level'] = convert_implementation_levels(params['implementation_levels'])
 
     # Date modified (for ticker)
     if params.get('date_modified_gte'):
