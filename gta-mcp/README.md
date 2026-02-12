@@ -25,46 +25,20 @@ See [Version History & Changelog](#version-history--changelog) below for details
 
 **Status:** Ongoing development to continuously improve query precision and result optimization. Send feedback or requests to Johannes Fritz.
 
-## Installation
+## Quick Start
 
-### Prerequisites
-- Python 3.10 or higher
-- `uv` package manager ([install here](https://github.com/astral-sh/uv))
-- GTA API key from SGEPT
+You need a GTA API key from SGEPT ([request access](https://globaltradealert.org/api-access)).
 
-### Setup
+### Option 1: Claude Desktop
 
-```bash
-# Clone or navigate to the project directory
-cd gta_mcp
-
-# Install dependencies with uv
-uv sync
-
-# Set your API key
-export GTA_API_KEY='your-api-key-here'
-
-# Test the installation
-uv run gta-mcp --help
-```
-
-## Configuration
-
-### Claude Desktop
-
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+Add to `claude_desktop_config.json` (`~/Library/Application Support/Claude/` on macOS, `%APPDATA%\Claude\` on Windows):
 
 ```json
 {
   "mcpServers": {
     "gta": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/absolute/path/to/gta_mcp",
-        "run",
-        "gta-mcp"
-      ],
+      "command": "uvx",
+      "args": ["sgept-gta-mcp"],
       "env": {
         "GTA_API_KEY": "your-api-key-here"
       }
@@ -73,12 +47,29 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 }
 ```
 
-### Other MCP Clients
+Restart Claude Desktop. The server auto-updates on each launch.
 
-For clients supporting stdio transport, run:
+### Option 2: Claude Code
 
 ```bash
-uv run gta-mcp
+claude mcp add --transport stdio gta -e GTA_API_KEY=your-key -- uvx sgept-gta-mcp
+```
+
+### Option 3: Any MCP Client
+
+```bash
+pip install sgept-gta-mcp
+GTA_API_KEY=your-key gta-mcp
+```
+
+### Development Install (Contributors)
+
+```bash
+git clone https://github.com/global-trade-alert/sgept-mcp-servers.git
+cd sgept-mcp-servers/gta-mcp
+uv sync
+export GTA_API_KEY='your-api-key-here'
+uv run gta-mcp --help
 ```
 
 ## Available Tools

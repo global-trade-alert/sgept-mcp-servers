@@ -11,11 +11,27 @@ _CACHE: Dict[str, str] = {}
 
 
 def get_resources_dir() -> Path:
-	"""Get the path to the resources directory."""
-	# Resources are in the project root, not in src/
+	"""Get the path to the resources directory.
+
+	Supports two layouts:
+	- Development: src/gta_mcp/resources_loader.py → ../../resources/
+	- Installed (pip/uvx): gta_mcp/resources_loader.py → gta_mcp/resources/
+	"""
 	current_file = Path(__file__)
+
+	# Installed layout: resources/ is a sibling directory inside the package
+	installed_path = current_file.parent / "resources"
+	if installed_path.is_dir():
+		return installed_path
+
+	# Development layout: resources/ is at the project root (3 levels up from src/gta_mcp/)
 	project_root = current_file.parent.parent.parent
-	return project_root / "resources"
+	dev_path = project_root / "resources"
+	if dev_path.is_dir():
+		return dev_path
+
+	# Fallback to development path (will produce clear "file not found" errors)
+	return dev_path
 
 
 def load_jurisdictions_table() -> str:
