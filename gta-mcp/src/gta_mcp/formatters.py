@@ -176,7 +176,12 @@ def format_interventions_overview(data: Dict[str, Any]) -> str:
         itype = intervention.get('intervention_type', '?')
         eval_ = intervention.get('gta_evaluation', '?')
         date = intervention.get('date_announced', '?')
-        status = "Active" if intervention.get('is_in_force') else "Removed"
+        if intervention.get('is_in_force'):
+            status = "In force"
+        elif intervention.get('date_removed'):
+            status = "Removed"
+        else:
+            status = "Not yet in force"
         url = make_gta_url(iid)
         lines.append(f"| {i} | [{iid}]({url}) | {title} | {itype} | {eval_} | {date} | {status} |")
 
@@ -226,7 +231,13 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
         output.append(f"**State Act ID**: {intervention.get('state_act_id')}")
         output.append(f"**Type**: {intervention.get('intervention_type', 'N/A')}")
         output.append(f"**GTA Evaluation**: {intervention.get('gta_evaluation', 'N/A')}")
-        output.append(f"**Status**: {'✓ In Force' if intervention.get('is_in_force') else '✗ Removed'}\n")
+        if intervention.get('is_in_force'):
+            status_str = "✓ In Force"
+        elif intervention.get('date_removed'):
+            status_str = "✗ Removed"
+        else:
+            status_str = "⏳ Not yet in force"
+        output.append(f"**Status**: {status_str}\n")
         
         # Implementing jurisdictions
         impl_juris = intervention.get('implementing_jurisdictions', [])
@@ -379,7 +390,13 @@ def format_intervention_detail_markdown(data: Dict[str, Any]) -> str:
     output.append(f"**GTA Evaluation**: {intervention.get('gta_evaluation', 'N/A')}")
     output.append(f"**Implementation Level**: {intervention.get('implementation_level', 'N/A')}")
     output.append(f"**Eligible Firm**: {intervention.get('eligible_firm', 'N/A')}")
-    output.append(f"**Status**: {'✓ In Force' if intervention.get('is_in_force') else '✗ Removed'}\n")
+    if intervention.get('is_in_force'):
+        detail_status = "✓ In Force"
+    elif intervention.get('date_removed'):
+        detail_status = "✗ Removed"
+    else:
+        detail_status = "⏳ Not yet in force"
+    output.append(f"**Status**: {detail_status}\n")
     
     # Implementing jurisdictions
     output.append("## Implementing Jurisdictions\n")

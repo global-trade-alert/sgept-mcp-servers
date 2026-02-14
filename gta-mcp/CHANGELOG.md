@@ -5,6 +5,11 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-02-14
+
+### Fixed
+- **Status label**: Interventions not yet in force were incorrectly labelled "Removed" in all formatters. Now uses three-state logic: "In force", "Removed" (has revocation date), "Not yet in force" (announced/pending)
+
 ## [0.4.2] - 2026-02-14
 
 ### Added
@@ -58,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **0.4.3** (2026-02-14): Fix false "Removed" status on pending interventions
 - **0.4.2** (2026-02-14): Comprehensive analysis prompt, tool routing fix
 - **0.4.0** (2026-02-12): Public release — glossary resource, use case library, user-first README, expanded references
 - **0.3.0** (2026-02-12): Expanded resources, MAST chapters, advanced filters, counts tool, analytical knowledge, PyPI publication
