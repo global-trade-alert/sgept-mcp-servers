@@ -291,7 +291,7 @@ pytest tests/test_tools.py
 
 ## Version and License
 
-**Current version:** 0.4.0 (February 2026)
+**Current version:** 0.4.1 (February 2026)
 
 **License:** MIT
 
