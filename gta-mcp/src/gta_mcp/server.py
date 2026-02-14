@@ -133,7 +133,14 @@ def get_auth_manager() -> JWTAuthManager:
     }
 )
 async def gta_search_interventions(params: GTASearchInput) -> str:
-    """Search trade policy interventions from the Global Trade Alert database.
+    """Search and retrieve trade policy interventions from the Global Trade Alert database.
+
+    THIS IS THE PRIMARY TOOL for finding, listing, and reading interventions. Use it when the user
+    wants to see, browse, find, or analyse actual intervention records — including their titles,
+    descriptions, dates, types, evaluations, and affected parties.
+
+    Do NOT use `gta_count_interventions` when the user asks to see or read interventions.
+    `gta_count_interventions` only returns aggregate numbers, not intervention records.
 
     Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
 
@@ -275,9 +282,13 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     }
 )
 async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
-    """Fetch complete details for a specific GTA intervention by ID.
+    """Fetch the FULL TEXT and complete details for a specific GTA intervention by ID.
 
-    Use this tool to get the full information for an intervention identified from search results.
+    USE THIS TOOL when the user asks to read, fetch, or see the text/description of a specific
+    intervention. This is the only tool that returns the full intervention description, source
+    documents, and all metadata. `gta_search_interventions` returns summaries;
+    `gta_count_interventions` returns only aggregate counts — neither provides full text.
+
     Returns comprehensive data including description, sources, all affected countries and products,
     implementation timeline, and evaluation details.
 
@@ -297,6 +308,8 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
              Do NOT modify or reformat the reference list. It provides essential clickable citations.
 
     Examples:
+        - "Show me the text of intervention 138295" → use this tool
+        - "What does intervention 138295 say?" → use this tool
         - Get full details for intervention 138295 (EU tariff changes)
         - Fetch complete source documentation for a specific measure
     """
@@ -494,13 +507,20 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
 async def gta_count_interventions(params: GTACountInput) -> str:
     """Count and aggregate trade policy interventions by one or more dimensions.
 
-    Use this tool for summary statistics and breakdowns such as:
-    - "Annual breakdown of harmful interventions by the US"
-    - "Count of subsidies by type and evaluation"
-    - "Number of interventions per MAST chapter"
+    ONLY use this tool when the user explicitly asks for counts, totals, statistics, or
+    numerical breakdowns. This tool returns ONLY aggregate numbers — it does NOT return
+    intervention titles, descriptions, text, or any individual intervention data.
 
-    This tool uses the GTA counts endpoint for server-side aggregation,
-    returning counts grouped by the specified dimensions.
+    ⚠️ Do NOT use this tool when the user asks to:
+    - See, read, or fetch interventions → use `gta_search_interventions`
+    - Read the text/description of a specific intervention → use `gta_get_intervention`
+    - List or browse interventions → use `gta_search_interventions`
+    - Analyse specific measures → use `gta_search_interventions` first, then `gta_get_intervention`
+
+    Use this tool for summary statistics and breakdowns such as:
+    - "How many harmful interventions has the US announced per year?"
+    - "Count of subsidies by type and evaluation"
+    - "What is the total number of interventions per MAST chapter?"
 
     Key parameters:
     - count_by: Dimensions to group by (e.g., ['date_announced_year', 'gta_evaluation'])
@@ -761,6 +781,45 @@ def prompt_critical_minerals_tracker(mineral: str, evaluation: str = "Harmful") 
         "   - affected_products=[same codes]\n"
         "5. Summarize: which countries restrict exports, which subsidize production, "
         "which impose import barriers. Include timeline and current in-force status."
+    )
+
+
+@mcp.prompt(
+    name="comprehensive_analysis",
+    description="Produce a rich analysis combining quantitative trends (counts over time, by instrument, by direction) with qualitative evidence (what key interventions actually say). Use for policy briefs and analytical reports."
+)
+def prompt_comprehensive_analysis(topic: str, jurisdiction: str = "", since: str = "2020-01-01") -> str:
+    jurisdiction_note = f" by or affecting {jurisdiction}" if jurisdiction else ""
+    jurisdiction_filter = f"\n   - implementing_jurisdictions=['{jurisdiction}']" if jurisdiction else ""
+    return (
+        f"Produce a comprehensive analysis of {topic}{jurisdiction_note} since {since}.\n\n"
+        "Combine quantitative trends with qualitative evidence from key interventions.\n\n"
+        "## Part 1: Quantitative landscape\n\n"
+        "Use `gta_count_interventions` to establish the statistical context:\n"
+        f"1. Count by year: count_by=['date_announced_year'], date_announced_gte='{since}'"
+        f"{jurisdiction_filter}\n"
+        "   → Establishes the trend: growing, stable, or declining?\n"
+        "2. Count by evaluation: count_by=['date_announced_year', 'gta_evaluation']\n"
+        "   → What share is harmful vs liberalising?\n"
+        "3. Count by instrument: count_by=['intervention_type'] or count_by=['mast_chapter']\n"
+        "   → Which policy tools are used most?\n\n"
+        "Summarise the numbers: total volume, direction of change, dominant instruments.\n\n"
+        "## Part 2: Qualitative evidence\n\n"
+        "Use `gta_search_interventions` to find the substantively important interventions:\n"
+        f"4. Search with the same filters used above, sorted by most recent\n"
+        "5. Triage the overview results — identify the most significant measures by:\n"
+        "   - Scale (number of affected countries/products)\n"
+        "   - Recency (most recent announcements)\n"
+        "   - Significance (evaluation, instrument type)\n"
+        "6. Use `gta_get_intervention` on 3-5 key interventions to read their full text\n"
+        "7. Summarise what these interventions actually do — the substance, not just metadata\n\n"
+        "## Part 3: Synthesis\n\n"
+        "Combine both dimensions into a coherent analytical narrative:\n"
+        "- Open with the quantitative picture (scale, trend, composition)\n"
+        "- Ground it in the qualitative evidence (what the key measures say and do)\n"
+        "- Note any patterns: escalation, retaliation, sectoral concentration\n"
+        "- Flag data caveats (publication lag, overcounting risks)\n\n"
+        "Include the Reference List from the search/get results at the end."
     )
 
 

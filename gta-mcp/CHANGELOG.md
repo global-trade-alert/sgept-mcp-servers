@@ -5,6 +5,14 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-02-14
+
+### Added
+- **Comprehensive Analysis Prompt** (`comprehensive_analysis`): MCP prompt guiding mixed quantitative + qualitative analysis workflows
+
+### Fixed
+- **Tool routing**: Improved tool descriptions to prevent over-reliance on the count endpoint when users ask to see, read, or fetch interventions
+
 ## [0.4.0] - 2026-02-12
 
 ### Added
@@ -50,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **0.4.2** (2026-02-14): Comprehensive analysis prompt, tool routing fix
 - **0.4.0** (2026-02-12): Public release — glossary resource, use case library, user-first README, expanded references
 - **0.3.0** (2026-02-12): Expanded resources, MAST chapters, advanced filters, counts tool, analytical knowledge, PyPI publication
 - **0.2.0** (2025-11-08): Text search for entity names

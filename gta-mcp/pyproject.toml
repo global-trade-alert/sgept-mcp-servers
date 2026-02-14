@@ -1,6 +1,6 @@
 [project]
 name = "sgept-gta-mcp"
-version = "0.4.1"
+version = "0.4.2"
 description = "MCP server for Global Trade Alert — 75,000+ trade policy interventions"
 readme = "README.md"
 license = {text = "MIT"}
