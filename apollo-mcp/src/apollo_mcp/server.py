@@ -80,24 +80,31 @@ async def apollo_search_people(
 
     client = get_api_client()
     try:
-        # Workaround: resolve domains/names to org IDs first
-        # (organization_domains filter in people search is broken)
+        # Name-based search: pass q_organization_name directly to people search
+        # (more reliable than resolving to org IDs, which misses accounts)
+        # Domain-based search: resolve to org IDs first (workaround for broken
+        # organization_domains filter in people search)
         org_ids: list[str] = []
-        if params.organization_domains or params.organization_names:
+        org_name_filter: str | None = None
+
+        if params.organization_names:
+            org_name_filter = params.organization_names[0]
+        if params.organization_domains:
             org_ids = await client.resolve_org_ids(
                 organization_domains=params.organization_domains or None,
-                organization_names=params.organization_names or None,
             )
             if not org_ids:
                 return ("## People Search Results\n\n"
-                        "No matching organizations found for the provided domains/names. "
-                        "Try searching for the company first with `apollo_search_company`.")
+                        "No matching organizations found for the provided domains. "
+                        "Try searching by company name instead, or use "
+                        "`apollo_search_company` to verify the domain.")
 
         result = await client.search_people(
             person_titles=params.person_titles or None,
             person_seniorities=params.person_seniorities or None,
             person_locations=params.person_locations or None,
             organization_ids=org_ids or None,
+            organization_name=org_name_filter,
             keywords=params.keywords,
             per_page=params.per_page,
             page=params.page,
@@ -249,25 +256,28 @@ async def apollo_find_contact_email(
 
     client = get_api_client()
     try:
-        # Step 1: Resolve company to org ID
-        org_ids = await client.resolve_org_ids(
-            organization_domains=[params.company_domain] if params.company_domain else None,
-            organization_names=[params.company_name] if params.company_name else None,
-        )
-
-        if not org_ids:
-            return ("## Find Contact Email\n\n"
-                    f"Could not find organization for "
-                    f"'{params.company_name or params.company_domain}'. "
-                    "Try `apollo_search_company` to verify the company name/domain.\n\n"
-                    "No credits were consumed.")
+        # Step 1: Resolve company to org ID (domain) or use name directly
+        org_ids: list[str] = []
+        if params.company_domain:
+            org_ids = await client.resolve_org_ids(
+                organization_domains=[params.company_domain],
+            )
 
         # Step 2: Search for people at that org
         search_kwargs: dict = {
-            "organization_ids": org_ids,
             "per_page": 10,
             "page": 1,
         }
+        if org_ids:
+            search_kwargs["organization_ids"] = org_ids
+        elif params.company_name:
+            search_kwargs["organization_name"] = params.company_name
+        else:
+            return ("## Find Contact Email\n\n"
+                    f"Could not find organization for "
+                    f"'{params.company_domain}'. "
+                    "Try `apollo_search_company` to verify the company domain.\n\n"
+                    "No credits were consumed.")
         if params.job_title:
             search_kwargs["person_titles"] = [params.job_title]
         if params.seniority:

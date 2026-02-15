@@ -12,8 +12,13 @@ class ApolloClient:
     - Organization name search requires `q_organization_name` (q_ prefix)
     - `organization_domains` filter in people search is broken —
       always resolve to org IDs first via org search
+    - Company search returns TWO arrays: `accounts` (major/parent companies)
+      and `organizations` (subsidiaries/smaller entities). Always check
+      accounts first — the parent company is almost never in organizations.
     - People search endpoint was migrated from mixed_people/search to
       mixed_people/api_search (the old endpoint returns 422)
+    - People search accepts `q_organization_name` as a direct filter —
+      useful as fallback when org ID resolution fails
     - People search returns obfuscated last names (`last_name_obfuscated`)
       and boolean flags (`has_email`, `has_city`, etc.) — enrich to get full data
     - Enrich accepts Apollo person `id` directly — more reliable than name matching
@@ -68,6 +73,10 @@ class ApolloClient:
 
         This is the workaround for the broken organization_domains filter
         in the people search endpoint.
+
+        NOTE: Apollo returns major/parent companies in `accounts` and
+        smaller entities/subsidiaries in `organizations`. We check both,
+        preferring accounts (which contain the parent company).
         """
         org_ids: list[str] = []
 
@@ -76,18 +85,27 @@ class ApolloClient:
                 result = await self.search_organizations(
                     organization_domains=[domain], per_page=1
                 )
-                for org in result.get("organizations", []):
-                    if org.get("id"):
-                        org_ids.append(org["id"])
+                for acct in result.get("accounts", []):
+                    if acct.get("id"):
+                        org_ids.append(acct["id"])
+                if not org_ids:
+                    for org in result.get("organizations", []):
+                        if org.get("id"):
+                            org_ids.append(org["id"])
 
         if organization_names:
             for name in organization_names:
                 result = await self.search_organizations(
                     organization_name=name, per_page=1
                 )
-                for org in result.get("organizations", []):
-                    if org.get("id"):
-                        org_ids.append(org["id"])
+                ids_before = len(org_ids)
+                for acct in result.get("accounts", []):
+                    if acct.get("id"):
+                        org_ids.append(acct["id"])
+                if len(org_ids) == ids_before:
+                    for org in result.get("organizations", []):
+                        if org.get("id"):
+                            org_ids.append(org["id"])
 
         return org_ids
 
@@ -98,6 +116,7 @@ class ApolloClient:
         person_seniorities: list[str] | None = None,
         person_locations: list[str] | None = None,
         organization_ids: list[str] | None = None,
+        organization_name: str | None = None,
         keywords: str = "",
         per_page: int = 25,
         page: int = 1,
@@ -109,6 +128,7 @@ class ApolloClient:
 
         NOTE: Do NOT pass organization_domains here — it's broken.
         Use resolve_org_ids() first, then pass organization_ids.
+        Fallback: pass organization_name for q_organization_name filter.
         """
         payload: dict[str, Any] = {
             "per_page": min(per_page, 100),
@@ -122,6 +142,8 @@ class ApolloClient:
             payload["person_locations"] = person_locations
         if organization_ids:
             payload["organization_ids"] = organization_ids
+        if organization_name:
+            payload["q_organization_name"] = organization_name
         if keywords:
             payload["q_keywords"] = keywords
 

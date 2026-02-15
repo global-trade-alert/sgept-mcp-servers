@@ -44,28 +44,40 @@ def format_people_results(data: dict[str, Any]) -> str:
 
 
 def format_company_results(data: dict[str, Any]) -> str:
-    """Format organization search results as a markdown table."""
-    orgs = data.get("organizations", [])
+    """Format organization search results as a markdown table.
 
-    if not orgs:
+    Apollo returns two arrays: `accounts` (major/parent companies) and
+    `organizations` (subsidiaries/smaller entities). We show both,
+    labelling accounts clearly so the agent picks the right one.
+    """
+    accounts = data.get("accounts", [])
+    orgs = data.get("organizations", [])
+    all_entries = [(a, "account") for a in accounts] + [(o, "org") for o in orgs]
+
+    if not all_entries:
         return "## Company Search Results\n\nNo results found."
 
     lines = [
-        f"## Company Search Results ({len(orgs)} found)",
+        f"## Company Search Results ({len(accounts)} accounts, {len(orgs)} organizations)",
         "",
-        "| # | Company | Domain | Industry | Employees | Apollo Org ID |",
-        "|---|---------|--------|----------|-----------|---------------|",
+        "| # | Type | Company | Domain | Industry | Employees | Apollo ID |",
+        "|---|------|---------|--------|----------|-----------|-----------|",
     ]
 
-    for i, org in enumerate(orgs, start=1):
-        name = org.get("name", "—")
-        domain = org.get("primary_domain", "—") or org.get("domain", "—") or "—"
-        industry = org.get("industry", "—") or "—"
-        employees = org.get("estimated_num_employees", "—")
+    for i, (entry, entry_type) in enumerate(all_entries, start=1):
+        name = entry.get("name", "—")
+        domain = entry.get("primary_domain", "—") or entry.get("domain", "—") or "—"
+        industry = entry.get("industry", "—") or "—"
+        employees = entry.get("estimated_num_employees", "—")
         if employees and employees != "—":
             employees = f"{employees:,}" if isinstance(employees, int) else str(employees)
-        org_id = org.get("id", "—")
-        lines.append(f"| {i} | {name} | {domain} | {industry} | {employees} | {org_id} |")
+        entry_id = entry.get("id", "—")
+        label = "Account" if entry_type == "account" else "Org"
+        lines.append(f"| {i} | {label} | {name} | {domain} | {industry} | {employees} | {entry_id} |")
+
+    lines.append("")
+    lines.append("*Accounts are parent/major companies. Organizations are subsidiaries or smaller entities. "
+                 "For people search, use the company name (not the ID) for best results.*")
 
     return "\n".join(lines)
 
