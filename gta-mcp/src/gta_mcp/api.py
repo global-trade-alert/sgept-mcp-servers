@@ -117,6 +117,10 @@ INTERVENTION_TYPE_TO_ID = {
     "Distribution restriction": 77,
     "Post-sales service restriction (MAST Chapter K1)": 78,
     "Corporate control order": 79,
+    "Debt purchase": 80,
+    "Equity stake": 81,
+    "Financial investment support": 82,
+    "Lending support": 83,
 }
 
 ISO_TO_UN_CODE = {

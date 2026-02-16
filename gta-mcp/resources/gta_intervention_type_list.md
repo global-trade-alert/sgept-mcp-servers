@@ -79,3 +79,7 @@
 |77|Distribution restriction|1|46|Distribution restriction|Distribution restriction|1|
 |78|Post-sales service restriction (MAST Chapter K1)|1|47|Post-sales service restriction (MAST Chapter K1)|Post-sales service restriction (MAST Chapter K1)|1|
 |79|Corporate control order|1|48|Corporate control order|Corporate control order|1|
+|80|Debt purchase|1|3|Debt purchase|Debt purchase|1|
+|81|Equity stake|1|3|Equity stake|Equity stake|1|
+|82|Financial investment support|1|3|Financial investment support|Financial investment support|1|
+|83|Lending support|1|3|Lending support|Lending support|1|
