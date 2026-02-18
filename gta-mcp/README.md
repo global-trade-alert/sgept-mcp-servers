@@ -70,7 +70,7 @@ If this file doesn't exist yet, create it with the content below. If it already 
   "mcpServers": {
     "gta": {
       "command": "uvx",
-      "args": ["sgept-gta-mcp"],
+      "args": ["sgept-gta-mcp@latest"],
       "env": {
         "GTA_API_KEY": "your-api-key-here"
       }
@@ -84,7 +84,7 @@ Then **completely quit and restart Claude Desktop** (not just close the window â
 ### For Claude Code
 
 ```bash
-claude mcp add --transport stdio gta -e GTA_API_KEY=your-key -- uvx sgept-gta-mcp
+claude mcp add --transport stdio gta -e GTA_API_KEY=your-key -- uvx sgept-gta-mcp@latest
 ```
 
 ### For any MCP client
@@ -207,6 +207,7 @@ Resources provide reference data and documentation through the MCP resource syst
 | Analytical Caveats | `gta://guide/analytical-caveats` | Data limitations and interpretation guidance |
 | Query Intent Mapping | `gta://guide/query-intent-mapping` | Natural language terms to structured GTA filters |
 | Query Patterns | `gta://guide/query-patterns` | Common analysis workflows |
+| Privacy Policy | `gta://legal/privacy` | Data handling, collection, and your rights |
 
 ## Understanding GTA Data
 
@@ -231,6 +232,15 @@ Resources provide reference data and documentation through the MCP resource syst
 | Timeout errors | Query too broad | Add country or date filters to narrow results |
 | Invalid jurisdiction code | Wrong format | Use ISO 3-letter codes (USA, CHN, DEU), not 2-letter or numeric |
 | Rate limit (429) | Too many queries | Wait 30 seconds and retry |
+
+## Privacy
+
+The GTA MCP server runs locally on your machine and does not store, cache,
+or log your queries. Search parameters are forwarded to the GTA API backend
+operated by SGEPT, which records only standard access logs (no query content).
+Access logs are retained for 90 days.
+
+Full policy: [PRIVACY.md](PRIVACY.md) | [globaltradealert.org/privacy](https://globaltradealert.org/privacy)
 
 ## For Developers
 

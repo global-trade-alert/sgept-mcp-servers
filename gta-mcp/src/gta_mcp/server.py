@@ -50,6 +50,7 @@ from .resources_loader import (
     load_search_strategy,
     load_jurisdiction_groups,
     load_query_intent_mapping,
+    load_privacy_policy,
 )
 from .hs_lookup import search_hs_codes
 from .sector_lookup import search_sectors
@@ -1178,6 +1179,21 @@ def get_query_intent_mapping() -> str:
 		Markdown guide mapping natural language terms to GTA structured filters
 	"""
 	return load_query_intent_mapping()
+
+
+@mcp.resource(
+	"gta://legal/privacy",
+	name="Privacy Policy",
+	description="Privacy policy for the GTA MCP server. Explains what data is collected, how it is used, and your rights. Reference this when users ask about data handling, privacy, or security.",
+	mime_type="text/markdown"
+)
+def get_privacy_policy() -> str:
+	"""Return the GTA MCP server privacy policy.
+
+	Returns:
+		Complete privacy policy as markdown
+	"""
+	return load_privacy_policy()
 
 
 def main():

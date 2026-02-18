@@ -643,3 +643,36 @@ def load_query_intent_mapping() -> str:
 			_CACHE["query_intent_mapping"] = f.read()
 
 	return _CACHE["query_intent_mapping"]
+
+
+def load_privacy_policy() -> str:
+	"""Load the privacy policy from PRIVACY.md.
+
+	Supports two layouts:
+	- Installed (pip/uvx): gta_mcp/PRIVACY.md (force-included in wheel)
+	- Development: ../../PRIVACY.md (project root)
+
+	Returns:
+		Complete privacy policy as markdown
+	"""
+	if "privacy_policy" not in _CACHE:
+		current_file = Path(__file__)
+
+		# Installed layout: PRIVACY.md is a sibling file inside the package
+		installed_path = current_file.parent / "PRIVACY.md"
+		if installed_path.exists():
+			with open(installed_path, 'r', encoding='utf-8') as f:
+				_CACHE["privacy_policy"] = f.read()
+			return _CACHE["privacy_policy"]
+
+		# Development layout: PRIVACY.md is at the project root
+		project_root = current_file.parent.parent.parent
+		dev_path = project_root / "PRIVACY.md"
+		if dev_path.exists():
+			with open(dev_path, 'r', encoding='utf-8') as f:
+				_CACHE["privacy_policy"] = f.read()
+			return _CACHE["privacy_policy"]
+
+		return "Error: Privacy policy file not found"
+
+	return _CACHE["privacy_policy"]

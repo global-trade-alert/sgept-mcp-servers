@@ -37,6 +37,7 @@ Repository = "https://github.com/global-trade-alert/sgept-mcp-servers"
 Documentation = "https://github.com/global-trade-alert/sgept-mcp-servers/blob/main/gta-mcp/README.md"
 Changelog = "https://github.com/global-trade-alert/sgept-mcp-servers/blob/main/gta-mcp/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/global-trade-alert/sgept-mcp-servers/issues"
+"Privacy Policy" = "https://globaltradealert.org/privacy"
 
 [build-system]
 requires = ["hatchling"]
@@ -47,6 +48,7 @@ packages = ["src/gta_mcp"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "resources" = "gta_mcp/resources"
+"PRIVACY.md" = "gta_mcp/PRIVACY.md"
 
 [tool.uv]
 dev-dependencies = []
