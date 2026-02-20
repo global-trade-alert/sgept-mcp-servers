@@ -164,12 +164,12 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
     Use 'Harmful' as shorthand for Red+Amber.
 
-    ⚠️ CRITICAL — MANDATORY LINKS: The tool response starts with a line containing
-    Activity Tracker and Data Centre links (📊 **Explore this data:** ...).
-    You MUST include these links verbatim in your reply to the user. They are NOT
-    optional metadata — they are the primary way users access the full filtered dataset.
-    If you call this tool multiple times, include the links from AT LEAST the most
-    relevant call.
+    ⚠️ CRITICAL — MANDATORY LINKS: Each tool response starts with a labeled dataset link
+    (📊 **Dataset — {filters}:** ...). You MUST include these links in your reply.
+    When you call this tool multiple times with DIFFERENT filters, each response has a
+    DIFFERENT link. Include ALL unique links in your reply, each with its label. The
+    broadest link (fewest filters) represents the full dataset; narrower links represent
+    filtered subsets. Users need both to explore the data interactively.
 
     ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
     as formatted. Do NOT modify or reformat — it provides clickable citations.
@@ -574,12 +574,12 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
     that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
 
-    ⚠️ CRITICAL — MANDATORY LINKS: The tool response starts with a line containing
-    Activity Tracker and Data Centre links (📊 **Explore this data:** ...).
-    You MUST include these links verbatim in your reply to the user. They are NOT
-    optional metadata — they are the primary way users access the full filtered dataset.
-    If you call this tool multiple times, include the links from AT LEAST the most
-    relevant call.
+    ⚠️ CRITICAL — MANDATORY LINKS: Each tool response starts with a labeled dataset link
+    (📊 **Dataset — {filters}:** ...). You MUST include these links in your reply.
+    When you call this tool multiple times with DIFFERENT filters, each response has a
+    DIFFERENT link. Include ALL unique links in your reply, each with its label. The
+    broadest link (fewest filters) represents the full dataset; narrower links represent
+    filtered subsets. Users need both to explore the data interactively.
 
     Examples:
         - US harmful interventions by year:

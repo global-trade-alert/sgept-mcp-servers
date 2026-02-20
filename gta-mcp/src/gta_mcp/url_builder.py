@@ -229,57 +229,15 @@ def build_dataset_label(original_params: Dict[str, Any]) -> str:
     return " | ".join(fragments) if fragments else "matching interventions"
 
 
-def _date_only_filters(filters: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract only date/period filters from a filters dict.
-
-    Used to build 'full dataset' URLs that include all interventions
-    in the date range, regardless of MAST chapter, country, type, etc.
-    """
-    date_keys = {"announcement_period", "implementation_period", "in_force_on_date"}
-    return {k: v for k, v in filters.items() if k in date_keys and v is not None}
-
-
-def _date_only_params(original_params: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract only date params from the original user params."""
-    date_keys = {
-        "date_announced_gte", "date_announced_lte",
-        "date_implemented_gte", "date_implemented_lte",
-    }
-    return {k: v for k, v in original_params.items() if k in date_keys and v}
-
-
-def _has_non_date_filters(filters: Dict[str, Any]) -> bool:
-    """Check if filters contain anything beyond date ranges."""
-    entity_keys = [
-        "implementer", "affected", "intervention_types", "gta_evaluation",
-        "affected_flow", "mast_chapters", "implementation_level",
-        "implementation_levels", "eligible_firms", "affected_sectors",
-        "intervention_id", "affected_products",
-    ]
-    return any(
-        isinstance(filters.get(k), list) and filters[k]
-        for k in entity_keys
-    )
-
-
-def _format_link_line(label: str, urls: Dict[str, str]) -> str:
-    """Format a single labeled link line."""
-    return (
-        f"📊 **{label}:** "
-        f"[Activity Tracker]({urls['activity_tracker']}) | "
-        f"[Data Centre]({urls['data_centre']})"
-    )
-
-
 def make_dataset_links_section(
     filters: Dict[str, Any],
     original_params: Dict[str, Any],
 ) -> str:
     """Build markdown section with Activity Tracker and Data Centre links.
 
-    Always includes a 'full dataset' link (date-only filters).
-    When the query has additional non-date filters, also includes a labeled
-    filtered link so users can access both views.
+    Each tool call produces ONE labeled link set for its exact filters.
+    The label describes what filters are applied so the LLM can present
+    multiple links from different tool calls, each clearly identified.
 
     Args:
         filters: The filters dict produced by build_filters() or build_count_filters().
@@ -288,88 +246,55 @@ def make_dataset_links_section(
     Returns:
         Formatted markdown section, or empty string if no URLs can be built.
     """
-    filtered_urls = build_dataset_urls(filters, original_params)
-    if not filtered_urls:
+    urls = build_dataset_urls(filters, original_params)
+    if not urls:
         return ""
 
-    lines = ["\n## Explore Dataset\n"]
+    label = build_dataset_label(original_params)
 
-    # Always build the full-dataset (date-only) link
-    if _has_non_date_filters(filters):
-        base_filters = _date_only_filters(filters)
-        base_params = _date_only_params(original_params)
-        base_urls = build_dataset_urls(base_filters, base_params)
+    # Note if HS codes were truncated
+    products = filters.get("affected_products")
+    truncation = ""
+    if products and len(products) > MAX_HS_CODES:
+        truncation = f" (top {MAX_HS_CODES} of {len(products)} products shown)"
 
-        if base_urls:
-            base_label = build_dataset_label(base_params)
-            lines.append(
-                f"**Full dataset ({base_label}):**\n"
-                f"- [Activity Tracker]({base_urls['activity_tracker']})\n"
-                f"- [Data Centre]({base_urls['data_centre']})\n"
-            )
-
-        # Filtered link
-        filtered_label = build_dataset_label(original_params)
-        products = filters.get("affected_products")
-        truncation = ""
-        if products and len(products) > MAX_HS_CODES:
-            truncation = f" (top {MAX_HS_CODES} of {len(products)} products shown)"
-        lines.append(
-            f"**Filtered — {filtered_label}{truncation}:**\n"
-            f"- [Activity Tracker]({filtered_urls['activity_tracker']})\n"
-            f"- [Data Centre]({filtered_urls['data_centre']})"
-        )
-    else:
-        # No non-date filters — the filtered URLs ARE the full dataset
-        label = build_dataset_label(original_params)
-        lines.append(
-            f"**Full dataset ({label}):**\n"
-            f"- [Activity Tracker]({filtered_urls['activity_tracker']}) — interactive timeline of all matching interventions\n"
-            f"- [Data Centre]({filtered_urls['data_centre']}) — aggregated statistics and data tables"
-        )
-
-    return "\n".join(lines)
+    return (
+        f"\n## Explore Dataset: {label}{truncation}\n\n"
+        f"- [Activity Tracker]({urls['activity_tracker']}) — interactive timeline\n"
+        f"- [Data Centre]({urls['data_centre']}) — aggregated statistics"
+    )
 
 
 def make_dataset_links_header(
     filters: Dict[str, Any],
     original_params: Dict[str, Any],
 ) -> str:
-    """Build compact labeled dataset links for the TOP of tool responses.
+    """Build compact labeled dataset link for the TOP of tool responses.
 
-    Always includes a 'full dataset' link (date-only filters).
-    When the query has additional non-date filters, adds a second labeled
-    filtered link. This ensures users always get access to the broadest
-    view plus any specific filtered view.
+    Each tool call produces ONE labeled link line for its exact filters.
+    The label describes what this specific query covers (e.g., "MAST L |
+    2026-02-01 to 2026-02-28" or "2026-02-01 to 2026-02-28").
+
+    When the LLM makes multiple tool calls with different filters, each
+    response has its own labeled link. The docstring instructs the LLM to
+    include ALL unique links — the broadest one as the primary dataset link
+    and narrower ones as filtered views.
 
     Args:
         filters: The filters dict produced by build_filters() or build_count_filters().
         original_params: The original user params (before conversion).
 
     Returns:
-        Labeled markdown link lines, or empty string if no URLs can be built.
+        Single labeled markdown link line, or empty string if no URLs can be built.
     """
-    filtered_urls = build_dataset_urls(filters, original_params)
-    if not filtered_urls:
+    urls = build_dataset_urls(filters, original_params)
+    if not urls:
         return ""
 
-    lines: List[str] = []
+    label = build_dataset_label(original_params)
 
-    if _has_non_date_filters(filters):
-        # Show BOTH full dataset and filtered links
-        base_filters = _date_only_filters(filters)
-        base_params = _date_only_params(original_params)
-        base_urls = build_dataset_urls(base_filters, base_params)
-
-        if base_urls:
-            base_label = f"Full dataset ({build_dataset_label(base_params)})"
-            lines.append(_format_link_line(base_label, base_urls))
-
-        filtered_label = f"Filtered — {build_dataset_label(original_params)}"
-        lines.append(_format_link_line(filtered_label, filtered_urls))
-    else:
-        # No non-date filters — filtered URLs ARE the full dataset
-        label = f"Full dataset ({build_dataset_label(original_params)})"
-        lines.append(_format_link_line(label, filtered_urls))
-
-    return "\n".join(lines)
+    return (
+        f"📊 **Dataset — {label}:** "
+        f"[Activity Tracker]({urls['activity_tracker']}) | "
+        f"[Data Centre]({urls['data_centre']})"
+    )

@@ -5,6 +5,11 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.9] - 2026-02-20
+
+### Changed
+- **Dataset links: one labeled link per tool call, no "full dataset" inference**: Removed the v0.4.8 logic that tried to infer a "full dataset" by stripping non-date filters. That approach was wrong — if the user asks about subsidies, the full dataset IS subsidies, not everything. Now each tool call produces one clearly labeled link for its exact filters (e.g., `📊 Dataset — MAST L | 2026-02-01 to 2026-02-28`). The LLM is instructed to include ALL unique links from all tool calls, letting it determine which is broadest based on context.
+
 ## [0.4.8] - 2026-02-20
 
 ### Fixed
