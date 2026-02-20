@@ -5,6 +5,12 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.8] - 2026-02-20
+
+### Fixed
+- **Dataset links show filtered subset instead of full dataset**: Every tool response now includes a "Full dataset" link (date-only filters) alongside any filtered link. When the query has non-date filters (e.g., MAST chapter, country), both the full and filtered links are shown with clear labels so users can access both views.
+- **LLM can't find search/get tools — only uses counts**: Added explicit `RELATED TOOLS` cross-reference sections to all tool docstrings so the model discovers `gta_search_interventions` and `gta_get_intervention` from any tool. Added workflow hint at the end of count responses: "Use `gta_search_interventions` to browse individual interventions, or `gta_get_intervention` to read full text."
+
 ## [0.4.7] - 2026-02-20
 
 ### Fixed

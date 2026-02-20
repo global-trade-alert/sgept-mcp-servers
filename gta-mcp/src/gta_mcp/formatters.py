@@ -662,6 +662,13 @@ def format_counts_markdown(
 
     output.append(result)
 
+    # Workflow hint: guide model to use search/get tools for details
+    output.append(
+        "\n\n💡 **Other tools available:** "
+        "Use `gta_search_interventions` to browse individual intervention records, "
+        "or `gta_get_intervention(intervention_id=...)` to read the full text of a specific measure."
+    )
+
     full_result = "\n".join(output)
 
     # Truncate if needed

@@ -141,6 +141,12 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     wants to see, browse, find, or analyse actual intervention records — including their titles,
     descriptions, dates, types, evaluations, and affected parties.
 
+    RELATED TOOLS:
+    - `gta_get_intervention` — fetch the FULL TEXT of a specific intervention by ID.
+      Use after this search to read what a measure actually says.
+    - `gta_count_interventions` — aggregate counts only (no records). Use for statistics.
+    - `gta_lookup_hs_codes` / `gta_lookup_sectors` — find product/sector codes before searching.
+
     Do NOT use `gta_count_interventions` when the user asks to see or read interventions.
     `gta_count_interventions` only returns aggregate numbers, not intervention records.
 
@@ -308,8 +314,12 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
 
     USE THIS TOOL when the user asks to read, fetch, or see the text/description of a specific
     intervention. This is the only tool that returns the full intervention description, source
-    documents, and all metadata. `gta_search_interventions` returns summaries;
-    `gta_count_interventions` returns only aggregate counts — neither provides full text.
+    documents, and all metadata.
+
+    RELATED TOOLS:
+    - `gta_search_interventions` — find interventions first (returns summaries with IDs),
+      then use THIS tool to read the full text of specific ones.
+    - `gta_count_interventions` — aggregate counts only (no text, no records).
 
     Returns comprehensive data including description, sources, all affected countries and products,
     implementation timeline, and evaluation details.
@@ -533,11 +543,13 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     numerical breakdowns. This tool returns ONLY aggregate numbers — it does NOT return
     intervention titles, descriptions, text, or any individual intervention data.
 
-    ⚠️ Do NOT use this tool when the user asks to:
-    - See, read, or fetch interventions → use `gta_search_interventions`
-    - Read the text/description of a specific intervention → use `gta_get_intervention`
-    - List or browse interventions → use `gta_search_interventions`
-    - Analyse specific measures → use `gta_search_interventions` first, then `gta_get_intervention`
+    RELATED TOOLS (use these for non-count queries):
+    - `gta_search_interventions` — browse/list actual intervention records with titles,
+      types, dates, affected countries. Returns up to 1000 records per call.
+    - `gta_get_intervention` — fetch the FULL TEXT and complete details of a specific
+      intervention by ID. Use after search to read what a measure actually says.
+    - `gta_lookup_hs_codes` — find HS product codes by keyword before searching.
+    - `gta_lookup_sectors` — find CPC sector codes by keyword before searching.
 
     Use this tool for summary statistics and breakdowns such as:
     - "How many harmful interventions has the US announced per year?"
