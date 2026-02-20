@@ -260,3 +260,31 @@ def make_dataset_links_section(
         f"- [Activity Tracker]({urls['activity_tracker']}) — interactive timeline of all matching interventions\n"
         f"- [Data Centre]({urls['data_centre']}) — aggregated statistics and data tables"
     )
+
+
+def make_dataset_links_header(
+    filters: Dict[str, Any],
+    original_params: Dict[str, Any],
+) -> str:
+    """Build compact one-line dataset links for the TOP of tool responses.
+
+    Placing links at the top of the response makes them much harder for
+    the LLM to drop when summarising results. This is the primary
+    mechanism for ensuring links reach the user.
+
+    Args:
+        filters: The filters dict produced by build_filters() or build_count_filters().
+        original_params: The original user params (before conversion).
+
+    Returns:
+        Single-line markdown with links, or empty string if no URLs can be built.
+    """
+    urls = build_dataset_urls(filters, original_params)
+    if not urls:
+        return ""
+
+    return (
+        f"📊 **Explore this data:** "
+        f"[Activity Tracker]({urls['activity_tracker']}) | "
+        f"[Data Centre]({urls['data_centre']})"
+    )

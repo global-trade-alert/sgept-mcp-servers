@@ -52,7 +52,7 @@ from .resources_loader import (
     load_query_intent_mapping,
     load_privacy_policy,
 )
-from .url_builder import make_dataset_links_section, build_dataset_urls
+from .url_builder import make_dataset_links_section, make_dataset_links_header, build_dataset_urls
 from .hs_lookup import search_hs_codes
 from .sector_lookup import search_sectors
 
@@ -158,12 +158,15 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
     Use 'Harmful' as shorthand for Red+Amber.
 
+    ⚠️ CRITICAL — MANDATORY LINKS: The tool response starts with a line containing
+    Activity Tracker and Data Centre links (📊 **Explore this data:** ...).
+    You MUST include these links verbatim in your reply to the user. They are NOT
+    optional metadata — they are the primary way users access the full filtered dataset.
+    If you call this tool multiple times, include the links from AT LEAST the most
+    relevant call.
+
     ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
     as formatted. Do NOT modify or reformat — it provides clickable citations.
-
-    ⚠️ CRITICAL: Include the "Explore Full Dataset" section from the response in your reply
-    exactly as formatted. It contains Activity Tracker and Data Centre links that let users
-    explore the complete filtered dataset interactively. Do NOT omit or reformat these links.
 
     Examples:
         - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
@@ -245,18 +248,22 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
-            dataset_links = make_dataset_links_section(filters, original_params)
-            if dataset_links:
-                formatted_response += "\n\n" + dataset_links
+            # Dataset links: header at TOP (high visibility), full section at bottom
+            links_header = make_dataset_links_header(filters, original_params)
+            if links_header:
+                formatted_response = links_header + "\n\n" + formatted_response
+                formatted_response += "\n\n" + make_dataset_links_section(filters, original_params)
             return formatted_response
         elif params.response_format == ResponseFormat.MARKDOWN:
             formatted_response = format_interventions_markdown(data)
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
-            dataset_links = make_dataset_links_section(filters, original_params)
-            if dataset_links:
-                formatted_response += "\n\n" + dataset_links
+            # Dataset links: header at TOP (high visibility), full section at bottom
+            links_header = make_dataset_links_header(filters, original_params)
+            if links_header:
+                formatted_response = links_header + "\n\n" + formatted_response
+                formatted_response += "\n\n" + make_dataset_links_section(filters, original_params)
             return formatted_response
         else:
             if filter_messages:
@@ -555,9 +562,12 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
     that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
 
-    ⚠️ CRITICAL: Include the "Explore Full Dataset" section from the response in your reply
-    exactly as formatted. It contains Activity Tracker and Data Centre links that let users
-    explore the complete filtered dataset interactively. Do NOT omit or reformat these links.
+    ⚠️ CRITICAL — MANDATORY LINKS: The tool response starts with a line containing
+    Activity Tracker and Data Centre links (📊 **Explore this data:** ...).
+    You MUST include these links verbatim in your reply to the user. They are NOT
+    optional metadata — they are the primary way users access the full filtered dataset.
+    If you call this tool multiple times, include the links from AT LEAST the most
+    relevant call.
 
     Examples:
         - US harmful interventions by year:
@@ -595,9 +605,11 @@ async def gta_count_interventions(params: GTACountInput) -> str:
                 count_variable=params.count_variable,
                 filter_messages=filter_messages,
             )
-            dataset_links = make_dataset_links_section(filters, filter_params)
-            if dataset_links:
-                formatted_response += "\n\n" + dataset_links
+            # Dataset links: header at TOP (high visibility), full section at bottom
+            links_header = make_dataset_links_header(filters, filter_params)
+            if links_header:
+                formatted_response = links_header + "\n\n" + formatted_response
+                formatted_response += "\n\n" + make_dataset_links_section(filters, filter_params)
             return formatted_response
         else:
             result = format_counts_json(

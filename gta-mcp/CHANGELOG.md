@@ -5,6 +5,11 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] - 2026-02-20
+
+### Fixed
+- **Dataset links still dropped by LLM**: Moved Activity Tracker and Data Centre links from the bottom to the **top** of tool responses (new `make_dataset_links_header`). Links at the bottom were consistently stripped during multi-tool synthesis. Top-positioned compact links (`📊 Explore this data: ...`) are much harder for the LLM to drop. Full links section remains at bottom as fallback. Strengthened CRITICAL docstring instructions to reference the top-of-response format and allow "at least one" set of links when multiple tools are called.
+
 ## [0.4.6] - 2026-02-20
 
 ### Fixed
