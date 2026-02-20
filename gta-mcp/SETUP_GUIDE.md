@@ -73,7 +73,7 @@ You need to edit a small settings file. This is the trickiest step, but just fol
   "mcpServers": {
     "gta": {
       "command": "uvx",
-      "args": ["sgept-gta-mcp"],
+      "args": ["sgept-gta-mcp@latest"],
       "env": {
         "GTA_API_KEY": "your-api-key-here"
       }

@@ -592,7 +592,7 @@ wheels = [
 
 [[package]]
 name = "sgept-gta-mcp"
-version = "0.4.0"
+version = "0.4.6"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

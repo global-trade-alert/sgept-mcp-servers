@@ -161,6 +161,10 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
     ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
     as formatted. Do NOT modify or reformat — it provides clickable citations.
 
+    ⚠️ CRITICAL: Include the "Explore Full Dataset" section from the response in your reply
+    exactly as formatted. It contains Activity Tracker and Data Centre links that let users
+    explore the complete filtered dataset interactively. Do NOT omit or reformat these links.
+
     Examples:
         - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
@@ -550,6 +554,10 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     show intervention-sector/product COMBINATIONS, not unique interventions. A single intervention
     affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
     that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
+
+    ⚠️ CRITICAL: Include the "Explore Full Dataset" section from the response in your reply
+    exactly as formatted. It contains Activity Tracker and Data Centre links that let users
+    explore the complete filtered dataset interactively. Do NOT omit or reformat these links.
 
     Examples:
         - US harmful interventions by year:
