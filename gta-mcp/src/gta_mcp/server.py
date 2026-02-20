@@ -52,6 +52,7 @@ from .resources_loader import (
     load_query_intent_mapping,
     load_privacy_policy,
 )
+from .url_builder import make_dataset_links_section, build_dataset_urls
 from .hs_lookup import search_hs_codes
 from .sector_lookup import search_sectors
 
@@ -174,10 +175,11 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
         client = get_api_client()
 
         # Build filter dictionary and get informational messages
-        filters, filter_messages = build_filters(params.model_dump(exclude={
+        original_params = params.model_dump(exclude={
             'limit', 'offset', 'sorting', 'response_format',
             'detail_level', 'show_keys'
-        }))
+        })
+        filters, filter_messages = build_filters(original_params)
 
         # Resolve show_keys from detail_level or explicit show_keys
         #
@@ -239,18 +241,26 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
+            dataset_links = make_dataset_links_section(filters, original_params)
+            if dataset_links:
+                formatted_response += "\n\n" + dataset_links
             return formatted_response
         elif params.response_format == ResponseFormat.MARKDOWN:
             formatted_response = format_interventions_markdown(data)
             if filter_messages:
                 message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
                 formatted_response = f"{message_section}\n\n{formatted_response}"
+            dataset_links = make_dataset_links_section(filters, original_params)
+            if dataset_links:
+                formatted_response += "\n\n" + dataset_links
             return formatted_response
         else:
-            response_json = format_interventions_json(data)
             if filter_messages:
-                response_json["filter_messages"] = filter_messages
-            return response_json
+                data["filter_messages"] = filter_messages
+            dataset_urls = build_dataset_urls(filters, original_params)
+            if dataset_urls:
+                data["dataset_urls"] = dataset_urls
+            return format_interventions_json(data)
             
     except ValueError as e:
         return f"❌ Configuration Error: {str(e)}\n\nPlease ensure GTA_API_KEY is set in your environment."
@@ -571,18 +581,28 @@ async def gta_count_interventions(params: GTACountInput) -> str:
 
         # Format response
         if params.response_format == ResponseFormat.MARKDOWN:
-            return format_counts_markdown(
+            formatted_response = format_counts_markdown(
                 data=data,
                 count_by=list(params.count_by),
                 count_variable=params.count_variable,
                 filter_messages=filter_messages,
             )
+            dataset_links = make_dataset_links_section(filters, filter_params)
+            if dataset_links:
+                formatted_response += "\n\n" + dataset_links
+            return formatted_response
         else:
-            return format_counts_json(
+            result = format_counts_json(
                 data=data,
                 count_by=list(params.count_by),
                 count_variable=params.count_variable,
             )
+            dataset_urls = build_dataset_urls(filters, filter_params)
+            if dataset_urls:
+                result_dict = json.loads(result)
+                result_dict["dataset_urls"] = dataset_urls
+                result = json.dumps(result_dict, indent=2, ensure_ascii=False)
+            return result
 
     except ValueError as e:
         return f"❌ Configuration Error: {str(e)}"
