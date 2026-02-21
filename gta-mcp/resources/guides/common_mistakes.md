@@ -119,3 +119,50 @@
 - Read the description field for GTA's reasoning
 - Check sources for official documentation
 - Remember that GTA evaluates measures against WTO principles, not political motives
+
+## Critical Data Caveats
+
+These caveats are distilled from the GTA analytical configuration (549 rules). Read before interpreting results.
+
+### India Code Anomaly
+
+India uses GTA jurisdiction code 699, NOT the standard UN M49 code 356. The MCP server handles this via ISO code conversion (IND → 699), but agents using raw UN codes must be aware.
+
+### MAST Chapter IDs Are Non-Alphabetical
+
+The mapping is not A=1, B=2, C=3. Actual mapping: A=1, B=2, C=17, D=4, E=5, F=6, G=8, H=18, I=9, J=19, K=20, L=10, M=11, N=13, P=14. Plus special categories: Capital controls=3, FDI=7, Migration=12, Tariffs=15, Unclear=16.
+
+### 68 Intervention Types (Not 74-79)
+
+Historical documents cite higher counts due to deprecated/merged types. The live API has 68 contiguous values. Always use the mappings endpoint or `gta://reference/intervention-types-list` for the current list.
+
+### What's NOT in the Database
+
+- Bilateral/multilateral agreements (only unilateral deviations from them)
+- Measures before November 2008
+- Financial measures below USD 10M (USD 100M for SME-targeted)
+- WTO TBT-notified and SPS-notified measures
+- UN Security Council sanctions and CITES measures
+- Proposals, drafts, speeches (only credible/enacted actions)
+
+### EU Jurisdiction Complexity
+
+- EU Regulations → implementing jurisdiction = "European Union"
+- EU Directives → each member state transposes separately
+- EU State Aid decisions → implementing jurisdiction = the member state, NOT the EU
+
+### IFI/NFI Jurisdiction Assignment
+
+When an international financial institution (World Bank, EIB, etc.) provides a loan/grant, implementing jurisdiction = beneficiary country, NOT the IFI headquarters.
+
+### Trade Defence Lifecycle
+
+Investigation initiation = Amber. Preliminary duties = Amber. Definitive duties = Red. Investigation terminated = measure removed. "Removed" status on an investigation means it progressed to the next stage, not that it was revoked.
+
+### Direction Determines Evaluation
+
+A tariff at 10% is neither Red nor Green inherently. Evaluation depends on comparison with prior level: up from 5% = Red, down from 15% = Green. This is why the `prior_level` and `new_level` fields in full-access responses are analytically critical.
+
+### Affected Jurisdiction Types
+
+Affected jurisdictions include: Inferred (auto-calculated from trade data, > USD 1M threshold), Targeted (explicitly named), Excluded (explicitly exempted), and Incidental (firm-specific context). Inferred jurisdictions are periodically recalculated and may change.

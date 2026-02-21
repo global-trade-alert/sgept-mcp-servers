@@ -531,25 +531,6 @@ def load_data_model_guide() -> str:
 	return _CACHE["data_model_guide"]
 
 
-def load_analytical_caveats() -> str:
-	"""Load the analytical caveats guide from markdown file.
-
-	Returns:
-		Complete markdown guide with 15 critical caveats from the GTA analytical configuration
-	"""
-	if "analytical_caveats" not in _CACHE:
-		resources_dir = get_resources_dir()
-		file_path = resources_dir / "guides" / "analytical_caveats.md"
-
-		if not file_path.exists():
-			return "Error: Analytical caveats guide resource file not found"
-
-		with open(file_path, 'r', encoding='utf-8') as f:
-			_CACHE["analytical_caveats"] = f.read()
-
-	return _CACHE["analytical_caveats"]
-
-
 def load_common_mistakes() -> str:
 	"""Load the common mistakes guide from markdown file.
 
@@ -586,25 +567,6 @@ def load_glossary() -> str:
 			_CACHE["glossary"] = f.read()
 
 	return _CACHE["glossary"]
-
-
-def load_search_strategy() -> str:
-	"""Load the search strategy guide from markdown file.
-
-	Returns:
-		Markdown guide explaining multi-pass search workflow and detail levels
-	"""
-	if "search_strategy" not in _CACHE:
-		resources_dir = get_resources_dir()
-		file_path = resources_dir / "guides" / "search_strategy.md"
-
-		if not file_path.exists():
-			return "Error: Search strategy guide not found"
-
-		with open(file_path, 'r', encoding='utf-8') as f:
-			_CACHE["search_strategy"] = f.read()
-
-	return _CACHE["search_strategy"]
 
 
 def load_jurisdiction_groups() -> str:

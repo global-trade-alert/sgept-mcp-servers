@@ -5,6 +5,19 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-21
+
+### Changed
+- **Proper MCP error handling**: All 7 tools now raise `ToolError` instead of returning error strings. The MCP protocol's `isError: true` flag is set correctly, enabling models to detect failures and retry or escalate.
+- **Server-level formatting instructions**: Moved dataset link and reference list formatting guidance from individual tool docstrings into FastMCP `instructions` field. Tool descriptions now focus purely on tool purpose.
+- **Consolidated resources (24 → 22)**: Merged `analytical_caveats.md` into `common_mistakes.md` (new "Critical Data Caveats" section). Merged `search_strategy.md` into `search_guide.md` (new "Multi-Pass Workflow & Detail Levels" section). No information lost.
+
+### Removed
+- **Deprecated JWT auth module**: Deleted `auth.py` (112 LOC) and all references. JWT auth has been unused since API v0.3+ — all endpoints use API key auth exclusively.
+
+### Added
+- **Unit test suite**: 65 tests covering `build_filters()`, `build_count_filters()`, conversion functions, HS/sector lookups, and Pydantic model validators. Added pytest + pytest-asyncio dev dependencies.
+
 ## [0.4.9] - 2026-02-20
 
 ### Changed

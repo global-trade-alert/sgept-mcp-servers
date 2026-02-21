@@ -1,6 +1,6 @@
 [project]
 name = "sgept-gta-mcp"
-version = "0.4.9"
+version = "0.5.0"
 description = "MCP server for Global Trade Alert — 75,000+ trade policy interventions"
 readme = "README.md"
 license = {text = "MIT"}
@@ -50,5 +50,5 @@ packages = ["src/gta_mcp"]
 "resources" = "gta_mcp/resources"
 "PRIVACY.md" = "gta_mcp/PRIVACY.md"
 
-[tool.uv]
-dev-dependencies = []
+[dependency-groups]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.23.0"]

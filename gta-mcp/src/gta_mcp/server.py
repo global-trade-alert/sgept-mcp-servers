@@ -3,7 +3,6 @@
 import os
 import sys
 import json
-from typing import Optional
 from mcp.server.fastmcp import FastMCP
 
 from .models import (
@@ -15,7 +14,7 @@ from .models import (
     ResponseFormat
 )
 from .api import GTAAPIClient, build_filters, build_count_filters
-from .auth import JWTAuthManager
+from mcp.server.fastmcp.exceptions import ToolError
 from .formatters import (
     format_interventions_markdown,
     format_interventions_json,
@@ -44,10 +43,8 @@ from .resources_loader import (
     load_query_syntax,
     load_exclusion_filters,
     load_data_model_guide,
-    load_analytical_caveats,
     load_common_mistakes,
     load_glossary,
-    load_search_strategy,
     load_jurisdiction_groups,
     load_query_intent_mapping,
     load_privacy_policy,
@@ -58,7 +55,24 @@ from .sector_lookup import search_sectors
 
 
 # Initialize MCP server
-mcp = FastMCP("gta_mcp")
+mcp = FastMCP(
+    "gta_mcp",
+    instructions="""When presenting GTA data to users:
+
+1. DATASET LINKS: Each tool response starts with a labeled dataset link
+   (📊 **Dataset — {filters}:** ...). Include ALL unique dataset links in your reply.
+   When calling tools multiple times with different filters, each has a different link.
+   Include all of them — the broadest link represents the full dataset, narrower links
+   represent filtered subsets.
+
+2. REFERENCE LISTS: Search and get_intervention responses include a "Reference List"
+   section at the end with clickable citations. Include this section exactly as formatted
+   — do not modify or reformat it.
+
+3. TICKER REFERENCES: Ticker responses include a "Referenced Interventions" section.
+   Include it exactly as formatted.
+"""
+)
 
 
 def get_api_client() -> GTAAPIClient:
@@ -95,33 +109,6 @@ KEY_PROFILES = {
 }
 
 
-# JWT auth manager - DEPRECATED (kept for backward compatibility)
-# As of API v0.3+, all endpoints including counts now support API key auth.
-# JWT auth is no longer required or used.
-_auth_manager: Optional[JWTAuthManager] = None
-
-
-def get_auth_manager() -> JWTAuthManager:
-    """[DEPRECATED] Get or create the JWT auth manager.
-
-    This function is kept for backward compatibility but is no longer used.
-    All GTA API endpoints now use API key authentication.
-
-    Raises:
-        ValueError: If GTA_AUTH_EMAIL or GTA_AUTH_PASSWORD not configured.
-    """
-    global _auth_manager
-    if _auth_manager is None:
-        email = os.getenv("GTA_AUTH_EMAIL")
-        password = os.getenv("GTA_AUTH_PASSWORD")
-        if not email or not password:
-            raise ValueError(
-                "[DEPRECATED] JWT authentication is no longer required.\n"
-                "All GTA endpoints now use API key authentication via GTA_API_KEY.\n"
-                "GTA_AUTH_EMAIL and GTA_AUTH_PASSWORD are optional and not needed."
-            )
-        _auth_manager = JWTAuthManager(email=email, password=password)
-    return _auth_manager
 
 
 @mcp.tool(
@@ -163,16 +150,6 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
 
     gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
     Use 'Harmful' as shorthand for Red+Amber.
-
-    ⚠️ CRITICAL — MANDATORY LINKS: Each tool response starts with a labeled dataset link
-    (📊 **Dataset — {filters}:** ...). You MUST include these links in your reply.
-    When you call this tool multiple times with DIFFERENT filters, each response has a
-    DIFFERENT link. Include ALL unique links in your reply, each with its label. The
-    broadest link (fewest filters) represents the full dataset; narrower links represent
-    filtered subsets. Users need both to explore the data interactively.
-
-    ⚠️ CRITICAL: Include the "Reference List" section from the response in your reply exactly
-    as formatted. Do NOT modify or reformat — it provides clickable citations.
 
     Examples:
         - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
@@ -280,23 +257,19 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             return format_interventions_json(data)
             
     except ValueError as e:
-        return f"❌ Configuration Error: {str(e)}\n\nPlease ensure GTA_API_KEY is set in your environment."
+        raise ToolError(f"Configuration Error: {str(e)}. Please ensure GTA_API_KEY is set.")
+    except ToolError:
+        raise
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
-            return (
-                "❌ Authentication Error: Invalid or expired API key.\n\n"
-                "Please check your GTA_API_KEY environment variable."
-            )
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
         elif "404" in error_msg:
-            return "❌ API endpoint not found. The GTA API structure may have changed."
+            raise ToolError("API endpoint not found. The GTA API structure may have changed.")
         elif "timeout" in error_msg.lower():
-            return (
-                "❌ Request timeout: The API took too long to respond.\n\n"
-                "Try reducing the limit parameter or adding more specific filters."
-            )
+            raise ToolError("Request timeout. Try reducing the limit or adding more specific filters.")
         else:
-            return f"❌ API Error: {error_msg}\n\nTry adjusting your search parameters or contact support."
+            raise ToolError(f"API Error: {error_msg}. Try adjusting your search parameters.")
 
 
 @mcp.tool(
@@ -333,12 +306,6 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
         str: Complete intervention details with all metadata, formatted per response_format.
              Includes full description, all sources, jurisdictions, products, and timeline.
 
-             ⚠️ CRITICAL: The response includes a "Reference List (in reverse chronological order)"
-             section at the end. You MUST include this complete reference list in your response to
-             the user EXACTLY as formatted. The reference list format is:
-             - {date}: {title} [ID [{intervention_id}](url)].
-             Do NOT modify or reformat the reference list. It provides essential clickable citations.
-
     Examples:
         - "Show me the text of intervention 138295" → use this tool
         - "What does intervention 138295 say?" → use this tool
@@ -362,14 +329,16 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
             
     except ValueError as e:
         if "not found" in str(e):
-            return f"❌ Intervention {params.intervention_id} not found in GTA database."
-        return f"❌ Error: {str(e)}"
+            raise ToolError(f"Intervention {params.intervention_id} not found in GTA database.")
+        raise ToolError(str(e))
+    except ToolError:
+        raise
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
-            return "❌ Authentication Error: Invalid or expired API key."
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
         else:
-            return f"❌ API Error: {error_msg}"
+            raise ToolError(f"API Error: {error_msg}")
 
 
 @mcp.tool(
@@ -400,11 +369,6 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
 
     Returns:
         str: List of ticker updates with modification dates, intervention IDs, and update text.
-
-             ⚠️ CRITICAL: The response includes a "Referenced Interventions" section at the end.
-             You MUST include this complete reference list in your response to the user EXACTLY
-             as formatted. Do NOT modify or reformat the reference list. It provides essential
-             clickable links to all mentioned interventions.
 
     Note: GTA entries are created by analysts after policy implementation. Recent entries may not
     yet appear. Use overlapping scan windows (e.g., 8-day window for weekly monitoring) to avoid gaps.
@@ -449,12 +413,14 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
         else:
             return json.dumps(data, indent=2, ensure_ascii=False)
             
+    except ToolError:
+        raise
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
-            return "❌ Authentication Error: Invalid or expired API key."
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
         else:
-            return f"❌ API Error: {error_msg}"
+            raise ToolError(f"API Error: {error_msg}")
 
 
 @mcp.tool(
@@ -513,17 +479,16 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
         # Format response (JSON is most useful for impact chains)
         return json.dumps(data, indent=2, ensure_ascii=False)
         
+    except ToolError:
+        raise
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
-            return "❌ Authentication Error: Invalid or expired API key."
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
         elif "404" in error_msg:
-            return (
-                f"❌ Endpoint not found for granularity '{params.granularity}'.\n\n"
-                "Valid options: 'product' or 'sector'"
-            )
+            raise ToolError(f"Endpoint not found for granularity '{params.granularity}'. Valid options: 'product' or 'sector'.")
         else:
-            return f"❌ API Error: {error_msg}"
+            raise ToolError(f"API Error: {error_msg}")
 
 
 @mcp.tool(
@@ -573,13 +538,6 @@ async def gta_count_interventions(params: GTACountInput) -> str:
     show intervention-sector/product COMBINATIONS, not unique interventions. A single intervention
     affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
     that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
-
-    ⚠️ CRITICAL — MANDATORY LINKS: Each tool response starts with a labeled dataset link
-    (📊 **Dataset — {filters}:** ...). You MUST include these links in your reply.
-    When you call this tool multiple times with DIFFERENT filters, each response has a
-    DIFFERENT link. Include ALL unique links in your reply, each with its label. The
-    broadest link (fewest filters) represents the full dataset; narrower links represent
-    filtered subsets. Users need both to explore the data interactively.
 
     Examples:
         - US harmful interventions by year:
@@ -637,21 +595,17 @@ async def gta_count_interventions(params: GTACountInput) -> str:
             return result
 
     except ValueError as e:
-        return f"❌ Configuration Error: {str(e)}"
+        raise ToolError(f"Configuration Error: {str(e)}. Please ensure GTA_API_KEY is set.")
+    except ToolError:
+        raise
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
-            return (
-                "❌ Authentication Error: Invalid or expired API key.\n\n"
-                "Please check your GTA_API_KEY environment variable."
-            )
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
         elif "timeout" in error_msg.lower():
-            return (
-                "❌ Request timeout: The counts query took too long.\n\n"
-                "Try adding more specific filters to reduce the data set."
-            )
+            raise ToolError("Request timeout. Try adding more specific filters to reduce the data set.")
         else:
-            return f"❌ API Error: {error_msg}\n\nTry adjusting your count parameters or filters."
+            raise ToolError(f"API Error: {error_msg}. Try adjusting your count parameters or filters.")
 
 
 # ============================================================================
@@ -687,9 +641,9 @@ async def gta_lookup_hs_codes(search_term: str, max_results: int = 50) -> str:
     try:
         return search_hs_codes(search_term, max_results)
     except FileNotFoundError as e:
-        return f"❌ {str(e)}"
+        raise ToolError(str(e))
     except Exception as e:
-        return f"❌ Error searching HS codes: {str(e)}"
+        raise ToolError(f"Error searching HS codes: {str(e)}")
 
 
 @mcp.tool(
@@ -719,9 +673,9 @@ async def gta_lookup_sectors(search_term: str, max_results: int = 50) -> str:
     try:
         return search_sectors(search_term, max_results)
     except FileNotFoundError as e:
-        return f"❌ {str(e)}"
+        raise ToolError(str(e))
     except Exception as e:
-        return f"❌ Error searching sectors: {str(e)}"
+        raise ToolError(f"Error searching sectors: {str(e)}")
 
 
 # ============================================================================
@@ -966,7 +920,7 @@ def get_intervention_type(type_slug: str) -> str:
 @mcp.resource(
     "gta://guide/searching",
     name="Guide: How to Search the GTA Database",
-    description="Comprehensive guide to searching the GTA database effectively. Explains default sorting behavior, how to find recent data, common search patterns, and troubleshooting tips. READ THIS if you're having trouble finding recent interventions or getting unexpected results.",
+    description="Comprehensive guide to searching the GTA database effectively. Explains default sorting behavior, how to find recent data, common search patterns, troubleshooting tips, multi-pass workflow with detail levels, monitoring with update_period, pre-search lookups, and custom show_keys. READ THIS if you're having trouble finding recent interventions or getting unexpected results.",
     mime_type="text/markdown"
 )
 def get_search_guide() -> str:
@@ -1144,24 +1098,9 @@ def get_data_model_guide() -> str:
 
 
 @mcp.resource(
-	"gta://guide/analytical-caveats",
-	name="Guide: Analytical Caveats (Critical)",
-	description="15 critical caveats distilled from the GTA analytical configuration (549 rules). Covers: evaluation filter-only values (4/5 are groupings), Amber = likely harmful, India code 699 anomaly, MAST non-alphabetical IDs, what's NOT in the database, overcounting by sector/product, date semantics, publication lag, EU jurisdiction complexity, trade defence lifecycle, and more. READ THIS before interpreting GTA results.",
-	mime_type="text/markdown"
-)
-def get_analytical_caveats() -> str:
-	"""Return analytical caveats guide with critical interpretation rules.
-
-	Returns:
-		Markdown document with 15 critical caveats
-	"""
-	return load_analytical_caveats()
-
-
-@mcp.resource(
 	"gta://guide/common-mistakes",
-	name="Guide: Common Mistakes When Using GTA Data",
-	description="Quick-reference DO/DON'T checklist for agents. Covers evaluation filter usage, date field selection, counting pitfalls, database scope limitations, and data quality caveats. Consult before making analytical claims.",
+	name="Guide: Common Mistakes & Analytical Caveats",
+	description="Quick-reference DO/DON'T checklist plus 15 critical data caveats. Covers evaluation filter usage, date field selection, counting pitfalls, database scope limitations, India code anomaly, MAST non-alphabetical IDs, EU jurisdiction complexity, trade defence lifecycle, and more. Consult before making analytical claims or interpreting GTA results.",
 	mime_type="text/markdown"
 )
 def get_common_mistakes() -> str:
@@ -1186,21 +1125,6 @@ def get_glossary() -> str:
 		Markdown document defining key GTA terms
 	"""
 	return load_glossary()
-
-
-@mcp.resource(
-	"gta://guide/search-strategy",
-	name="Guide: Multi-Pass Search Strategy",
-	description="How to use detail_level and show_keys for efficient searching. Explains the overview→triage→detail workflow for handling large result sets, monitoring with update_period, and choosing the right detail level for different query types.",
-	mime_type="text/markdown"
-)
-def get_search_strategy() -> str:
-	"""Return search strategy guide for multi-pass workflow.
-
-	Returns:
-		Markdown guide explaining detail levels and search workflow
-	"""
-	return load_search_strategy()
 
 
 @mcp.resource(
