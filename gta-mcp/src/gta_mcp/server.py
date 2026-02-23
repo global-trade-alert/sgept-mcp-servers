@@ -112,18 +112,48 @@ KEY_PROFILES = {
 
 
 @mcp.tool(name="gta_search_interventions")
-async def gta_search_interventions(params: GTASearchInput):
+async def gta_search_interventions(
+    implementing_jurisdictions: list[str] | None = None,
+    affected_jurisdictions: list[str] | None = None,
+    affected_products: list[int] | None = None,
+    affected_sectors: list[str | int] | None = None,
+    intervention_types: list[str] | None = None,
+    mast_chapters: list[str] | None = None,
+    gta_evaluation: list[str] | None = None,
+    eligible_firms: list[str | int] | None = None,
+    implementation_levels: list[str | int] | None = None,
+    date_announced_gte: str | None = None,
+    date_announced_lte: str | None = None,
+    date_implemented_gte: str | None = None,
+    date_implemented_lte: str | None = None,
+    date_modified_gte: str | None = None,
+    date_modified_lte: str | None = None,
+    is_in_force: bool | None = None,
+    query: str | None = None,
+    detail_level: str | None = None,
+    sorting: str | None = "-date_announced",
+    show_keys: list[str] | None = None,
+    keep_affected: bool | None = None,
+    keep_implementer: bool | None = None,
+    keep_intervention_types: bool | None = None,
+    keep_mast_chapters: bool | None = None,
+    keep_implementation_level: bool | None = None,
+    keep_eligible_firms: bool | None = None,
+    keep_affected_sectors: bool | None = None,
+    keep_affected_products: bool | None = None,
+    keep_implementation_period_na: bool | None = None,
+    keep_revocation_na: bool | None = None,
+    intervention_id: list[int] | None = None,
+    keep_intervention_id: bool | None = None,
+    response_format: str = "markdown",
+    limit: int = 50,
+    offset: int = 0,
+):
     """Search and retrieve trade policy interventions from the Global Trade Alert database.
 
     THIS IS THE PRIMARY TOOL for finding, listing, and reading interventions. Use it when the user
     wants to see, browse, find, or analyse actual intervention records — including their titles,
     descriptions, dates, types, evaluations, and affected parties.
-
-    RELATED TOOLS:
-    - `gta_get_intervention` — fetch the FULL TEXT of a specific intervention by ID.
-      Use after this search to read what a measure actually says.
-    - `gta_count_interventions` — aggregate counts only (no records). Use for statistics.
-    - `gta_lookup_hs_codes` / `gta_lookup_sectors` — find product/sector codes before searching.
 
     Do NOT use `gta_count_interventions` when the user asks to see or read interventions.
     `gta_count_interventions` only returns aggregate numbers, not intervention records.
@@ -152,6 +182,7 @@ async def gta_search_interventions(params: GTASearchInput):
     Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
     gta://reference/mast-chapters, gta://reference/jurisdiction-groups
     """
+    params = GTASearchInput(**{k: v for k, v in locals().items()})
     try:
         client = get_api_client()
 
@@ -264,17 +295,16 @@ async def gta_search_interventions(params: GTASearchInput):
 
 
 @mcp.tool(name="gta_get_intervention")
-async def gta_get_intervention(params: GTAGetInterventionInput):
+async def gta_get_intervention(
+    intervention_id: int,
+    response_format: str = "markdown",
+):
     """Fetch the FULL TEXT and complete details for a specific GTA intervention by ID.
 
     USE THIS TOOL when the user asks to read, fetch, or see the text/description of a specific
     intervention. This is the only tool that returns the full intervention description, source
-    documents, and all metadata.
-
-    RELATED TOOLS:
-    - `gta_search_interventions` — find interventions first (returns summaries with IDs),
-      then use THIS tool to read the full text of specific ones.
-    - `gta_count_interventions` — aggregate counts only (no text, no records).
+    documents, and all metadata. `gta_search_interventions` returns summaries;
+    `gta_count_interventions` returns only aggregate counts — neither provides full text.
 
     Returns comprehensive data including description, sources, all affected countries and products,
     implementation timeline, and evaluation details.
@@ -294,6 +324,7 @@ async def gta_get_intervention(params: GTAGetInterventionInput):
         - Get full details for intervention 138295 (EU tariff changes)
         - Fetch complete source documentation for a specific measure
     """
+    params = GTAGetInterventionInput(**{k: v for k, v in locals().items()})
     try:
         client = get_api_client()
 
@@ -324,7 +355,14 @@ async def gta_get_intervention(params: GTAGetInterventionInput):
 
 
 @mcp.tool(name="gta_list_ticker_updates")
-async def gta_list_ticker_updates(params: GTATickerInput):
+async def gta_list_ticker_updates(
+    implementing_jurisdictions: list[str] | None = None,
+    intervention_types: list[str] | None = None,
+    date_modified_gte: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    response_format: str = "markdown",
+):
     """Get recent text updates to existing GTA interventions via the ticker endpoint.
 
     The ticker provides updates when intervention descriptions or details are modified,
@@ -350,6 +388,7 @@ async def gta_list_ticker_updates(params: GTATickerInput):
         - Get updates from the last week
         - Track changes to US trade measures
     """
+    params = GTATickerInput(**{k: v for k, v in locals().items()})
     try:
         client = get_api_client()
 
@@ -397,13 +436,20 @@ async def gta_list_ticker_updates(params: GTATickerInput):
 
 
 @mcp.tool(name="gta_get_impact_chains")
-async def gta_get_impact_chains(params: GTAImpactChainInput):
+async def gta_get_impact_chains(
+    granularity: str,
+    implementing_jurisdictions: list[str] | None = None,
+    affected_jurisdictions: list[str] | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    response_format: str = "markdown",
+):
     """Extract granular impact chains showing implementing-product/sector-affected jurisdiction tuples.
-    
+
     Unlike the main data endpoint which aggregates data, impact chains provide unaggregated
     relationships between implementing jurisdictions, affected products/sectors, and affected
     jurisdictions. Essential for bilateral trade flow analysis and detailed impact assessment.
-    
+
     Args:
         params (GTAImpactChainInput): Parameters including:
             - granularity: 'product' for HS codes or 'sector' for broader categories (required)
@@ -412,14 +458,15 @@ async def gta_get_impact_chains(params: GTAImpactChainInput):
             - limit: Max results (1-1000, default 50)
             - offset: Pagination offset (default 0)
             - response_format: 'markdown' (default) or 'json'
-    
+
     Returns:
         str: Granular impact chain data showing specific jurisdiction-product-jurisdiction relationships.
-    
+
     Examples:
         - Get product-level impact chains for US implementing jurisdictions
         - Analyze sector-level impacts on EU countries
     """
+    params = GTAImpactChainInput(**{k: v for k, v in locals().items()})
     try:
         client = get_api_client()
 
@@ -456,20 +503,44 @@ async def gta_get_impact_chains(params: GTAImpactChainInput):
 
 
 @mcp.tool(name="gta_count_interventions")
-async def gta_count_interventions(params: GTACountInput):
+async def gta_count_interventions(
+    count_by: list[str],
+    count_variable: str = "intervention_id",
+    implementing_jurisdictions: list[str] | None = None,
+    affected_jurisdictions: list[str] | None = None,
+    affected_products: list[int] | None = None,
+    affected_sectors: list[str | int] | None = None,
+    intervention_types: list[str] | None = None,
+    mast_chapters: list[str] | None = None,
+    gta_evaluation: list[str] | None = None,
+    eligible_firms: list[str | int] | None = None,
+    implementation_levels: list[str | int] | None = None,
+    date_announced_gte: str | None = None,
+    date_announced_lte: str | None = None,
+    date_implemented_gte: str | None = None,
+    date_implemented_lte: str | None = None,
+    date_removed_gte: str | None = None,
+    date_removed_lte: str | None = None,
+    affected_flow: list[int] | None = None,
+    is_in_force: bool | None = None,
+    query: str | None = None,
+    keep_affected: bool | None = None,
+    keep_implementer: bool | None = None,
+    keep_intervention_types: bool | None = None,
+    keep_mast_chapters: bool | None = None,
+    keep_implementation_level: bool | None = None,
+    keep_eligible_firms: bool | None = None,
+    keep_affected_sectors: bool | None = None,
+    keep_affected_products: bool | None = None,
+    intervention_id: list[int] | None = None,
+    keep_intervention_id: bool | None = None,
+    response_format: str = "markdown",
+):
     """Count and aggregate trade policy interventions by one or more dimensions.
 
     ONLY use this tool when the user explicitly asks for counts, totals, statistics, or
     numerical breakdowns. This tool returns ONLY aggregate numbers — it does NOT return
     intervention titles, descriptions, text, or any individual intervention data.
-
-    RELATED TOOLS (use these for non-count queries):
-    - `gta_search_interventions` — browse/list actual intervention records with titles,
-      types, dates, affected countries. Returns up to 1000 records per call.
-    - `gta_get_intervention` — fetch the FULL TEXT and complete details of a specific
-      intervention by ID. Use after search to read what a measure actually says.
-    - `gta_lookup_hs_codes` — find HS product codes by keyword before searching.
-    - `gta_lookup_sectors` — find CPC sector codes by keyword before searching.
 
     Use this tool for summary statistics and breakdowns such as:
     - "How many harmful interventions has the US announced per year?"
@@ -505,6 +576,7 @@ async def gta_count_interventions(params: GTACountInput):
         - Subsidies by implementing country:
           count_by=['implementer'], mast_chapters=['L']
     """
+    params = GTACountInput(**{k: v for k, v in locals().items()})
     try:
         # Get API client
         client = get_api_client()

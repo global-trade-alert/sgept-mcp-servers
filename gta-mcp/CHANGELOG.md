@@ -5,10 +5,15 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-02-23
+
+### Fixed
+- **Claude Desktop tool discovery (root cause)**: Flattened all 5 Pydantic-wrapped tool signatures to use direct function parameters instead of `params: PydanticModel`. This eliminates `$defs`/`$ref` from all JSON schemas, reducing total tool definition size from 50KB to 19KB. Claude Desktop silently dropped tools whose schemas used `$defs`/`$ref` references. All 7 tools now produce clean, flat JSON schemas with zero `$defs`/`$ref`.
+
 ## [0.5.1] - 2026-02-23
 
 ### Fixed
-- **Claude Desktop tool discovery**: Removed `annotations` and `outputSchema` from all 7 tool definitions. These newer MCP spec features caused some clients to silently drop tools from the available tool list. All tools now use minimal decorator syntax (`@mcp.tool(name=...)`) with no return type annotations, ensuring maximum client compatibility.
+- **Claude Desktop tool discovery (partial)**: Removed `annotations` and `outputSchema` from all 7 tool definitions. These newer MCP spec features caused some clients to silently drop tools from the available tool list. All tools now use minimal decorator syntax (`@mcp.tool(name=...)`) with no return type annotations, ensuring maximum client compatibility.
 - **Pinned mcp SDK**: Constrained `mcp>=1.0.0,<2.0.0` to prevent future breaking changes from upstream SDK updates affecting tool serialization.
 
 ## [0.5.0] - 2026-02-21
@@ -103,7 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.5.1** (2026-02-23): Fix Claude Desktop tool discovery — remove annotations/outputSchema, pin mcp SDK
+- **0.5.2** (2026-02-23): Fix Claude Desktop tool discovery — flatten all tool schemas to eliminate $defs/$ref
+- **0.5.1** (2026-02-23): Remove annotations/outputSchema, pin mcp SDK (partial fix)
 - **0.5.0** (2026-02-21): ToolError handling, server instructions, resource consolidation, unit tests, remove deprecated JWT auth
 - **0.4.3** (2026-02-14): Fix false "Removed" status on pending interventions
 - **0.4.2** (2026-02-14): Comprehensive analysis prompt, tool routing fix
