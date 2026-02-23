@@ -8,8 +8,6 @@ from mcp.server.fastmcp import FastMCP
 from .models import (
     GTASearchInput,
     GTAGetInterventionInput,
-    GTATickerInput,
-    GTAImpactChainInput,
     GTACountInput,
     ResponseFormat
 )
@@ -20,7 +18,6 @@ from .formatters import (
     format_interventions_json,
     format_interventions_overview,
     format_intervention_detail_markdown,
-    format_ticker_markdown,
     format_counts_markdown,
     format_counts_json,
     CHARACTER_LIMIT
@@ -111,6 +108,203 @@ KEY_PROFILES = {
 
 
 
+# ============================================================================
+# Lookup Tools - Product & Sector Code Discovery (registered first — small)
+# ============================================================================
+
+
+@mcp.tool(name="gta_lookup_hs_codes")
+async def gta_lookup_hs_codes(search_term: str, max_results: int = 50):
+    """Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix.
+
+Use BEFORE gta_search_interventions when the user asks about specific commodities or products.
+Returns matching codes across all 3 levels (chapters, headings, subheadings) with the numeric
+IDs needed for the affected_products filter.
+
+Examples:
+    - search_term='lithium' → finds HS 282520, 283691, etc.
+    - search_term='28' → lists all codes in chapter 28 (inorganic chemicals)
+    - search_term='8541' → lists subheadings under heading 8541 (semiconductors)
+    - search_term='steel' → finds relevant iron/steel HS codes
+
+Returns a markdown table with codes and a ready-to-use affected_products list.
+"""
+    try:
+        return search_hs_codes(search_term, max_results)
+    except FileNotFoundError as e:
+        raise ToolError(str(e))
+    except Exception as e:
+        raise ToolError(f"Error searching HS codes: {str(e)}")
+
+
+@mcp.tool(name="gta_lookup_sectors")
+async def gta_lookup_sectors(search_term: str, max_results: int = 50):
+    """Search CPC (Central Product Classification) sector codes by keyword or code prefix.
+
+Use BEFORE gta_search_interventions when the user asks about services or broad sector
+categories. Returns matching sectors with IDs for the affected_sectors filter.
+CPC ID >= 500 = services, ID < 500 = goods.
+
+Examples:
+    - search_term='financial' → finds CPC 711, 715, 717
+    - search_term='71' → lists all sectors in division 71 (financial services)
+    - search_term='transport' → finds transport-related CPC sectors
+
+Returns a markdown table with codes and a ready-to-use affected_sectors list.
+"""
+    try:
+        return search_sectors(search_term, max_results)
+    except FileNotFoundError as e:
+        raise ToolError(str(e))
+    except Exception as e:
+        raise ToolError(f"Error searching sectors: {str(e)}")
+
+
+# ============================================================================
+# Core Tools - Count, Get, Search (registered last — highest priority)
+# ============================================================================
+
+
+@mcp.tool(name="gta_count_interventions")
+async def gta_count_interventions(
+    count_by: list[str],
+    count_variable: str = "intervention_id",
+    implementing_jurisdictions: list[str] | None = None,
+    affected_jurisdictions: list[str] | None = None,
+    affected_products: list[int] | None = None,
+    affected_sectors: list[str | int] | None = None,
+    intervention_types: list[str] | None = None,
+    mast_chapters: list[str] | None = None,
+    gta_evaluation: list[str] | None = None,
+    date_announced_gte: str | None = None,
+    date_announced_lte: str | None = None,
+    is_in_force: bool | None = None,
+    query: str | None = None,
+    response_format: str = "markdown",
+):
+    """Count and aggregate trade policy interventions by one or more dimensions.
+
+ONLY use this tool when the user explicitly asks for counts, totals, statistics, or
+numerical breakdowns. This tool returns ONLY aggregate numbers — it does NOT return
+intervention titles, descriptions, text, or any individual intervention data.
+
+count_by dimensions: date_announced_year, date_implemented_year, gta_evaluation,
+intervention_type, implementer, mast_chapter, affected, product, sector.
+
+gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
+Use 'Harmful' as shorthand for Red+Amber.
+
+Examples:
+    - US harmful interventions by year:
+      count_by=['date_announced_year'], implementing_jurisdictions=['USA'],
+      gta_evaluation=['Red']
+    - Subsidies by implementing country:
+      count_by=['implementer'], mast_chapters=['L']
+"""
+    params = GTACountInput(**{k: v for k, v in locals().items()})
+    try:
+        # Get API client
+        client = get_api_client()
+
+        # Build count-specific filters
+        filter_params = params.model_dump(
+            exclude={'count_by', 'count_variable', 'response_format'}
+        )
+        filters, filter_messages = build_count_filters(filter_params)
+
+        # Make API request (now uses API key auth via self.headers)
+        data = await client.count_interventions(
+            count_by=list(params.count_by),
+            count_variable=params.count_variable,
+            filters=filters,
+        )
+
+        # Format response
+        if params.response_format == ResponseFormat.MARKDOWN:
+            formatted_response = format_counts_markdown(
+                data=data,
+                count_by=list(params.count_by),
+                count_variable=params.count_variable,
+                filter_messages=filter_messages,
+            )
+            # Dataset links: header at TOP (high visibility), full section at bottom
+            links_header = make_dataset_links_header(filters, filter_params)
+            if links_header:
+                formatted_response = links_header + "\n\n" + formatted_response
+                formatted_response += "\n\n" + make_dataset_links_section(filters, filter_params)
+            return formatted_response
+        else:
+            result = format_counts_json(
+                data=data,
+                count_by=list(params.count_by),
+                count_variable=params.count_variable,
+            )
+            dataset_urls = build_dataset_urls(filters, filter_params)
+            if dataset_urls:
+                result_dict = json.loads(result)
+                result_dict["dataset_urls"] = dataset_urls
+                result = json.dumps(result_dict, indent=2, ensure_ascii=False)
+            return result
+
+    except ValueError as e:
+        raise ToolError(f"Configuration Error: {str(e)}. Please ensure GTA_API_KEY is set.")
+    except ToolError:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "403" in error_msg:
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
+        elif "timeout" in error_msg.lower():
+            raise ToolError("Request timeout. Try adding more specific filters to reduce the data set.")
+        else:
+            raise ToolError(f"API Error: {error_msg}. Try adjusting your count parameters or filters.")
+
+
+@mcp.tool(name="gta_get_intervention")
+async def gta_get_intervention(
+    intervention_id: int,
+    response_format: str = "markdown",
+):
+    """Fetch the FULL TEXT and complete details for a specific GTA intervention by ID.
+
+Use this when the user asks to read, fetch, or see the text/description of a specific
+intervention. Returns full description, sources, all affected countries and products,
+implementation timeline, and evaluation details.
+
+Examples:
+    - "Show me intervention 138295" → use this tool
+    - "What does intervention 138295 say?" → use this tool
+"""
+    params = GTAGetInterventionInput(**{k: v for k, v in locals().items()})
+    try:
+        client = get_api_client()
+
+        # Fetch intervention
+        intervention = await client.get_intervention(params.intervention_id)
+
+        # Wrap single intervention in expected format for formatters
+        data = {"results": [intervention]}
+
+        # Format response
+        if params.response_format == ResponseFormat.MARKDOWN:
+            return format_intervention_detail_markdown(data)
+        else:
+            return format_interventions_json(data)
+
+    except ValueError as e:
+        if "not found" in str(e):
+            raise ToolError(f"Intervention {params.intervention_id} not found in GTA database.")
+        raise ToolError(str(e))
+    except ToolError:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "403" in error_msg:
+            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
+        else:
+            raise ToolError(f"API Error: {error_msg}")
+
+
 @mcp.tool(name="gta_search_interventions")
 async def gta_search_interventions(
     implementing_jurisdictions: list[str] | None = None,
@@ -120,68 +314,38 @@ async def gta_search_interventions(
     intervention_types: list[str] | None = None,
     mast_chapters: list[str] | None = None,
     gta_evaluation: list[str] | None = None,
-    eligible_firms: list[str | int] | None = None,
-    implementation_levels: list[str | int] | None = None,
     date_announced_gte: str | None = None,
     date_announced_lte: str | None = None,
-    date_implemented_gte: str | None = None,
-    date_implemented_lte: str | None = None,
-    date_modified_gte: str | None = None,
-    date_modified_lte: str | None = None,
     is_in_force: bool | None = None,
     query: str | None = None,
     detail_level: str | None = None,
     sorting: str | None = "-date_announced",
-    show_keys: list[str] | None = None,
-    keep_affected: bool | None = None,
-    keep_implementer: bool | None = None,
-    keep_intervention_types: bool | None = None,
-    keep_mast_chapters: bool | None = None,
-    keep_implementation_level: bool | None = None,
-    keep_eligible_firms: bool | None = None,
-    keep_affected_sectors: bool | None = None,
-    keep_affected_products: bool | None = None,
-    keep_implementation_period_na: bool | None = None,
-    keep_revocation_na: bool | None = None,
     intervention_id: list[int] | None = None,
-    keep_intervention_id: bool | None = None,
     response_format: str = "markdown",
     limit: int = 50,
     offset: int = 0,
 ):
     """Search and retrieve trade policy interventions from the Global Trade Alert database.
 
-    THIS IS THE PRIMARY TOOL for finding, listing, and reading interventions. Use it when the user
-    wants to see, browse, find, or analyse actual intervention records — including their titles,
-    descriptions, dates, types, evaluations, and affected parties.
+THIS IS THE PRIMARY TOOL for finding, listing, and reading interventions. Use it when the user
+wants to see, browse, find, or analyse actual intervention records — including their titles,
+descriptions, dates, types, evaluations, and affected parties.
 
-    Do NOT use `gta_count_interventions` when the user asks to see or read interventions.
-    `gta_count_interventions` only returns aggregate numbers, not intervention records.
+Do NOT use gta_count_interventions when the user asks to see or read interventions.
 
-    Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
+Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
+For commodity/product queries, use gta_lookup_hs_codes first. For services, use gta_lookup_sectors.
 
-    BEFORE calling this tool:
-    - For commodity/product queries → use `gta_lookup_hs_codes` to find HS product codes
-    - For service/sector queries → use `gta_lookup_sectors` to find CPC sector codes
-    - For country groups (G20, EU, BRICS) → see gta://reference/jurisdiction-groups
-    - For mapping concepts to filters → see gta://guide/query-intent-mapping
+gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
+Use 'Harmful' as shorthand for Red+Amber.
 
-    Key filters: implementing_jurisdictions, affected_products, mast_chapters, intervention_types,
-    gta_evaluation, date_announced_gte. Use 'query' ONLY for named entities (companies, programs).
-
-    gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
-    Use 'Harmful' as shorthand for Red+Amber.
-
-    Examples:
-        - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
-          intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
-        - Subsidies: mast_chapters=['L']
-        - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
-          then mast_chapters=['P'], affected_products=[282520, 283691, ...]
-
-    Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
-    gta://reference/mast-chapters, gta://reference/jurisdiction-groups
-    """
+Examples:
+    - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
+      intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
+    - Subsidies: mast_chapters=['L']
+    - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
+      then mast_chapters=['P'], affected_products=[282520, 283691, ...]
+"""
     params = GTASearchInput(**{k: v for k, v in locals().items()})
     try:
         client = get_api_client()
@@ -277,7 +441,7 @@ async def gta_search_interventions(
             if dataset_urls:
                 data["dataset_urls"] = dataset_urls
             return format_interventions_json(data)
-            
+
     except ValueError as e:
         raise ToolError(f"Configuration Error: {str(e)}. Please ensure GTA_API_KEY is set.")
     except ToolError:
@@ -292,399 +456,6 @@ async def gta_search_interventions(
             raise ToolError("Request timeout. Try reducing the limit or adding more specific filters.")
         else:
             raise ToolError(f"API Error: {error_msg}. Try adjusting your search parameters.")
-
-
-@mcp.tool(name="gta_get_intervention")
-async def gta_get_intervention(
-    intervention_id: int,
-    response_format: str = "markdown",
-):
-    """Fetch the FULL TEXT and complete details for a specific GTA intervention by ID.
-
-    USE THIS TOOL when the user asks to read, fetch, or see the text/description of a specific
-    intervention. This is the only tool that returns the full intervention description, source
-    documents, and all metadata. `gta_search_interventions` returns summaries;
-    `gta_count_interventions` returns only aggregate counts — neither provides full text.
-
-    Returns comprehensive data including description, sources, all affected countries and products,
-    implementation timeline, and evaluation details.
-
-    Args:
-        params (GTAGetInterventionInput): Parameters including:
-            - intervention_id: The unique GTA intervention ID (required)
-            - response_format: 'markdown' (default) or 'json'
-
-    Returns:
-        str: Complete intervention details with all metadata, formatted per response_format.
-             Includes full description, all sources, jurisdictions, products, and timeline.
-
-    Examples:
-        - "Show me the text of intervention 138295" → use this tool
-        - "What does intervention 138295 say?" → use this tool
-        - Get full details for intervention 138295 (EU tariff changes)
-        - Fetch complete source documentation for a specific measure
-    """
-    params = GTAGetInterventionInput(**{k: v for k, v in locals().items()})
-    try:
-        client = get_api_client()
-
-        # Fetch intervention
-        intervention = await client.get_intervention(params.intervention_id)
-
-        # Wrap single intervention in expected format for formatters
-        data = {"results": [intervention]}
-
-        # Format response
-        if params.response_format == ResponseFormat.MARKDOWN:
-            return format_intervention_detail_markdown(data)
-        else:
-            return format_interventions_json(data)
-            
-    except ValueError as e:
-        if "not found" in str(e):
-            raise ToolError(f"Intervention {params.intervention_id} not found in GTA database.")
-        raise ToolError(str(e))
-    except ToolError:
-        raise
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "403" in error_msg:
-            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
-        else:
-            raise ToolError(f"API Error: {error_msg}")
-
-
-@mcp.tool(name="gta_list_ticker_updates")
-async def gta_list_ticker_updates(
-    implementing_jurisdictions: list[str] | None = None,
-    intervention_types: list[str] | None = None,
-    date_modified_gte: str | None = None,
-    limit: int = 50,
-    offset: int = 0,
-    response_format: str = "markdown",
-):
-    """Get recent text updates to existing GTA interventions via the ticker endpoint.
-
-    The ticker provides updates when intervention descriptions or details are modified,
-    showing what changed without needing to re-fetch full intervention data. Useful
-    for monitoring policy evolution and tracking changes to existing measures.
-
-    Args:
-        params (GTATickerInput): Parameters including:
-            - implementing_jurisdictions: Filter by implementing country ISO codes
-            - intervention_types: Filter by intervention types
-            - date_modified_gte: Updates modified on or after this date (YYYY-MM-DD)
-            - limit: Max results (1-1000, default 50)
-            - offset: Pagination offset (default 0)
-            - response_format: 'markdown' (default) or 'json'
-
-    Returns:
-        str: List of ticker updates with modification dates, intervention IDs, and update text.
-
-    Note: GTA entries are created by analysts after policy implementation. Recent entries may not
-    yet appear. Use overlapping scan windows (e.g., 8-day window for weekly monitoring) to avoid gaps.
-
-    Examples:
-        - Get updates from the last week
-        - Track changes to US trade measures
-    """
-    params = GTATickerInput(**{k: v for k, v in locals().items()})
-    try:
-        client = get_api_client()
-
-        # Build filter dictionary and get informational messages
-        filters, filter_messages = build_filters(params.model_dump(exclude={'limit', 'offset', 'response_format'}))
-
-        # Make API request
-        results = await client.get_ticker_updates(
-            filters=filters,
-            limit=params.limit,
-            offset=params.offset
-        )
-
-        # Wrap response in expected format for formatters
-        # Ticker API returns a list directly, not a dict
-        if isinstance(results, list):
-            data = {
-                "results": results,
-                "count": len(results),
-                "next": None if len(results) < params.limit else f"Use offset={params.offset + params.limit}",
-                "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - params.limit)}"
-            }
-        else:
-            data = results
-
-        # Format response
-        if params.response_format == ResponseFormat.MARKDOWN:
-            formatted_response = format_ticker_markdown(data)
-            # Prepend filter messages if any
-            if filter_messages:
-                message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
-                formatted_response = f"{message_section}\n\n{formatted_response}"
-            return formatted_response
-        else:
-            return json.dumps(data, indent=2, ensure_ascii=False)
-            
-    except ToolError:
-        raise
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "403" in error_msg:
-            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
-        else:
-            raise ToolError(f"API Error: {error_msg}")
-
-
-@mcp.tool(name="gta_get_impact_chains")
-async def gta_get_impact_chains(
-    granularity: str,
-    implementing_jurisdictions: list[str] | None = None,
-    affected_jurisdictions: list[str] | None = None,
-    limit: int = 50,
-    offset: int = 0,
-    response_format: str = "markdown",
-):
-    """Extract granular impact chains showing implementing-product/sector-affected jurisdiction tuples.
-
-    Unlike the main data endpoint which aggregates data, impact chains provide unaggregated
-    relationships between implementing jurisdictions, affected products/sectors, and affected
-    jurisdictions. Essential for bilateral trade flow analysis and detailed impact assessment.
-
-    Args:
-        params (GTAImpactChainInput): Parameters including:
-            - granularity: 'product' for HS codes or 'sector' for broader categories (required)
-            - implementing_jurisdictions: Filter by implementing country ISO codes
-            - affected_jurisdictions: Filter by affected country ISO codes
-            - limit: Max results (1-1000, default 50)
-            - offset: Pagination offset (default 0)
-            - response_format: 'markdown' (default) or 'json'
-
-    Returns:
-        str: Granular impact chain data showing specific jurisdiction-product-jurisdiction relationships.
-
-    Examples:
-        - Get product-level impact chains for US implementing jurisdictions
-        - Analyze sector-level impacts on EU countries
-    """
-    params = GTAImpactChainInput(**{k: v for k, v in locals().items()})
-    try:
-        client = get_api_client()
-
-        # Build filter dictionary and get informational messages
-        filters, filter_messages = build_filters(
-            params.model_dump(exclude={'granularity', 'limit', 'offset', 'response_format'})
-        )
-
-        # Make API request
-        data = await client.get_impact_chains(
-            granularity=params.granularity,
-            filters=filters,
-            limit=params.limit,
-            offset=params.offset
-        )
-
-        # Add filter messages to response if any
-        if filter_messages:
-            data["filter_messages"] = filter_messages
-
-        # Format response (JSON is most useful for impact chains)
-        return json.dumps(data, indent=2, ensure_ascii=False)
-        
-    except ToolError:
-        raise
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "403" in error_msg:
-            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
-        elif "404" in error_msg:
-            raise ToolError(f"Endpoint not found for granularity '{params.granularity}'. Valid options: 'product' or 'sector'.")
-        else:
-            raise ToolError(f"API Error: {error_msg}")
-
-
-@mcp.tool(name="gta_count_interventions")
-async def gta_count_interventions(
-    count_by: list[str],
-    count_variable: str = "intervention_id",
-    implementing_jurisdictions: list[str] | None = None,
-    affected_jurisdictions: list[str] | None = None,
-    affected_products: list[int] | None = None,
-    affected_sectors: list[str | int] | None = None,
-    intervention_types: list[str] | None = None,
-    mast_chapters: list[str] | None = None,
-    gta_evaluation: list[str] | None = None,
-    eligible_firms: list[str | int] | None = None,
-    implementation_levels: list[str | int] | None = None,
-    date_announced_gte: str | None = None,
-    date_announced_lte: str | None = None,
-    date_implemented_gte: str | None = None,
-    date_implemented_lte: str | None = None,
-    date_removed_gte: str | None = None,
-    date_removed_lte: str | None = None,
-    affected_flow: list[int] | None = None,
-    is_in_force: bool | None = None,
-    query: str | None = None,
-    keep_affected: bool | None = None,
-    keep_implementer: bool | None = None,
-    keep_intervention_types: bool | None = None,
-    keep_mast_chapters: bool | None = None,
-    keep_implementation_level: bool | None = None,
-    keep_eligible_firms: bool | None = None,
-    keep_affected_sectors: bool | None = None,
-    keep_affected_products: bool | None = None,
-    intervention_id: list[int] | None = None,
-    keep_intervention_id: bool | None = None,
-    response_format: str = "markdown",
-):
-    """Count and aggregate trade policy interventions by one or more dimensions.
-
-    ONLY use this tool when the user explicitly asks for counts, totals, statistics, or
-    numerical breakdowns. This tool returns ONLY aggregate numbers — it does NOT return
-    intervention titles, descriptions, text, or any individual intervention data.
-
-    Use this tool for summary statistics and breakdowns such as:
-    - "How many harmful interventions has the US announced per year?"
-    - "Count of subsidies by type and evaluation"
-    - "What is the total number of interventions per MAST chapter?"
-
-    Key parameters:
-    - count_by: Dimensions to group by (e.g., ['date_announced_year', 'gta_evaluation'])
-    - count_variable: What to count ('intervention_id' or 'state_act_id')
-    - All standard filter parameters (jurisdictions, dates, types, etc.)
-
-    Common count_by dimensions:
-    - date_announced_year / date_implemented_year: Annual trends
-    - gta_evaluation: Harmful vs liberalizing split
-    - intervention_type: By specific measure type
-    - implementer: By implementing country
-    - mast_chapter: By broad policy category
-    - affected: By affected country
-
-    ⚠️ When counting by sector or product (count_by includes 'sector', 'product', etc.), results
-    show intervention-sector/product COMBINATIONS, not unique interventions. A single intervention
-    affecting 50 HS codes appears 50 times. To count unique interventions, use count_by dimensions
-    that don't expand (e.g., 'implementer', 'date_announced_year', 'gta_evaluation').
-
-    Examples:
-        - US harmful interventions by year:
-          count_by=['date_announced_year'], implementing_jurisdictions=['USA'],
-          gta_evaluation=['Red']
-
-        - Cross-tab of year vs evaluation for all countries:
-          count_by=['date_announced_year', 'gta_evaluation']
-
-        - Subsidies by implementing country:
-          count_by=['implementer'], mast_chapters=['L']
-    """
-    params = GTACountInput(**{k: v for k, v in locals().items()})
-    try:
-        # Get API client
-        client = get_api_client()
-
-        # Build count-specific filters
-        filter_params = params.model_dump(
-            exclude={'count_by', 'count_variable', 'response_format'}
-        )
-        filters, filter_messages = build_count_filters(filter_params)
-
-        # Make API request (now uses API key auth via self.headers)
-        data = await client.count_interventions(
-            count_by=list(params.count_by),
-            count_variable=params.count_variable,
-            filters=filters,
-        )
-
-        # Format response
-        if params.response_format == ResponseFormat.MARKDOWN:
-            formatted_response = format_counts_markdown(
-                data=data,
-                count_by=list(params.count_by),
-                count_variable=params.count_variable,
-                filter_messages=filter_messages,
-            )
-            # Dataset links: header at TOP (high visibility), full section at bottom
-            links_header = make_dataset_links_header(filters, filter_params)
-            if links_header:
-                formatted_response = links_header + "\n\n" + formatted_response
-                formatted_response += "\n\n" + make_dataset_links_section(filters, filter_params)
-            return formatted_response
-        else:
-            result = format_counts_json(
-                data=data,
-                count_by=list(params.count_by),
-                count_variable=params.count_variable,
-            )
-            dataset_urls = build_dataset_urls(filters, filter_params)
-            if dataset_urls:
-                result_dict = json.loads(result)
-                result_dict["dataset_urls"] = dataset_urls
-                result = json.dumps(result_dict, indent=2, ensure_ascii=False)
-            return result
-
-    except ValueError as e:
-        raise ToolError(f"Configuration Error: {str(e)}. Please ensure GTA_API_KEY is set.")
-    except ToolError:
-        raise
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "403" in error_msg:
-            raise ToolError("Authentication Error: Invalid or expired API key. Check your GTA_API_KEY.")
-        elif "timeout" in error_msg.lower():
-            raise ToolError("Request timeout. Try adding more specific filters to reduce the data set.")
-        else:
-            raise ToolError(f"API Error: {error_msg}. Try adjusting your count parameters or filters.")
-
-
-# ============================================================================
-# Lookup Tools - Product & Sector Code Discovery
-# ============================================================================
-
-
-@mcp.tool(name="gta_lookup_hs_codes")
-async def gta_lookup_hs_codes(search_term: str, max_results: int = 50):
-    """Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix.
-
-    Use BEFORE gta_search_interventions when the user asks about specific commodities or products.
-    Returns matching codes across all 3 levels (chapters, headings, subheadings) with the numeric
-    IDs needed for the affected_products filter.
-
-    Examples:
-        - search_term='lithium' → finds HS 282520, 283691, etc.
-        - search_term='28' → lists all codes in chapter 28 (inorganic chemicals)
-        - search_term='8541' → lists subheadings under heading 8541 (semiconductors)
-        - search_term='steel' → finds relevant iron/steel HS codes
-
-    Returns a markdown table with codes and a ready-to-use affected_products list.
-    """
-    try:
-        return search_hs_codes(search_term, max_results)
-    except FileNotFoundError as e:
-        raise ToolError(str(e))
-    except Exception as e:
-        raise ToolError(f"Error searching HS codes: {str(e)}")
-
-
-@mcp.tool(name="gta_lookup_sectors")
-async def gta_lookup_sectors(search_term: str, max_results: int = 50):
-    """Search CPC (Central Product Classification) sector codes by keyword or code prefix.
-
-    Use BEFORE gta_search_interventions when the user asks about services or broad sector
-    categories. Returns matching sectors with IDs for the affected_sectors filter.
-    CPC ID >= 500 = services, ID < 500 = goods.
-
-    Examples:
-        - search_term='financial' → finds CPC 711, 715, 717
-        - search_term='71' → lists all sectors in division 71 (financial services)
-        - search_term='transport' → finds transport-related CPC sectors
-
-    Returns a markdown table with codes and a ready-to-use affected_sectors list.
-    """
-    try:
-        return search_sectors(search_term, max_results)
-    except FileNotFoundError as e:
-        raise ToolError(str(e))
-    except Exception as e:
-        raise ToolError(f"Error searching sectors: {str(e)}")
 
 
 # ============================================================================
