@@ -5,19 +5,6 @@ All notable changes to the GTA MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.3] - 2026-02-23
-
-### Fixed
-- **Claude Desktop tool budget limit**: Reduced total tool definition size from 20KB to 9KB (55% reduction). Claude Desktop silently drops tools when the combined tool definitions across all MCP servers exceed a budget (~100KB). With 12 active MCP servers, GTA's 20KB share was too large — only the last 3 of 7 tools survived. Fix: removed 2 rarely-used tools (ticker, impact_chains), trimmed 18 parameters from search and 17 from count, shortened all descriptions. Result: 5 tools at 9KB total, well within budget.
-
-### Changed
-- **Tool registration order**: Lookup tools registered first, core tools (count, get, search) registered last. Ensures highest-priority tools survive any client-side tool budget trimming.
-
-### Removed
-- **Ticker tool** (`gta_list_ticker_updates`): Removed from tool interface to save budget. Monitoring can be done via `gta_search_interventions` with `date_modified_gte` or `sorting='-last_updated'`.
-- **Impact chains tool** (`gta_get_impact_chains`): Removed from tool interface. This niche analytical tool was rarely used via Claude Desktop.
-- **Advanced search/count parameters**: Removed `keep_*` exclusion filters (11), `eligible_firms`, `implementation_levels`, `show_keys`, `date_modified_*`, `date_implemented_*` from search tool; similar reduction for count tool. These parameters remain in the Pydantic models but are not exposed in the MCP tool schema. Advanced filtering is documented in resources.
-
 ## [0.5.2] - 2026-02-23
 
 ### Fixed
@@ -121,7 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.5.3** (2026-02-23): Fix Claude Desktop tool budget — reduce from 7 tools/20KB to 5 tools/9KB
 - **0.5.2** (2026-02-23): Fix Claude Desktop tool discovery — flatten all tool schemas to eliminate $defs/$ref
 - **0.5.1** (2026-02-23): Remove annotations/outputSchema, pin mcp SDK (partial fix)
 - **0.5.0** (2026-02-21): ToolError handling, server instructions, resource consolidation, unit tests, remove deprecated JWT auth
