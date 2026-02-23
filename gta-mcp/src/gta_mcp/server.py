@@ -111,17 +111,8 @@ KEY_PROFILES = {
 
 
 
-@mcp.tool(
-    name="gta_search_interventions",
-    annotations={
-        "title": "Search GTA Trade Interventions",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": True
-    }
-)
-async def gta_search_interventions(params: GTASearchInput) -> str:
+@mcp.tool(name="gta_search_interventions")
+async def gta_search_interventions(params: GTASearchInput):
     """Search and retrieve trade policy interventions from the Global Trade Alert database.
 
     THIS IS THE PRIMARY TOOL for finding, listing, and reading interventions. Use it when the user
@@ -272,17 +263,8 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
             raise ToolError(f"API Error: {error_msg}. Try adjusting your search parameters.")
 
 
-@mcp.tool(
-    name="gta_get_intervention",
-    annotations={
-        "title": "Get Detailed GTA Intervention",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": True
-    }
-)
-async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
+@mcp.tool(name="gta_get_intervention")
+async def gta_get_intervention(params: GTAGetInterventionInput):
     """Fetch the FULL TEXT and complete details for a specific GTA intervention by ID.
 
     USE THIS TOOL when the user asks to read, fetch, or see the text/description of a specific
@@ -341,17 +323,8 @@ async def gta_get_intervention(params: GTAGetInterventionInput) -> str:
             raise ToolError(f"API Error: {error_msg}")
 
 
-@mcp.tool(
-    name="gta_list_ticker_updates",
-    annotations={
-        "title": "List GTA Ticker Updates",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": True
-    }
-)
-async def gta_list_ticker_updates(params: GTATickerInput) -> str:
+@mcp.tool(name="gta_list_ticker_updates")
+async def gta_list_ticker_updates(params: GTATickerInput):
     """Get recent text updates to existing GTA interventions via the ticker endpoint.
 
     The ticker provides updates when intervention descriptions or details are modified,
@@ -423,17 +396,8 @@ async def gta_list_ticker_updates(params: GTATickerInput) -> str:
             raise ToolError(f"API Error: {error_msg}")
 
 
-@mcp.tool(
-    name="gta_get_impact_chains",
-    annotations={
-        "title": "Get GTA Impact Chains",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": True
-    }
-)
-async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
+@mcp.tool(name="gta_get_impact_chains")
+async def gta_get_impact_chains(params: GTAImpactChainInput):
     """Extract granular impact chains showing implementing-product/sector-affected jurisdiction tuples.
     
     Unlike the main data endpoint which aggregates data, impact chains provide unaggregated
@@ -491,17 +455,8 @@ async def gta_get_impact_chains(params: GTAImpactChainInput) -> str:
             raise ToolError(f"API Error: {error_msg}")
 
 
-@mcp.tool(
-    name="gta_count_interventions",
-    annotations={
-        "title": "Count/Aggregate GTA Trade Interventions",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": True
-    }
-)
-async def gta_count_interventions(params: GTACountInput) -> str:
+@mcp.tool(name="gta_count_interventions")
+async def gta_count_interventions(params: GTACountInput):
     """Count and aggregate trade policy interventions by one or more dimensions.
 
     ONLY use this tool when the user explicitly asks for counts, totals, statistics, or
@@ -613,17 +568,8 @@ async def gta_count_interventions(params: GTACountInput) -> str:
 # ============================================================================
 
 
-@mcp.tool(
-    name="gta_lookup_hs_codes",
-    annotations={
-        "title": "Look Up HS Product Codes",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False
-    }
-)
-async def gta_lookup_hs_codes(search_term: str, max_results: int = 50) -> str:
+@mcp.tool(name="gta_lookup_hs_codes")
+async def gta_lookup_hs_codes(search_term: str, max_results: int = 50):
     """Search HS (Harmonized System) product codes by keyword, chapter number, or code prefix.
 
     Use BEFORE gta_search_interventions when the user asks about specific commodities or products.
@@ -646,17 +592,8 @@ async def gta_lookup_hs_codes(search_term: str, max_results: int = 50) -> str:
         raise ToolError(f"Error searching HS codes: {str(e)}")
 
 
-@mcp.tool(
-    name="gta_lookup_sectors",
-    annotations={
-        "title": "Look Up CPC Sector Codes",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False
-    }
-)
-async def gta_lookup_sectors(search_term: str, max_results: int = 50) -> str:
+@mcp.tool(name="gta_lookup_sectors")
+async def gta_lookup_sectors(search_term: str, max_results: int = 50):
     """Search CPC (Central Product Classification) sector codes by keyword or code prefix.
 
     Use BEFORE gta_search_interventions when the user asks about services or broad sector
