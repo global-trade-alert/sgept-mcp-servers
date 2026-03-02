@@ -278,7 +278,7 @@ keep_affected_products=False
 
 ---
 
-### 9. `keep_implementation_period_na` - Implementation Date Handling
+### 9. `keep_implementation_na` - Implementation Date Handling
 
 **Controls**: Whether interventions with NO implementation date are included
 
@@ -287,10 +287,10 @@ keep_affected_products=False
 **Usage**:
 ```python
 # INCLUSION (default): Include measures with AND without implementation dates
-# keep_implementation_period_na=True is implicit
+# keep_implementation_na=True is implicit
 
 # EXCLUSION: Only measures with KNOWN implementation dates
-keep_implementation_period_na=False
+keep_implementation_na=False
 ```
 
 **Common Use Cases**:
@@ -302,13 +302,13 @@ keep_implementation_period_na=False
 ```python
 # Only subsidies that have been actually implemented (not just announced)
 mast_chapters=['L']
-keep_implementation_period_na=False
+keep_implementation_na=False
 date_implemented_gte='2020-01-01'
 ```
 
 **Important**: This works **independently** of `date_implemented_gte/lte` filters:
 - `date_implemented_gte` filters dates when present
-- `keep_implementation_period_na=False` excludes NULL dates entirely
+- `keep_implementation_na=False` excludes NULL dates entirely
 
 ---
 
@@ -422,7 +422,7 @@ keep_eligible_firms=False
 **Use Case**: Only measures with complete date information
 
 ```python
-keep_implementation_period_na=False  # Must have implementation date
+keep_implementation_na=False  # Must have implementation date
 keep_revocation_na=True  # Allow both active and revoked
 date_implemented_gte='2018-01-01'
 ```

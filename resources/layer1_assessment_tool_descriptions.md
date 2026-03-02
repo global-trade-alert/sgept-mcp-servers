@@ -1427,7 +1427,7 @@ async def gta_search_interventions(params: GTASearchInput) -> str:
           affected_sectors=[11, 12, 13, 21, 22], keep_affected_sectors=False
 
         - Only measures with known implementation dates (exclude NA):
-          keep_implementation_period_na=False
+          keep_implementation_na=False
 
         - Non-subsidy measures (exclude subsidies):
           mast_chapters=['L'], keep_mast_chapters=False

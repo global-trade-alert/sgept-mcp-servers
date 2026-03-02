@@ -2272,7 +2272,7 @@ components:
           description: Daterange filter defining in which range the intervention was
             implemented. `None` values are treated as unfiltered (=any date into the
             past or future).
-        keep_implementation_period_na:
+        keep_implementation_na:
           type: boolean
           default: true
           description: Boolean filter defining if interventions with no implementation
@@ -2726,7 +2726,7 @@ components:
           description: Daterange filter defining in which range the intervention was
             implemented. `None` values are treated as unfiltered (=any date into the
             past or future).
-        keep_implementation_period_na:
+        keep_implementation_na:
           type: boolean
           default: true
           description: Boolean filter defining if interventions with no implementation

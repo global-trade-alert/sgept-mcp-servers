@@ -83,7 +83,8 @@ def get_api_client() -> GTAAPIClient:
             "GTA_API_KEY environment variable not set. "
             "Please set your API key: export GTA_API_KEY='your-key-here'"
         )
-    return GTAAPIClient(api_key)
+    base_url = os.getenv("GTA_BASE_URL")
+    return GTAAPIClient(api_key, base_url=base_url)
 
 
 # Key profiles for show_keys — controls which fields the API returns per intervention.
@@ -141,7 +142,7 @@ async def gta_search_interventions(
     keep_eligible_firms: bool | None = None,
     keep_affected_sectors: bool | None = None,
     keep_affected_products: bool | None = None,
-    keep_implementation_period_na: bool | None = None,
+    keep_implementation_na: bool | None = None,
     keep_revocation_na: bool | None = None,
     intervention_id: list[int] | None = None,
     keep_intervention_id: bool | None = None,

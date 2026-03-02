@@ -468,7 +468,7 @@ Get all Chinese export controls with complete date coverage for regression analy
 
 implementing_jurisdictions: ['CHN']
 intervention_types: ['Export ban', 'Export restriction', 'Export quota', 'Export licensing requirement']
-keep_implementation_period_na: False
+keep_implementation_na: False
 keep_revocation_na: False
 date_announced_gte: '2018-01-01'
 response_format: 'json'
@@ -478,7 +478,7 @@ Only include interventions with all three dates populated.
 ```
 
 **What happens:**
-- Excludes interventions missing implementation dates (keep_implementation_period_na=False)
+- Excludes interventions missing implementation dates (keep_implementation_na=False)
 - Excludes interventions missing revocation dates (keep_revocation_na=False)
 - Returns only interventions with complete temporal coverage
 - Suitable for time-series econometric analysis
@@ -528,7 +528,7 @@ keep_intervention_types: False
 affected_sectors: [11, 12, 13, 21, 22, 23, 24, 25]
 keep_affected_sectors: False
 
-keep_implementation_period_na: False
+keep_implementation_na: False
 
 date_announced_gte: '2022-01-01'
 gta_evaluation: ['Red']
@@ -570,7 +570,7 @@ keep_affected_products: False
 ```
 Research requiring complete temporal data:
 
-keep_implementation_period_na: False  # Exclude measures without implementation dates
+keep_implementation_na: False  # Exclude measures without implementation dates
 keep_revocation_na: False  # Exclude measures without removal dates
 
 This ensures clean datasets for econometric/time-series analysis.

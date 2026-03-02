@@ -134,7 +134,7 @@ def build_dataset_urls(
         ("keep_affected_products", "kap", 1),
         ("keep_intervention_id", "kid", 1),
         ("keep_in_force_on_date", "kifd", 1),
-        ("keep_implementation_period_na", "kin", 1),
+        ("keep_implementation_na", "kin", 1),
         ("keep_revocation_na", "krn", 1),
     ]
 

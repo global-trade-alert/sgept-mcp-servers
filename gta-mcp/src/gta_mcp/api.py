@@ -578,16 +578,18 @@ SECTOR_LEVEL2_GROUPS = {
 
 class GTAAPIClient:
     """Client for interacting with the GTA API."""
-    
-    BASE_URL = "https://api.globaltradealert.org"
-    
-    def __init__(self, api_key: str):
+
+    DEFAULT_BASE_URL = "https://api.globaltradealert.org"
+
+    def __init__(self, api_key: str, base_url: str | None = None):
         """Initialize the GTA API client.
-        
+
         Args:
             api_key: The GTA API key for authentication
+            base_url: Optional base URL override for the API
         """
         self.api_key = api_key
+        self.base_url = base_url or self.DEFAULT_BASE_URL
         self.headers = {
             "Authorization": f"APIKey {api_key}",
             "Content-Type": "application/json"
@@ -621,7 +623,7 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        endpoint = f"{self.BASE_URL}/api/v2/gta/data/"
+        endpoint = f"{self.base_url}/api/v2/gta/data/"
 
         # Build request body with request_data wrapper
         body = {
@@ -660,7 +662,7 @@ class GTAAPIClient:
             httpx.HTTPStatusError: If API request fails
             ValueError: If intervention not found
         """
-        endpoint = f"{self.BASE_URL}/api/v2/gta/data/"
+        endpoint = f"{self.base_url}/api/v2/gta/data/"
 
         body = {
             "limit": 1,
@@ -704,7 +706,7 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        endpoint = f"{self.BASE_URL}/api/v1/gta/ticker/"
+        endpoint = f"{self.base_url}/api/v1/gta/ticker/"
 
         body = {
             "limit": limit,
@@ -740,7 +742,7 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails.
         """
-        endpoint = f"{self.BASE_URL}/api/v1/gta/data-counts/"
+        endpoint = f"{self.base_url}/api/v1/gta/data-counts/"
 
         # count_by and count_variable go inside request_data alongside filters
         request_data = dict(filters)
@@ -782,7 +784,7 @@ class GTAAPIClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        endpoint = f"{self.BASE_URL}/api/v1/gta/impact-chains/{granularity}/"
+        endpoint = f"{self.base_url}/api/v1/gta/impact-chains/{granularity}/"
 
         body = {
             "limit": limit,
@@ -1438,7 +1440,7 @@ def build_filters(params: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
         'keep_eligible_firms': 'eligible firm types',
         'keep_affected_sectors': 'CPC sectors',
         'keep_affected_products': 'HS product codes',
-        'keep_implementation_period_na': 'interventions without implementation dates',
+        'keep_implementation_na': 'interventions without implementation dates',
         'keep_revocation_na': 'interventions without revocation dates',
         'keep_intervention_id': 'intervention IDs'
     }

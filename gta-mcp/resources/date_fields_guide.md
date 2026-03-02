@@ -110,6 +110,8 @@ This means searching by `date_implemented` will **miss many recent announcements
 
 ## 4. Last Update Date (date_modified)
 
+⚠️ **Sort field name:** When sorting by this field, use `last_updated` — NOT `date_modified`. Example: `sorting="-last_updated"`. Using `date_modified` as a sort value is invalid.
+
 **Definition:** The date when the database entry was last modified with content-related changes.
 
 **Source (from GTA Handbook):**

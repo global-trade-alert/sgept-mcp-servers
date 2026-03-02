@@ -502,14 +502,14 @@ date_announced_gte='2023-01-01'
 **Use case:** Effective date analysis
 
 ```python
-keep_implementation_period_na=False
+keep_implementation_na=False
 implementing_jurisdictions=['USA']
 date_implemented_gte='2024-01-01'
 ```
 
 **What this finds:** Only US measures with actual implementation dates (excludes interventions with missing implementation date), implemented since 2024.
 
-**Key pattern:** `keep_implementation_period_na=False` excludes measures without implementation dates.
+**Key pattern:** `keep_implementation_na=False` excludes measures without implementation dates.
 
 **When to use:** Effective date analysis, excluding announced-but-not-implemented measures, timeline accuracy.
 

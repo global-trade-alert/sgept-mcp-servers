@@ -305,7 +305,7 @@ class GTASearchInput(BaseModel):
         )
     )
 
-    keep_implementation_period_na: Optional[bool] = Field(
+    keep_implementation_na: Optional[bool] = Field(
         default=None,
         description=(
             "Include (True, default) or exclude (False) interventions with NO implementation date. "

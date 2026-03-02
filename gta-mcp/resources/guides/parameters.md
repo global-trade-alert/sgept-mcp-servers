@@ -413,6 +413,7 @@ query='China & tariff'  # Use implementing_jurisdictions instead
 - `'date_announced'` - Oldest announcements first
 - `'-intervention_id'` - Highest ID first
 - `'intervention_id'` - Lowest ID first
+- `'-last_updated'` - Most recently modified first (use with `date_modified_gte`)
 
 **Valid sort fields:**
 - `date_announced`
@@ -420,6 +421,7 @@ query='China & tariff'  # Use implementing_jurisdictions instead
 - `date_implemented`
 - `date_removed`
 - `intervention_id`
+- `last_updated` ← use this to sort by modification date (NOT `date_modified`)
 
 **Note:** Use `-` prefix for descending order. Can combine multiple fields with commas.
 
@@ -454,7 +456,7 @@ All filterable parameters have corresponding `keep_*` parameters that control wh
 - `keep_eligible_firms` - Control firm types inclusion/exclusion
 - `keep_affected_sectors` - Control sectors inclusion/exclusion
 - `keep_affected_products` - Control products inclusion/exclusion
-- `keep_implementation_period_na` - Include/exclude interventions with no implementation date
+- `keep_implementation_na` - Include/exclude interventions with no implementation date
 - `keep_revocation_na` - Include/exclude interventions with no revocation date
 - `keep_intervention_id` - Control specific intervention IDs inclusion/exclusion
 
@@ -473,7 +475,7 @@ affected_products=[854110, 854121, 854129], keep_affected_products=False
 affected_sectors=[11, 12, 13, 21, 22], keep_affected_sectors=False
 
 # Only measures with known implementation dates
-keep_implementation_period_na=False
+keep_implementation_na=False
 
 # Exclude subsidies
 mast_chapters=['L'], keep_mast_chapters=False
