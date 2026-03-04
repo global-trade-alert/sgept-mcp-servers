@@ -391,6 +391,27 @@ class GTADatabaseClient:
         sources = []
         tables_tried = []
 
+        # Always fetch source citation URLs from api_state_act_source + api_source_list
+        # This is the authoritative source citation table (what the website displays).
+        # The legacy gta_measure.source field is often stale/wrong.
+        source_citations = []
+        try:
+            cursor.execute('''
+                SELECT
+                    sl.source_id,
+                    sl.source_url
+                FROM api_state_act_source sas
+                JOIN api_source_list sl ON sas.source_id = sl.source_id
+                WHERE sas.state_act_id = %s
+                ORDER BY sas.id ASC
+            ''', (state_act_id,))
+            source_citations = cursor.fetchall()
+            tables_tried.append(('api_state_act_source+api_source_list', len(source_citations)))
+        except Exception as e:
+            tables_tried.append(('api_state_act_source+api_source_list', f'error: {str(e)[:50]}'))
+
+        measure['source_citations'] = source_citations
+
         # Try 1: api_files table (uploaded files with field_id = state_act_id)
         try:
             cursor.execute('''
@@ -411,22 +432,10 @@ class GTADatabaseClient:
         except Exception as e:
             tables_tried.append(('api_files', f'error: {str(e)[:50]}'))
 
-        # Try 2: api_state_act_source + api_source_list (linked sources)
-        if not sources:
-            try:
-                cursor.execute('''
-                    SELECT
-                        sl.source_id,
-                        sl.source_url
-                    FROM api_state_act_source sas
-                    JOIN api_source_list sl ON sas.source_id = sl.source_id
-                    WHERE sas.state_act_id = %s
-                    ORDER BY sas.id ASC
-                ''', (state_act_id,))
-                sources = cursor.fetchall()
-                tables_tried.append(('api_state_act_source+api_source_list', len(sources)))
-            except Exception as e:
-                tables_tried.append(('api_state_act_source+api_source_list', f'error: {str(e)[:50]}'))
+        # Try 2: api_state_act_source + api_source_list (linked sources — fallback for files)
+        if not sources and source_citations:
+            sources = list(source_citations)
+            tables_tried.append(('reused_source_citations_as_sources', len(sources)))
 
         # Try 2: gta_state_act_source (older schema, direct URL storage)
         if not sources:
