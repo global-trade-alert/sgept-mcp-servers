@@ -25,7 +25,7 @@ This document maps every gap, identifies what DPA already has, highlights DPA-un
 | **API key authentication + tier system** | `users/api/authentication.py` -> `APIKeyAuthentication` | Partially exists (`APIUserPermission` model has `is_restricted_dpa`, `dpa_delay` fields) | **HIGH** -- model exists, endpoints don't use it |
 | **Trade data / macro indicators** | `api/urls.py` -> `trade_data`, `trade_counts`, `trade_coverage` | N/A -- DPA has no trade data equivalent | **NOT APPLICABLE** |
 | **ClickHouse backend for analytics** | `api/urls.py` -> `*_ch` endpoints | N/A | **FUTURE** -- only needed at scale |
-| **Ticker / change monitoring endpoint** | `gta/` ticker views | None | **HIGH** |
+| **Ticker / change monitoring endpoint** | `gta/` ticker views | N/A -- DPA events are single-dated records; querying recent events by date or date_modified provides equivalent "what's new" capability without a separate ticker mechanism | **NOT APPLICABLE** |
 | **Impact chain analysis** | `gta/` impact chain views | None | **MEDIUM** -- could map to policy propagation |
 | **Full-text search with operators** | GTA data slicer `query` param | DPA `SearchViewSet` exists but limited | **MEDIUM** |
 | **Sync status monitoring** | `api/urls.py` -> `SyncStatusView` | None | **LOW** |
@@ -59,7 +59,7 @@ DPA has ~70% of the backend infrastructure (models, ViewSets, mixins, serializer
 |---|---|---|---|
 | **Search tool** | `gta_search_interventions` -- 39 filter params, detail levels, exclusion filters, full-text query | `dpa_search_events` -- 11 filter params, basic | **CRITICAL** |
 | **Get single item** | `gta_get_intervention` | `dpa_get_event` | **PARITY** |
-| **Ticker / updates** | `gta_list_ticker_updates` | None | **HIGH** |
+| **Ticker / updates** | `gta_list_ticker_updates` | N/A -- DPA events are atomic single-date records; recent event queries serve this purpose | **N/A** |
 | **Aggregation / counts** | `gta_count_interventions` -- 24 count dimensions | None | **CRITICAL** |
 | **Impact analysis** | `gta_get_impact_chains` -- product/sector granularity | None | **MEDIUM** |
 | **Product code lookup** | `gta_lookup_hs_codes` | N/A -- DPA uses economic activities not HS codes | **N/A** |
@@ -113,7 +113,7 @@ These capabilities are unique to DPA and must be preserved and surfaced in the p
 |---|---|---|
 | `GET /api/v1/dpa/events/` | CRITICAL | Public events endpoint with API key auth, complex filtering, streaming export. Reuses existing `EventViewSet` logic. |
 | `GET /api/v1/dpa/data-counts/` | CRITICAL | Aggregation endpoint. Count by: jurisdiction, policy_area, economic_activity, event_type, year, month, implementation_level, action_type, government_branch, binding_status. |
-| `GET /api/v1/dpa/ticker/` | HIGH | Recently modified events. New view, simple query. |
+| ~~`GET /api/v1/dpa/ticker/`~~ | N/A | Not needed -- DPA events are single-dated; sorting by `date_modified` on the events endpoint covers "what changed" queries. |
 | `GET /api/v1/dpa/helper-tables/` | MEDIUM | Combined reference data (jurisdictions, policy areas, economic activities, event types, action types, intervention types, implementation levels, government branches). |
 | `GET /api/v1/dpa/jurisdiction/` | HIGH | Individual reference endpoint |
 | `GET /api/v1/dpa/policy-area/` | HIGH | Individual reference endpoint |
@@ -133,7 +133,7 @@ These capabilities are unique to DPA and must be preserved and surfaced in the p
 | Tool | Priority | Description |
 |---|---|---|
 | `dpa_count_events` | CRITICAL | Aggregation with 15+ count dimensions |
-| `dpa_list_ticker_updates` | HIGH | Change monitoring |
+| ~~`dpa_list_ticker_updates`~~ | N/A | Not needed -- DPA events are atomic single-date records; sorting/filtering by modification date on `dpa_search_events` covers this |
 | `dpa_get_intervention` | HIGH | Get full intervention (parent of events) |
 | `dpa_search_interventions` | HIGH | Search at intervention level (not just events) |
 | `dpa_get_issue` | MEDIUM | Get cross-cutting policy issue details |
@@ -218,9 +218,9 @@ These capabilities are unique to DPA and must be preserved and surfaced in the p
 | Priority | Count | Items |
 |---|---|---|
 | **CRITICAL** | 4 | Public events endpoint, data counts endpoint, MCP search enhancement, MCP count tool |
-| **HIGH** | 15 | Reference endpoints (7), ticker, auth wiring, MCP new tools (3), MCP exclusion filters, MCP date granularity, MCP guides |
+| **HIGH** | 13 | Reference endpoints (7), auth wiring, MCP new tools (2), MCP exclusion filters, MCP date granularity, MCP guides |
 | **MEDIUM** | 6 | Helper tables combined, impact chains, MCP field control, MCP sorting, MCP issue tool, rate limiting |
 | **LOW** | 1 | Sync status monitoring |
-| **NOT APPLICABLE** | 3 | Trade data, ClickHouse, HS code/sector lookup |
+| **NOT APPLICABLE** | 5 | Trade data, ClickHouse, HS code/sector lookup, ticker (backend), ticker (MCP) |
 
 **Estimated effort:** Phase 1 (backend) is primarily wiring existing infrastructure into new URL routes -- moderate effort. Phase 2 (MCP) requires new tool implementations and guide authoring -- significant effort. Phase 3 (auth) is configuration-level work leveraging existing GTA patterns -- low effort.
