@@ -56,11 +56,11 @@ def get_slack_client() -> SlackAPIClient:
     if _slack_client is not None:
         return _slack_client
 
-    token = os.getenv("SLACK_USER_TOKEN")
+    token = os.getenv("SLACK_BOT_TOKEN") or os.getenv("SLACK_USER_TOKEN")
     if not token:
         raise ValueError(
-            "SLACK_USER_TOKEN environment variable not set. "
-            "Please set your Slack user token: export SLACK_USER_TOKEN='xoxp-...'"
+            "SLACK_BOT_TOKEN or SLACK_USER_TOKEN environment variable not set. "
+            "Set a bot token (xoxb-) or user token (xoxp-)."
         )
 
     _slack_client = SlackAPIClient(token)
@@ -393,22 +393,20 @@ def get_channel_types_help() -> str:
 def main() -> None:
     """Run the MCP server."""
     # Validate token is present at startup
-    token = os.getenv("SLACK_USER_TOKEN")
+    token = os.getenv("SLACK_BOT_TOKEN") or os.getenv("SLACK_USER_TOKEN")
     if not token:
         print(
-            "ERROR: SLACK_USER_TOKEN environment variable not set.\n"
-            "Please set your Slack user token:\n"
-            "  export SLACK_USER_TOKEN='xoxp-...'\n",
+            "ERROR: No Slack token set.\n"
+            "Set SLACK_BOT_TOKEN (xoxb-) or SLACK_USER_TOKEN (xoxp-).\n",
             file=sys.stderr,
         )
         sys.exit(1)
 
     # Validate token format
-    if not token.startswith("xoxp-"):
+    if not token.startswith(("xoxp-", "xoxb-")):
         print(
             "ERROR: Invalid token format.\n"
-            "SLACK_USER_TOKEN must be a user token (starts with 'xoxp-').\n"
-            "Bot tokens (xoxb-) are not supported.\n",
+            "Token must start with 'xoxp-' (user) or 'xoxb-' (bot).\n",
             file=sys.stderr,
         )
         sys.exit(1)

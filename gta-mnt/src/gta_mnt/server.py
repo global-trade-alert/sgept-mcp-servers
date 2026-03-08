@@ -59,6 +59,20 @@ class ListStep1QueueInput(BaseModel):
     )
 
 
+class ListStep2QueueInput(BaseModel):
+    """Input for listing Step 2 review queue."""
+    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
+    offset: int = Field(default=0, ge=0, description="Offset for pagination")
+    implementing_jurisdictions: Optional[List[str]] = Field(
+        default=None,
+        description="Filter by jurisdiction codes (e.g., ['USA', 'CHN'])"
+    )
+    date_entered_review_gte: Optional[str] = Field(
+        default=None,
+        description="Filter by date entered review (YYYY-MM-DD)"
+    )
+
+
 class GetMeasureInput(BaseModel):
     """Input for getting measure details."""
     state_act_id: int = Field(..., description="StateAct ID")
@@ -83,7 +97,7 @@ class AddCommentInput(BaseModel):
 class SetStatusInput(BaseModel):
     """Input for setting status."""
     state_act_id: int = Field(..., description="StateAct ID")
-    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision)")
+    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision, 19=Step2)")
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
 
@@ -122,6 +136,23 @@ async def list_step1_queue(params: ListStep1QueueInput) -> str:
         date_entered_review_gte=params.date_entered_review_gte
     )
     return format_step1_queue(data)
+
+
+@mcp.tool(name="gta_mnt_list_step2_queue")
+async def list_step2_queue(params: ListStep2QueueInput) -> str:
+    """List measures awaiting Step 2 review (status 19), ordered by status_time DESC.
+
+    Uses api_state_act_status_log for accurate ordering.
+    """
+    db_client = get_db_client()
+    data = await db_client.list_step1_queue(
+        status_id=19,
+        limit=params.limit,
+        offset=params.offset,
+        implementing_jurisdictions=params.implementing_jurisdictions,
+        date_entered_review_gte=params.date_entered_review_gte
+    )
+    return format_step1_queue(data, queue_label="Step 2")
 
 
 @mcp.tool(name="gta_mnt_get_measure")

@@ -52,7 +52,7 @@ class SetStatusInput(BaseModel):
     """Input parameters for setting measure status."""
     state_act_id: int = Field(description="StateAct ID")
     new_status_id: int = Field(
-        description="Status ID (2=Step1, 3=Publishable, 6=Under revision)"
+        description="Status ID (2=Step1, 3=Publishable, 6=Under revision, 19=Step2)"
     )
     comment: Optional[str] = Field(
         default=None,

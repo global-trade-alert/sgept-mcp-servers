@@ -63,12 +63,13 @@ class GTADatabaseClient:
 
     async def list_step1_queue(
         self,
+        status_id: int = 2,
         limit: int = 20,
         offset: int = 0,
         implementing_jurisdictions: Optional[list[str]] = None,
         date_entered_review_gte: Optional[str] = None
     ) -> dict:
-        """List measures awaiting Step 1 review.
+        """List measures awaiting review by status.
 
         Query uses api_state_act_log with api_state_act_status_log to get accurate
         status_time ordering (most recent first).
@@ -98,9 +99,9 @@ class GTADatabaseClient:
             FROM api_state_act_log sa
             LEFT JOIN api_state_act_status_log sl
                 ON sa.state_act_id = sl.state_act_id AND sl.state_act_status_id = sa.status_id
-            WHERE sa.status_id = 2
+            WHERE sa.status_id = %s
         '''
-        params = []
+        params = [status_id]
 
         # TODO: Jurisdiction filtering would require joining through interventions
         # For now, filter by jurisdiction is not supported in list view
@@ -123,9 +124,9 @@ class GTADatabaseClient:
         count_query = '''
             SELECT COUNT(DISTINCT sa.state_act_id) as count
             FROM api_state_act_log sa
-            WHERE sa.status_id = 2
+            WHERE sa.status_id = %s
         '''
-        cursor.execute(count_query)
+        cursor.execute(count_query, (status_id,))
         count = cursor.fetchone()['count']
 
         return {

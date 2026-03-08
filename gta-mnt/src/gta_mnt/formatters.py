@@ -122,11 +122,12 @@ def truncate_quote(quote: str, max_length: int = 500) -> str:
 # WS2: List Step 1 Queue Formatter
 # ============================================================================
 
-def format_step1_queue(data: dict) -> str:
-    """Format Step 1 queue results as markdown.
+def format_step1_queue(data: dict, queue_label: str = "Step 1") -> str:
+    """Format review queue results as markdown.
 
     Args:
         data: API response dict with 'results' and 'count'
+        queue_label: Label for the queue (e.g., 'Step 1', 'Step 2')
 
     Returns:
         Markdown-formatted queue listing
@@ -135,10 +136,10 @@ def format_step1_queue(data: dict) -> str:
     count = data.get("count", 0)
 
     if count == 0:
-        return "# Step 1 Review Queue\n\n*No measures awaiting Step 1 review.*"
+        return f"# {queue_label} Review Queue\n\n*No measures awaiting {queue_label} review.*"
 
     lines = [
-        f"# Step 1 Review Queue ({count} measures)\n",
+        f"# {queue_label} Review Queue ({count} measures)\n",
         "| ID | Title | Date Entered Review |",
         "|-----|-------|---------------------|"
     ]
