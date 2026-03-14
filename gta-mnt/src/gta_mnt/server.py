@@ -1,6 +1,10 @@
-"""MCP server for GTA monitoring and automated review (Sancho Claudino).
+"""MCP server for GTA monitoring, review, and entry creation.
 
-Refactored to use direct MySQL database access instead of REST API endpoints.
+Two automated users with strictly separated roles:
+- Sancho Claudino (9900): REVIEWER — comments, status changes, framework tags
+- Sancho Claudito (9901): AUTHOR — creates state acts, interventions, relationships
+
+These must never be mixed. A reviewer must not appear as entry author.
 """
 
 import os
@@ -11,7 +15,7 @@ from mcp.server.fastmcp import FastMCP
 
 from .api import GTADatabaseClient
 from .source_fetcher import SourceFetcher
-from .constants import SANCHO_USER_ID, SANCHO_FRAMEWORK_ID
+from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID
 from .formatters import (
     format_step1_queue,
     format_measure_detail,
@@ -120,6 +124,111 @@ class LogReviewInput(BaseModel):
     issues_found: List[str] = Field(default_factory=list, description="List of issues discovered (empty if none)")
     decision: str = Field(..., description="APPROVE or DISAPPROVE")
     actions_taken: List[str] = Field(default_factory=list, description="List of actions (comments posted, status changed, framework added)")
+
+
+# ========================================================================
+# Entry Creation Input Models
+# ========================================================================
+
+class LookupInput(BaseModel):
+    """Input for looking up reference table values."""
+    table: str = Field(..., description="Table short name: jurisdiction, product, sector, rationale, unit, firm, intervention_type, mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm, implementation_level, intervention_area, firm_role, level_type")
+    query: str = Field(..., description="Search string (matched with LIKE %%query%%)")
+    limit: int = Field(default=20, ge=1, le=100, description="Max results to return")
+
+
+class CreateStateActInput(BaseModel):
+    """Input for creating a new state act (measure)."""
+    title: str = Field(..., description="State act title")
+    description: str = Field(..., description="Announcement description text")
+    source_url: str = Field(..., description="Primary source URL")
+    is_source_official: int = Field(..., description="1 if official source, 0 if not")
+    date_announced: str = Field(..., description="Date announced (YYYY-MM-DD)")
+    evaluation_id: int = Field(..., description="1=Red, 2=Amber, 3=Green")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class CreateInterventionInput(BaseModel):
+    """Input for creating a new intervention."""
+    state_act_id: int = Field(..., description="FK to state act (from gta_mnt_create_state_act)")
+    description: str = Field(..., description="Intervention description text")
+    intervention_type_id: int = Field(..., description="FK to api_intervention_type_list (e.g. 81=Equity stake)")
+    chapter_id: int = Field(..., description="MAST chapter ID (e.g. 10=L)")
+    subchapter_id: int = Field(..., description="MAST subchapter ID (e.g. 55=L13)")
+    gta_evaluation_id: int = Field(..., description="1=Red, 2=Amber, 3=Green")
+    affected_flow_id: int = Field(..., description="1=Inward, 2=Outward, 3=Outward subsidy")
+    eligible_firm_id: int = Field(..., description="FK to api_eligible_firm_list (e.g. 3=firm-specific)")
+    implementation_level_id: int = Field(..., description="FK to api_implementation_level_list (e.g. 6=NFI)")
+    intervention_area_id: int = Field(..., description="1=goods, 2=service, 3=investment, 4=migration")
+    date_implemented: str = Field(..., description="Implementation date (YYYY-MM-DD)")
+    date_announced: str = Field(..., description="Announcement date (YYYY-MM-DD)")
+    title: Optional[str] = Field(default=None, description="Optional title (defaults to state act title)")
+    announced_as_temporary: int = Field(default=0, description="0=permanent, 1=temporary")
+    aj_type: int = Field(default=1, description="1=inferred, 2=targeted, 3=excluded, 4=incidental")
+    dm_type: int = Field(default=1, description="1=inferred, 2=targeted, 3=excluded, 4=incidental")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddIJInput(BaseModel):
+    """Input for adding implementing jurisdiction to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    jurisdiction_id: int = Field(..., description="FK to api_jurisdiction_list (look up via gta_mnt_lookup)")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddProductInput(BaseModel):
+    """Input for adding affected product to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    product_id: int = Field(..., description="FK to api_product_list (look up HS code via gta_mnt_lookup)")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddSectorInput(BaseModel):
+    """Input for adding affected sector to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    sector_id: int = Field(..., description="FK to api_sector_list")
+    sector_type: str = Field(default='N', description="'N'=normal, 'A'=additional, 'P'=primary")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddRationaleInput(BaseModel):
+    """Input for adding rationale/motive to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    rationale_id: int = Field(..., description="FK to api_rationale_list")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddFirmInput(BaseModel):
+    """Input for adding a firm to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    firm_name: str = Field(..., description="Firm name (looked up or created in mtz_firm_log)")
+    role_id: int = Field(..., description="FK to mtz_firm_role: 1=beneficiary, 2=target, 3=acting agency, 4=petitioner, 5=exempted, 6=intermediary")
+    jurisdiction_id: Optional[int] = Field(default=None, description="Optional: firm's home jurisdiction ID")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddSourceInput(BaseModel):
+    """Input for adding a source URL to a state act."""
+    state_act_id: int = Field(..., description="FK to api_state_act_log")
+    source_url: str = Field(..., description="Source URL")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class QueueRecalculationInput(BaseModel):
+    """Input for queuing AJ/DM recalculation."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddLevelInput(BaseModel):
+    """Input for adding a level row to an intervention."""
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    prior_level: Optional[str] = Field(default=None, description="Prior level value")
+    new_level: Optional[str] = Field(default=None, description="New level value")
+    unit_id: Optional[int] = Field(default=None, description="FK to api_unit_list")
+    level_type_id: Optional[int] = Field(default=None, description="FK to api_level_type_list")
+    tariff_peak: Optional[int] = Field(default=None, description="Tariff peak indicator")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
 @mcp.tool(name="gta_mnt_list_step1_queue")
@@ -288,6 +397,286 @@ async def log_review(params: LogReviewInput) -> str:
     )
 
     return f"✅ Review log saved\n\nStateAct: {params.state_act_id}\nDecision: {params.decision}\nLog: {log_path}"
+
+
+# ========================================================================
+# Entry Creation Tools
+# ========================================================================
+
+@mcp.tool(name="gta_mnt_lookup")
+async def lookup(params: LookupInput) -> str:
+    """Look up IDs in GTA reference tables by search string.
+
+    Supports: jurisdiction, product, sector, rationale, unit, firm, intervention_type,
+    mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm,
+    implementation_level, intervention_area, firm_role, level_type.
+    """
+    db_client = get_db_client()
+    result = await db_client.lookup(
+        table=params.table,
+        query=params.query,
+        limit=params.limit
+    )
+
+    if result.get('error'):
+        return f"❌ {result['error']}"
+
+    results = result['results']
+    if not results:
+        return f"No matches for '{params.query}' in {result['table']}"
+
+    lines = [f"# Lookup: {result['table']} ({len(results)} results)\n"]
+    for row in results:
+        lines.append(f"- **{row.get(result['id_column'], 'N/A')}**: {row.get(result['name_column'], 'N/A')}")
+    return "\n".join(lines)
+
+
+@mcp.tool(name="gta_mnt_create_state_act")
+async def create_state_act(params: CreateStateActInput) -> str:
+    """Create a new state act (measure) in the GTA database.
+
+    Always creates with status_id=2 (Step 1 review). Never creates in publishable state.
+    Also creates source URL entry and links it to the state act.
+    """
+    db_client = get_db_client()
+    result = await db_client.create_state_act(
+        title=params.title,
+        description=params.description,
+        source_url=params.source_url,
+        is_source_official=params.is_source_official,
+        date_announced=params.date_announced,
+        evaluation_id=params.evaluation_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — State Act\n\nSQL:\n```sql\n{result['sql']}\n```\n\nParams: {result['params']}\n\nRollback: `{result['rollback']}`"
+
+    if result['success']:
+        return f"✅ {result['message']}\n\nState Act ID: {result['state_act_id']}\nSource ID: {result['source_id']}\nStatus: {result['status_id']} (Step 1 review)\nAuthor: Sancho Claudito (user_id={SANCHO_AUTHOR_ID})"
+    else:
+        return f"❌ {result['message']}"
+
+
+@mcp.tool(name="gta_mnt_create_intervention")
+async def create_intervention(params: CreateInterventionInput) -> str:
+    """Create a new intervention under an existing state act.
+
+    Requires a state_act_id from gta_mnt_create_state_act.
+    Use gta_mnt_lookup to find IDs for intervention_type, chapter, subchapter, etc.
+    """
+    db_client = get_db_client()
+    result = await db_client.create_intervention(
+        state_act_id=params.state_act_id,
+        description=params.description,
+        intervention_type_id=params.intervention_type_id,
+        chapter_id=params.chapter_id,
+        subchapter_id=params.subchapter_id,
+        gta_evaluation_id=params.gta_evaluation_id,
+        affected_flow_id=params.affected_flow_id,
+        eligible_firm_id=params.eligible_firm_id,
+        implementation_level_id=params.implementation_level_id,
+        intervention_area_id=params.intervention_area_id,
+        date_implemented=params.date_implemented,
+        date_announced=params.date_announced,
+        title=params.title,
+        announced_as_temporary=params.announced_as_temporary,
+        aj_type=params.aj_type,
+        dm_type=params.dm_type,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Intervention\n\nSQL:\n```sql\n{result['sql']}\n```\n\nParams: {result['params']}\n\nRollback: `{result['rollback']}`"
+
+    if result['success']:
+        return f"✅ {result['message']}\n\nIntervention ID: {result['intervention_id']}"
+    else:
+        return f"❌ {result.get('message', result.get('error', 'Unknown error'))}"
+
+
+@mcp.tool(name="gta_mnt_add_ij")
+async def add_ij(params: AddIJInput) -> str:
+    """Add implementing jurisdiction to an intervention.
+
+    Use gta_mnt_lookup with table='jurisdiction' to find the jurisdiction_id.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_ij(
+        intervention_id=params.intervention_id,
+        jurisdiction_id=params.jurisdiction_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add IJ\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_product")
+async def add_product(params: AddProductInput) -> str:
+    """Add affected product to an intervention.
+
+    Use gta_mnt_lookup with table='product' to find the product_id from HS code description.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_product(
+        intervention_id=params.intervention_id,
+        product_id=params.product_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Product\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_sector")
+async def add_sector(params: AddSectorInput) -> str:
+    """Add affected sector to an intervention.
+
+    Use gta_mnt_lookup with table='sector' to find the sector_id.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_sector(
+        intervention_id=params.intervention_id,
+        sector_id=params.sector_id,
+        sector_type=params.sector_type,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Sector\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_rationale")
+async def add_rationale(params: AddRationaleInput) -> str:
+    """Add rationale/motive tag to an intervention.
+
+    Use gta_mnt_lookup with table='rationale' to find the rationale_id.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_rationale(
+        intervention_id=params.intervention_id,
+        rationale_id=params.rationale_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Rationale\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_firm")
+async def add_firm(params: AddFirmInput) -> str:
+    """Add a firm to an intervention. Creates firm in mtz_firm_log if it doesn't already exist.
+
+    Firm roles: 1=beneficiary, 2=target, 3=acting agency, 4=petitioner, 5=exempted, 6=intermediary.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_firm(
+        intervention_id=params.intervention_id,
+        firm_name=params.firm_name,
+        role_id=params.role_id,
+        jurisdiction_id=params.jurisdiction_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Firm\n\nSQL: {result['sql']}\nExisting firm: {result['existing_firm']}"
+
+    if result['success']:
+        created = " (newly created)" if result.get('created_new') else " (existing)"
+        return f"✅ {result['message']}{created}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_source")
+async def add_source_tool(params: AddSourceInput) -> str:
+    """Add a source URL to a state act. Creates source in api_source_list if URL is new.
+
+    Note: gta_mnt_create_state_act already adds the primary source. Use this for additional sources.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_source(
+        state_act_id=params.state_act_id,
+        source_url=params.source_url,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Source\n\nSQL: {result['sql']}"
+
+    if result['success']:
+        return f"✅ {result['message']}\n\nSource ID: {result['source_id']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_queue_recalculation")
+async def queue_recalculation(params: QueueRecalculationInput) -> str:
+    """Queue an intervention for AJ/DM auto-population from COMTRADE trade data.
+
+    Only needed for inferred AJ/DM types (aj_type=1, dm_type=1).
+    The population_procedure runs asynchronously and populates api_intervention_aj and api_intervention_dm.
+    """
+    db_client = get_db_client()
+    result = await db_client.queue_recalculation(
+        intervention_id=params.intervention_id,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Queue Recalculation\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_level")
+async def add_level(params: AddLevelInput) -> str:
+    """Add a level row (prior/new level with unit) to an intervention.
+
+    Use gta_mnt_lookup with table='unit' or table='level_type' to find IDs.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_level(
+        intervention_id=params.intervention_id,
+        prior_level=params.prior_level,
+        new_level=params.new_level,
+        unit_id=params.unit_id,
+        level_type_id=params.level_type_id,
+        tariff_peak=params.tariff_peak,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Level\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
 
 
 def main():
