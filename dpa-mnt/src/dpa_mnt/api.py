@@ -303,6 +303,7 @@ class DPADatabaseClient:
             result['related_interventions'] = []
 
         # 8. Sources (via lux_event_source → lux_source_log, with file info)
+        # display_on_flag: 1 = primary source shown on front page, 0 = background/contextual
         cursor.execute('''
             SELECT
                 s.source_id,
@@ -312,6 +313,7 @@ class DPADatabaseClient:
                 st.source_type_name,
                 s.institution_name,
                 s.source_date,
+                es.display_on_flag,
                 f.file_url,
                 f.file_name
             FROM lux_event_source es
@@ -320,7 +322,7 @@ class DPADatabaseClient:
             LEFT JOIN lux_source_file sf ON s.source_id = sf.source_id
             LEFT JOIN lux_file_log f ON sf.file_id = f.id AND f.is_deleted = 0
             WHERE es.event_id = %s
-            ORDER BY s.source_id ASC
+            ORDER BY es.display_on_flag DESC, s.source_id ASC
         ''', (event_id,))
         result['sources'] = cursor.fetchall()
 
