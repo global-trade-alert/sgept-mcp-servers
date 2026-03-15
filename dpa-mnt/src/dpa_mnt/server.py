@@ -84,7 +84,7 @@ class AddCommentInput(BaseModel):
 class SetStatusInput(BaseModel):
     """Input for setting status."""
     event_id: int = Field(..., description="Event ID")
-    new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 5=Under revision)")
+    new_status_id: int = Field(..., description="Status ID: 3=Publishable (PASS), 4=Concern (CONDITIONAL), 5=Under revision (FAIL)")
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
 
@@ -221,7 +221,7 @@ async def set_status(params: SetStatusInput) -> str:
 
     Creates entry in lux_event_status_log.
 
-    Status IDs: 2=Step1 review, 3=Publishable, 5=Under revision, 6=Revised, 7=Published.
+    Status IDs: 3=Publishable (PASS), 4=Concern (CONDITIONAL/ESCALATION), 5=Under revision (FAIL).
     """
     db_client = get_db_client()
     result = await db_client.set_status(
