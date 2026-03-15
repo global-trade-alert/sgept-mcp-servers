@@ -35,4 +35,4 @@ AUTHOR_NAME = "Buzetta Claudini"
 
 # Review artifact storage path
 # Each event gets a folder with source files, comments, and review log
-REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/dpa/sc-reviews"
+REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/dpa/bc-reviews"
