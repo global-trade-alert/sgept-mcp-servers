@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 
 from .api import DPADatabaseClient
 from .source_fetcher import SourceFetcher
-from .constants import SANCHO_USER_ID, DPA_FRAMEWORK_ID, REVIEWER_NAME
+from .constants import SANCHO_USER_ID, DPA_FRAMEWORK_ID, REVIEWER_NAME, BC_REVIEW_ISSUE_ID
 from .formatters import (
     format_review_queue,
     format_event_detail,
@@ -88,10 +88,9 @@ class SetStatusInput(BaseModel):
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
 
-class AddFrameworkInput(BaseModel):
-    """Input for adding framework tag."""
-    event_id: int = Field(..., description="Event ID")
-    framework_name: str = Field(default="buzessa claudini dpa review", description="Framework name")
+class AddReviewTagInput(BaseModel):
+    """Input for tagging an intervention as reviewed."""
+    event_id: int = Field(..., description="Event ID (intervention is looked up automatically)")
 
 
 class ListTemplatesInput(BaseModel):
@@ -237,20 +236,21 @@ async def set_status(params: SetStatusInput) -> str:
         return f"Failed: {result['message']}"
 
 
-@mcp.tool(name="dpa_mnt_add_framework")
-async def add_framework(params: AddFrameworkInput) -> str:
-    """Attach 'buzessa claudini dpa review' framework tag to an event for tracking.
+@mcp.tool(name="dpa_mnt_add_review_tag")
+async def add_review_tag(params: AddReviewTagInput) -> str:
+    """Tag the intervention with 'BC review' issue after reviewing an event.
 
-    Use this to mark that an event has been reviewed by Buzessa Claudini.
+    Looks up the intervention from the event_id and adds issue 83 ('BC review')
+    to lux_intervention_issue_log. Idempotent — safe to call multiple times.
+    Call this after every completed review (PASS, CONDITIONAL, or FAIL).
     """
     db_client = get_db_client()
-    result = await db_client.add_framework(
-        event_id=params.event_id,
-        framework_name=params.framework_name
+    result = await db_client.add_review_tag(
+        event_id=params.event_id
     )
 
     if result['success']:
-        return f"Framework attached.\n\nFramework ID: {result['framework_id']}\nEvent: {params.event_id}"
+        return f"Review tag applied.\n\nIntervention: {result.get('intervention_id')}\nIssue ID: {BC_REVIEW_ISSUE_ID} (BC review)\nEvent: {params.event_id}\n{result['message']}"
     else:
         return f"Failed: {result['message']}"
 

@@ -13,7 +13,8 @@ import pymysql.cursors
 
 from .constants import (
     SANCHO_USER_ID, DPA_FRAMEWORK_ID, REVIEWER_NAME,
-    BUZESSA_REVIEWER_ID, BUZETTA_AUTHOR_ID, AUTHOR_NAME
+    BUZESSA_REVIEWER_ID, BUZETTA_AUTHOR_ID, AUTHOR_NAME,
+    BC_REVIEW_ISSUE_ID
 )
 from .storage import ReviewStorage
 
@@ -438,38 +439,63 @@ class DPADatabaseClient:
     # Add Framework
     # ========================================================================
 
-    async def add_framework(
+    async def add_review_tag(
         self,
-        event_id: int,
-        framework_name: str = "buzessa claudini dpa review"
+        event_id: int
     ) -> dict:
-        """Attach framework tag to event for tracking.
+        """Tag the intervention with 'BC review' issue after reviewing an event.
 
-        Uses gta_framework ID 496 and api_state_act_framework with
-        state_act_id = event_id (shared mechanism with GTA).
+        Looks up the intervention_id from the event, then inserts into
+        lux_intervention_issue_log if not already present. This tracks
+        which interventions have had at least one event reviewed.
         """
         conn = self._get_connection()
         cursor = conn.cursor()
 
         try:
-            cursor.execute('''
-                INSERT IGNORE INTO api_framework_log (id, name, description, slug, pinned, date_created, status_id)
-                VALUES (%s, %s, 'Automated DPA quality review by Buzessa Claudini', 'buzessa-claudini-dpa-reviewed', 0, %s, 1)
-            ''', (DPA_FRAMEWORK_ID, framework_name, datetime.now(UTC)))
+            # Get intervention_id from event
+            cursor.execute(
+                'SELECT intervention_id FROM lux_event_log WHERE event_id = %s',
+                (event_id,)
+            )
+            row = cursor.fetchone()
+            if not row or not row.get('intervention_id'):
+                return {
+                    'success': False,
+                    'message': f'Event {event_id} not found or has no intervention_id'
+                }
 
+            intervention_id = row['intervention_id']
+
+            # Check if already tagged
             cursor.execute('''
-                INSERT INTO api_state_act_framework (framework_id, state_act_id)
+                SELECT id FROM lux_intervention_issue_log
+                WHERE intervention_id = %s AND issue_id = %s
+            ''', (intervention_id, BC_REVIEW_ISSUE_ID))
+
+            if cursor.fetchone():
+                return {
+                    'event_id': event_id,
+                    'intervention_id': intervention_id,
+                    'issue_id': BC_REVIEW_ISSUE_ID,
+                    'success': True,
+                    'message': f"Intervention {intervention_id} already tagged with BC review (issue {BC_REVIEW_ISSUE_ID})"
+                }
+
+            # Insert issue tag
+            cursor.execute('''
+                INSERT INTO lux_intervention_issue_log (intervention_id, issue_id)
                 VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE framework_id = framework_id
-            ''', (DPA_FRAMEWORK_ID, event_id))
+            ''', (intervention_id, BC_REVIEW_ISSUE_ID))
 
             conn.commit()
 
             return {
                 'event_id': event_id,
-                'framework_id': DPA_FRAMEWORK_ID,
+                'intervention_id': intervention_id,
+                'issue_id': BC_REVIEW_ISSUE_ID,
                 'success': True,
-                'message': f"Framework '{framework_name}' attached to event {event_id}"
+                'message': f"Intervention {intervention_id} tagged with BC review (issue {BC_REVIEW_ISSUE_ID})"
             }
 
         except Exception as e:
@@ -477,7 +503,7 @@ class DPADatabaseClient:
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'Failed to add framework: {e}'
+                'message': f'Failed to add review tag: {e}'
             }
 
     # ========================================================================
