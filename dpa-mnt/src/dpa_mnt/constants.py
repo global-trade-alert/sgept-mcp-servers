@@ -34,5 +34,5 @@ REVIEWER_NAME = "Buzessa Claudini"
 AUTHOR_NAME = "Buzetta Claudini"
 
 # Review artifact storage path
-# Each event gets a folder with source files, comments, and review log
+# Organised by intervention ID; event files prefixed with evt-{event_id}
 REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/dpa/bc-reviews"

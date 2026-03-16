@@ -1,6 +1,7 @@
 """Review artifact storage for dpa_mnt server.
 
-Stores source files, comments, and review logs for each reviewed DPA event.
+Stores source files, comments, and review logs organised by intervention ID.
+Each intervention gets a folder; event-level files are prefixed with evt-{event_id}.
 """
 
 import os
@@ -14,47 +15,52 @@ from .constants import REVIEW_STORAGE_PATH
 class ReviewStorage:
     """Manages persistent storage of review artifacts.
 
-    Each event gets a dedicated folder containing:
-    - source.{pdf|html|txt} - Downloaded source file
-    - comments.md - All review comments
-    - review-log.md - Review activity log
+    Organised by intervention: bc-reviews/{intervention_id}/
+    Each event's files are prefixed: evt-{event_id}-{artifact}.
     """
 
     def __init__(self, base_path: str = REVIEW_STORAGE_PATH):
         self.base_path = Path(base_path)
 
-    def get_review_path(self, event_id: int) -> Path:
-        review_path = self.base_path / str(event_id)
+    def get_review_path(self, intervention_id: int) -> Path:
+        review_path = self.base_path / str(intervention_id)
         review_path.mkdir(parents=True, exist_ok=True)
         return review_path
 
+    def _evt_prefix(self, event_id: int) -> str:
+        return f"evt-{event_id}"
+
     def save_source(
         self,
+        intervention_id: int,
         event_id: int,
         content: bytes,
         content_type: str,
         source_url: str
     ) -> Path:
-        review_path = self.get_review_path(event_id)
+        review_path = self.get_review_path(intervention_id)
+        prefix = self._evt_prefix(event_id)
 
         ext_map = {"pdf": "pdf", "html": "html", "text": "txt"}
         ext = ext_map.get(content_type, "txt")
-        file_path = review_path / f"source.{ext}"
+        file_path = review_path / f"{prefix}-source.{ext}"
         file_path.write_bytes(content)
 
-        meta_path = review_path / "source-url.txt"
+        meta_path = review_path / f"{prefix}-source-url.txt"
         meta_path.write_text(source_url)
 
         return file_path
 
     def save_comment(
         self,
+        intervention_id: int,
         event_id: int,
         comment_text: str,
         comment_id: Optional[int] = None
     ) -> Path:
-        review_path = self.get_review_path(event_id)
-        comments_path = review_path / "comments.md"
+        review_path = self.get_review_path(intervention_id)
+        prefix = self._evt_prefix(event_id)
+        comments_path = review_path / f"{prefix}-comments.md"
 
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         separator = "\n" + "=" * 80 + "\n"
@@ -77,6 +83,7 @@ class ReviewStorage:
 
     def save_log(
         self,
+        intervention_id: int,
         event_id: int,
         source_url: str,
         fields_validated: list[str],
@@ -84,8 +91,9 @@ class ReviewStorage:
         decision: str,
         actions_taken: list[str]
     ) -> Path:
-        review_path = self.get_review_path(event_id)
-        log_path = review_path / "review-log.md"
+        review_path = self.get_review_path(intervention_id)
+        prefix = self._evt_prefix(event_id)
+        log_path = review_path / f"{prefix}-review-log.md"
 
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -125,14 +133,16 @@ class ReviewStorage:
         log_path.write_text(content)
         return log_path
 
-    def get_source_path(self, event_id: int) -> Optional[Path]:
-        review_path = self.get_review_path(event_id)
+    def get_source_path(self, intervention_id: int, event_id: int) -> Optional[Path]:
+        review_path = self.get_review_path(intervention_id)
+        prefix = self._evt_prefix(event_id)
         for ext in ["pdf", "html", "txt"]:
-            source_path = review_path / f"source.{ext}"
+            source_path = review_path / f"{prefix}-source.{ext}"
             if source_path.exists():
                 return source_path
         return None
 
-    def review_exists(self, event_id: int) -> bool:
-        log_path = self.get_review_path(event_id) / "review-log.md"
+    def review_exists(self, intervention_id: int, event_id: int) -> bool:
+        review_path = self.base_path / str(intervention_id)
+        log_path = review_path / f"evt-{event_id}-review-log.md"
         return log_path.exists()

@@ -106,6 +106,7 @@ class GetInterventionContextInput(BaseModel):
 class LogReviewInput(BaseModel):
     """Input for logging a review."""
     event_id: int = Field(..., description="Event ID")
+    intervention_id: int = Field(..., description="Intervention ID (from get_event result)")
     source_url: str = Field(..., description="Source URL used for validation")
     fields_validated: List[str] = Field(default_factory=list, description="List of fields checked")
     issues_found: List[str] = Field(default_factory=list, description="List of issues discovered (empty if none)")
@@ -174,7 +175,7 @@ async def get_source(params: GetSourceInput) -> str:
     db_client = get_db_client()
     source_fetcher = get_source_fetcher()
 
-    # Get event to retrieve source list
+    # Get event to retrieve source list and intervention_id
     event_data = await db_client.get_event(
         event_id=params.event_id,
         include_intervention=False,
@@ -186,8 +187,10 @@ async def get_source(params: GetSourceInput) -> str:
         return f"Source index {params.source_index} out of range. Event {params.event_id} has {len(sources)} source(s) (indices 0-{len(sources)-1})."
 
     source_data = sources[params.source_index]
+    intervention_id = event_data.get('intervention_id')
 
     source_result = await source_fetcher.get_source(
+        intervention_id=intervention_id,
         event_id=params.event_id,
         source_data=source_data,
         fetch_content=params.fetch_content
@@ -275,6 +278,7 @@ async def log_review(params: LogReviewInput) -> str:
     storage = ReviewStorage()
 
     log_path = storage.save_log(
+        intervention_id=params.intervention_id,
         event_id=params.event_id,
         source_url=params.source_url,
         fields_validated=params.fields_validated,
@@ -283,7 +287,7 @@ async def log_review(params: LogReviewInput) -> str:
         actions_taken=params.actions_taken
     )
 
-    return f"Review log saved.\n\nEvent: {params.event_id}\nDecision: {params.decision}\nLog: {log_path}"
+    return f"Review log saved.\n\nEvent: {params.event_id}\nIntervention: {params.intervention_id}\nDecision: {params.decision}\nLog: {log_path}"
 
 
 def main():

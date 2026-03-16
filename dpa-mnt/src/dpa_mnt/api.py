@@ -1,7 +1,8 @@
 """DPA database client for dpa_mnt server - Direct MySQL Access.
 
-All queries use lux_* tables for DPA data. Shared tables (api_comment_log,
-gta_framework, api_state_act_framework) use event_id as the foreign key.
+All queries use lux_* tables for DPA data.
+Comments use gta_comment (the table the Lumière dashboard reads).
+Review tracking uses lux_intervention_issue_log (issue 83 = BC review).
 """
 
 import os
@@ -362,6 +363,14 @@ class DPADatabaseClient:
         cursor = conn.cursor()
 
         try:
+            # Look up intervention_id for storage path
+            cursor.execute(
+                'SELECT intervention_id FROM lux_event_log WHERE event_id = %s',
+                (event_id,)
+            )
+            row = cursor.fetchone()
+            intervention_id = row['intervention_id'] if row else None
+
             now = datetime.now(UTC)
             cursor.execute('''
                 INSERT INTO api_comment_log
@@ -372,11 +381,13 @@ class DPADatabaseClient:
             conn.commit()
             comment_id = cursor.lastrowid
 
-            self.storage.save_comment(
-                event_id=event_id,
-                comment_text=comment_text,
-                comment_id=comment_id
-            )
+            if intervention_id:
+                self.storage.save_comment(
+                    intervention_id=intervention_id,
+                    event_id=event_id,
+                    comment_text=comment_text,
+                    comment_id=comment_id
+                )
 
             return {
                 'comment_id': comment_id,
