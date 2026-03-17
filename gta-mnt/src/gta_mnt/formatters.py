@@ -1,6 +1,6 @@
 """Formatters for gta_mnt outputs (markdown formatting, comment structures)."""
 
-from typing import Optional
+from typing import Optional, Any
 
 
 def format_issue_comment(
@@ -194,19 +194,15 @@ def format_measure_detail(measure: dict) -> str:
     else:
         impl_jur_str = "N/A"
 
-    # Get source info - prefer authoritative source_citations over legacy fields
+    # Get source info
     source_info = measure.get("source_info", {})
-    source_citations = measure.get("source_citations", [])
 
-    # Build source content from authoritative api_state_act_source + api_source_list
-    # The legacy gta_measure.source field is often stale/wrong — only use as last resort
-    if source_citations:
-        source_content = "\n\n".join(sc.get("source_url", "") for sc in source_citations if sc.get("source_url"))
-    else:
-        source_markdown = measure.get("source_markdown") or ""
-        source_text = measure.get("source_text") or ""
-        source_field = measure.get("source") or ""
-        source_content = source_markdown or source_text or source_field
+    # Primary citation: source_markdown contains the full formatted citation
+    # (e.g. "Author (Date). TITLE. Publisher (Retrieved date): URL")
+    source_markdown = measure.get("source_markdown") or ""
+    source_text = measure.get("source_text") or ""
+    source_field = measure.get("source") or ""
+    source_content = source_markdown or source_text or source_field
 
     lines = [
         f"# StateAct {state_act_id}: {title}\n",
@@ -240,10 +236,20 @@ def format_measure_detail(measure: dict) -> str:
             removal_date = intervention.get("removal_date")
             implementation_level_id = intervention.get("implementation_level_id")
             implementation_level_name = intervention.get("implementation_level_name")
-            prior_level = intervention.get("prior_level")
-            new_level = intervention.get("new_level")
-            unit_id = intervention.get("unit_id")
-            unit_name = intervention.get("unit_name")
+            # Levels: prefer level_rows (from api_intervention_level) over inline prior_level/new_level
+            level_rows = intervention.get("level_rows", [])
+            if level_rows:
+                # Use first level row for primary display
+                lr = level_rows[0]
+                prior_level = lr.get("prior_level")
+                new_level = lr.get("new_level")
+                unit_id = lr.get("unit_id")
+                unit_name = lr.get("unit_name")
+            else:
+                prior_level = intervention.get("prior_level")
+                new_level = intervention.get("new_level")
+                unit_id = intervention.get("unit_id")
+                unit_name = intervention.get("unit_name")
             int_description = intervention.get("description") or ""
 
             # Format implementation level with name if available
@@ -273,6 +279,12 @@ def format_measure_detail(measure: dict) -> str:
                 lines.append(f"- **Prior Level:** {prior_level if prior_level is not None else 'N/A'}")
                 lines.append(f"- **New Level:** {new_level if new_level is not None else 'N/A'}")
                 lines.append(f"- **Unit:** {unit_str}")
+                if level_rows:
+                    level_type = level_rows[0].get("level_type_name")
+                    if level_type:
+                        lines.append(f"- **Level Type:** {level_type}")
+                    if len(level_rows) > 1:
+                        lines.append(f"- **Additional level rows:** {len(level_rows) - 1}")
             lines.append("")
 
             # Affected Jurisdictions section with type
@@ -303,6 +315,28 @@ def format_measure_detail(measure: dict) -> str:
                         lines.append(f"- {name} ({iso})")
                 lines.append("")
 
+            # Products section (HS codes)
+            products = intervention.get("products", [])
+            if products:
+                lines.append("#### Products")
+                for prod in products:
+                    pid = prod.get("product_id", "?")
+                    pdesc = prod.get("product_description", "")
+                    lines.append(f"- HS {pid}: {pdesc}")
+                lines.append("")
+
+            # Sectors section (CPC)
+            sectors = intervention.get("sectors", [])
+            if sectors:
+                lines.append("#### Sectors")
+                for sec in sectors:
+                    sid = sec.get("sector_id", "?")
+                    sname = sec.get("sector_name", "")
+                    stype = sec.get("sector_type", "")
+                    type_label = f" [{stype}]" if stype and stype != "N" else ""
+                    lines.append(f"- {sid}: {sname}{type_label}")
+                lines.append("")
+
             # Firms section
             firms = intervention.get("firms", [])
             if firms:
@@ -321,6 +355,21 @@ def format_measure_detail(measure: dict) -> str:
                 lines.append("#### Description")
                 lines.append(int_description)
                 lines.append("")
+
+    # Motive quotes section (state act level)
+    motive_quotes = measure.get("motive_quotes", [])
+    if motive_quotes:
+        lines.append(f"\n## Motive Quotes ({len(motive_quotes)})\n")
+        for mq in motive_quotes:
+            quote = mq.get("stated_motive_name", "")
+            url = mq.get("stated_motive_url", "")
+            lines.append(f"- \"{quote}\"")
+            if url:
+                lines.append(f"  Source: {url}")
+        lines.append("")
+    else:
+        lines.append("\n## Motive Quotes\n")
+        lines.append("*No motive quotes recorded*\n")
 
     # Comments section
     comments = measure.get("comments", [])
@@ -403,6 +452,59 @@ def format_source_result(source_result) -> str:
 # ============================================================================
 # WS10: List Templates Formatter
 # ============================================================================
+
+def format_guessed_hs_codes(data: Any) -> str:
+    """Format Bastiat API HS code guess results as markdown.
+
+    Args:
+        data: Bastiat API response dict.
+
+    Returns:
+        Markdown-formatted HS code suggestions.
+    """
+    if not data:
+        return "# HS Code Guess\n\n*No results returned from Bastiat API.*"
+
+    # Handle various response shapes from the API
+    hs_codes = data.get("hs_codes", data.get("results", []))
+
+    if not hs_codes:
+        return "# HS Code Guess\n\n*No HS codes identified for the given text.*"
+
+    lines = [
+        f"# AI-Guessed HS Codes ({len(hs_codes)} results)\n",
+        "| HS Code | Description | Confidence | Level |",
+        "|---------|-------------|------------|-------|",
+    ]
+
+    # Build ready-to-use product IDs list
+    product_ids = []
+
+    for code in hs_codes:
+        hs_code = code.get("hs_code", code.get("code", "N/A"))
+        description = code.get("description", code.get("name", "N/A"))
+        confidence = code.get("confidence", code.get("score", "N/A"))
+        level = code.get("level", code.get("hs_level", len(str(hs_code))))
+
+        # Format confidence as percentage if numeric
+        if isinstance(confidence, (int, float)):
+            confidence_str = f"{confidence:.0%}" if confidence <= 1 else f"{confidence}%"
+        else:
+            confidence_str = str(confidence)
+
+        lines.append(f"| {hs_code} | {description} | {confidence_str} | {level}-digit |")
+        product_ids.append(str(hs_code))
+
+    # Add ready-to-use lookup hint
+    lines.append("")
+    lines.append("## Next Steps")
+    lines.append("")
+    lines.append("Use `gta_mnt_lookup(table='product', query='<hs_code>')` to find the database product_id for each code.")
+    lines.append("")
+    lines.append(f"**Codes for lookup:** {', '.join(product_ids)}")
+
+    return "\n".join(lines)
+
 
 def format_templates(data: dict) -> str:
     """Format comment templates as markdown.

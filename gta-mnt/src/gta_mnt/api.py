@@ -1,18 +1,76 @@
 """GTA API client for gta_mnt server - Direct Database Access.
 
 Refactored to use direct MySQL connections instead of REST API endpoints.
+Also includes BastiatAPIClient for AI-powered HS code guessing.
 """
 
 import os
+import re
 import sys
 from typing import Optional
 from datetime import datetime, UTC
 
+import httpx
 import pymysql
 import pymysql.cursors
 
+
+def _slugify(text: str, max_length: int = 490) -> str:
+    """Generate a URL-safe slug from text, matching Django AutoSlugField behaviour."""
+    slug = re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
+    return slug[:max_length]
+
 from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID, LOOKUP_TABLES
 from .storage import ReviewStorage
+
+
+class BastiatAPIClient:
+    """Client for Bastiat API (AI-powered HS Code Guesser).
+
+    Uses semantic understanding to match natural language product descriptions
+    to HS codes, unlike gta_mnt_lookup which only does substring matching.
+    """
+
+    DEFAULT_BASE_URL = "https://bastiat-api.globaltradealert.org"
+
+    def __init__(self, api_key: str, base_url: str | None = None):
+        self.api_key = api_key
+        self.base_url = base_url or self.DEFAULT_BASE_URL
+        self.headers = {
+            "Authorization": f"APIKey {api_key}",
+            "Content-Type": "application/json",
+        }
+
+    async def guess_hs_codes(
+        self,
+        article_text: str,
+        target_hs_levels: list[int] | None = None,
+        initial_hs_codes: list[str] | None = None,
+    ) -> dict:
+        """Call Bastiat API to guess HS codes from product description text.
+
+        Args:
+            article_text: Natural language description of products/goods.
+            target_hs_levels: HS digit levels to return (e.g. [2, 4, 6]).
+            initial_hs_codes: Optional hint codes to guide the search.
+
+        Returns:
+            API response dict with guessed HS codes.
+        """
+        payload = {"article_text": article_text}
+        if target_hs_levels:
+            payload["target_hs_levels"] = target_hs_levels
+        if initial_hs_codes:
+            payload["initial_hs_codes"] = initial_hs_codes
+
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            response = await client.post(
+                f"{self.base_url}/bastiat/howard/guess-hs-codes/",
+                headers=self.headers,
+                json=payload,
+            )
+            response.raise_for_status()
+            return response.json()
 
 
 class GTADatabaseClient:
@@ -347,6 +405,52 @@ class GTADatabaseClient:
                 except Exception as e:
                     print(f"[gta-mnt] WARNING: Levels query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['level_rows'] = []
+
+                # Products (HS codes)
+                try:
+                    cursor.execute('''
+                        SELECT
+                            p.product_id,
+                            p.product_description
+                        FROM api_intervention_product ip
+                        JOIN api_product_list p ON ip.product_id = p.product_id
+                        WHERE ip.intervention_id = %s
+                    ''', (intervention['id'],))
+                    intervention['products'] = cursor.fetchall()
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Products query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
+                    intervention['products'] = []
+
+                # Sectors (CPC)
+                try:
+                    cursor.execute('''
+                        SELECT
+                            s.sector_id,
+                            s.sector_name,
+                            isec.type as sector_type
+                        FROM api_intervention_sector isec
+                        JOIN api_sector_list s ON isec.sector_id = s.sector_id
+                        WHERE isec.intervention_id = %s
+                    ''', (intervention['id'],))
+                    intervention['sectors'] = cursor.fetchall()
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Sectors query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
+                    intervention['sectors'] = []
+
+        # Fetch motive quotes from gta_stated_motive_log
+        try:
+            cursor.execute('''
+                SELECT
+                    stated_motive_id,
+                    stated_motive_name,
+                    stated_motive_url
+                FROM gta_stated_motive_log
+                WHERE state_act_id = %s
+            ''', (state_act_id,))
+            measure['motive_quotes'] = cursor.fetchall()
+        except Exception as e:
+            print(f"[gta-mnt] WARNING: Motive quotes query failed: {e}", file=sys.stderr)
+            measure['motive_quotes'] = []
 
         # Optionally fetch comments
         if include_comments:
@@ -838,6 +942,7 @@ class GTADatabaseClient:
         is_source_official: int,
         date_announced: str,
         evaluation_id: int,
+        source_citation: Optional[str] = None,
         dry_run: bool = False
     ) -> dict:
         """Create a new state act (measure) in api_state_act_log.
@@ -847,10 +952,13 @@ class GTADatabaseClient:
         Args:
             title: State act title
             description: Announcement description text
-            source_url: Primary source URL (stored in source_markdown)
+            source_url: Primary source URL
             is_source_official: 1 if official source, 0 if not
             date_announced: YYYY-MM-DD
             evaluation_id: 1=Red, 2=Amber, 3=Green
+            source_citation: Full GTA citation string (e.g. 'Author (Date). TITLE. Publisher (Retrieved): URL').
+                           Stored in both source_markdown and source fields.
+                           If omitted, source_url is used as fallback.
             dry_run: If True, return SQL without executing
 
         Returns:
@@ -858,18 +966,25 @@ class GTADatabaseClient:
         """
         now = datetime.now(UTC)
         status_id = 2  # Step 1 review — never create in publishable state
+        citation_text = source_citation or source_url
+
+        # Convert plain text description to HTML (<p> wrapped) + store markdown copy
+        description_html = ''.join(f'<p>{p.strip()}</p>' for p in description.split('\n\n') if p.strip()) if description else ''
+        description_markdown = description  # Plain text version
 
         insert_sql = '''
             INSERT INTO api_state_act_log
-                (title, description, source_markdown, date_announced,
+                (title, description, description_markdown, source_markdown, source, date_announced,
                  is_source_official, status_id, evaluation_id,
-                 author_id, date_created, last_modified)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 author_id, date_created, last_modified,
+                 is_migrated, is_validated_after_migration, submit_to_review_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         params = (
-            title, description, source_url, date_announced,
+            title, description_html, description_markdown, citation_text, citation_text, date_announced,
             is_source_official, status_id, evaluation_id,
-            SANCHO_AUTHOR_ID, now.strftime('%Y-%m-%d'), now
+            SANCHO_AUTHOR_ID, now.strftime('%Y-%m-%d'), now,
+            1, 1, now.strftime('%Y-%m-%d')
         )
 
         if dry_run:
@@ -886,6 +1001,13 @@ class GTADatabaseClient:
         try:
             cursor.execute(insert_sql, params)
             state_act_id = cursor.lastrowid
+
+            # Generate slug for public URLs (mirrors Django AutoSlugField)
+            slug = f"{state_act_id}-{_slugify(title)}"
+            cursor.execute(
+                'UPDATE api_state_act_log SET slug = %s WHERE state_act_id = %s',
+                (slug, state_act_id)
+            )
 
             # Log initial status
             cursor.execute('''
@@ -914,6 +1036,15 @@ class GTADatabaseClient:
                 INSERT INTO api_state_act_source (source_id, state_act_id)
                 VALUES (%s, %s)
             ''', (source_id, state_act_id))
+
+            # Write source citation to api_state_act_source_log_new
+            # (admin dashboard reads source display from this table)
+            cursor.execute('''
+                INSERT INTO api_state_act_source_log_new
+                    (status, source, source_markdown, datetime_created,
+                     datetime_modified, order_nr, state_act_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', ('NEW', citation_text, citation_text, now, now, 1, state_act_id))
 
             conn.commit()
 
@@ -990,22 +1121,32 @@ class GTADatabaseClient:
             sa = cursor.fetchone()
             title = sa['title'] if sa else 'Untitled'
 
+        # Convert plain text description to HTML (<p> wrapped) + store markdown copy
+        description_html = ''.join(f'<p>{p.strip()}</p>' for p in description.split('\n\n') if p.strip()) if description else ''
+        description_markdown = description  # Plain text version
+
         insert_sql = '''
             INSERT INTO api_intervention_log
-                (state_act_id, title, description, intervention_type_id,
+                (state_act_id, title, description, description_markdown_collected,
+                 intervention_type_id,
                  chapter_id, subchapter_id, gta_evaluation_id,
                  affected_flow_id, eligible_firm_id, implementation_level_id,
                  intervention_area_id, date_implemented, date_announced,
                  announced_as_temporary, aj_type, dm_type,
+                 status_id,
+                 is_in_counts, is_in_coverage, is_in_inspector,
                  date_created, last_modified)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         params = (
-            state_act_id, title, description, intervention_type_id,
+            state_act_id, title, description_html, description_markdown,
+            intervention_type_id,
             chapter_id, subchapter_id, gta_evaluation_id,
             affected_flow_id, eligible_firm_id, implementation_level_id,
             intervention_area_id, date_implemented, date_announced,
             announced_as_temporary, aj_type, dm_type,
+            2,  # status_id=2 (Step 1 review), matching state act status
+            0, 0, 0,
             now.strftime('%Y-%m-%d'), now
         )
 
@@ -1031,6 +1172,23 @@ class GTADatabaseClient:
 
             cursor.execute(insert_sql, params)
             intervention_id = cursor.lastrowid
+
+            # Generate slug for public URLs (mirrors Django AutoSlugField)
+            slug = f"{intervention_id}-{_slugify(title)}"
+            cursor.execute(
+                'UPDATE api_intervention_log SET slug = %s WHERE intervention_id = %s',
+                (slug, intervention_id)
+            )
+
+            # Write description to api_intervention_description_log
+            # (admin dashboard reads intervention descriptions from this table)
+            cursor.execute('''
+                INSERT INTO api_intervention_description_log
+                    (status, description, description_markdown,
+                     datetime_created, datetime_modified, order_nr, intervention_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', ('NEW', description_html, description_markdown, now, now, 1, intervention_id))
+
             conn.commit()
 
             return {
@@ -1104,6 +1262,11 @@ class GTADatabaseClient:
         self,
         intervention_id: int,
         product_id: int,
+        prior_level: Optional[str] = None,
+        new_level: Optional[str] = None,
+        unit_id: Optional[int] = None,
+        date_implemented: Optional[str] = None,
+        date_removed: Optional[str] = None,
         dry_run: bool = False
     ) -> dict:
         """Add affected product to an intervention.
@@ -1111,17 +1274,43 @@ class GTADatabaseClient:
         Args:
             intervention_id: FK to api_intervention_log
             product_id: FK to api_product_list (look up from HS code via gta_mnt_lookup)
+            prior_level: Optional prior tariff/level value for this product
+            new_level: Optional new tariff/level value for this product
+            unit_id: Optional FK to api_unit_list (e.g. percentage, specific rate)
+            date_implemented: Optional per-product implementation date (YYYY-MM-DD)
+            date_removed: Optional per-product removal date (YYYY-MM-DD)
             dry_run: If True, return SQL without executing
 
         Returns:
             Dict with success status
         """
-        insert_sql = '''
+        # Build column list dynamically based on provided optional fields
+        columns = ['intervention_id', 'product_id', 'is_completely_captured', 'is_in_original']
+        values = [intervention_id, product_id, 0, 1]
+
+        if prior_level is not None:
+            columns.append('prior_level')
+            values.append(prior_level)
+        if new_level is not None:
+            columns.append('new_level')
+            values.append(new_level)
+        if unit_id is not None:
+            columns.append('unit_id')
+            values.append(unit_id)
+        if date_implemented is not None:
+            columns.append('date_implemented')
+            values.append(date_implemented)
+        if date_removed is not None:
+            columns.append('date_removed')
+            values.append(date_removed)
+
+        placeholders = ', '.join(['%s'] * len(values))
+        insert_sql = f'''
             INSERT INTO api_intervention_product
-                (intervention_id, product_id, is_completely_captured, is_in_original)
-            VALUES (%s, %s, 0, 1)
+                ({', '.join(columns)})
+            VALUES ({placeholders})
         '''
-        params = (intervention_id, product_id)
+        params = tuple(values)
 
         if dry_run:
             return {'dry_run': True, 'sql': insert_sql.strip(), 'params': [str(p) for p in params]}
@@ -1281,7 +1470,7 @@ class GTADatabaseClient:
         if dry_run:
             sqls = []
             if not existing:
-                sqls.append(f"INSERT INTO mtz_firm_log (firm_name, jurisdiction_id, priority) VALUES ('{firm_name}', {jurisdiction_id}, 0)")
+                sqls.append(f"INSERT INTO mtz_firm_log (firm_name, jurisdiction_id, priority, status_id, hs_status_id, cpc_status_id) VALUES ('{firm_name}', {jurisdiction_id}, 0, 1, 1, 1)")
             sqls.append(f"INSERT INTO api_intervention_firm (firm_id, intervention_id, role_id) VALUES (<firm_id>, {intervention_id}, {role_id})")
             return {'dry_run': True, 'sql': sqls, 'existing_firm': existing is not None}
 
@@ -1290,8 +1479,10 @@ class GTADatabaseClient:
                 firm_id = existing['firm_id']
             else:
                 cursor.execute('''
-                    INSERT INTO mtz_firm_log (firm_name, jurisdiction_id, priority)
-                    VALUES (%s, %s, 0)
+                    INSERT INTO mtz_firm_log
+                        (firm_name, jurisdiction_id, priority,
+                         status_id, hs_status_id, cpc_status_id)
+                    VALUES (%s, %s, 0, 1, 1, 1)
                 ''', (firm_name, jurisdiction_id))
                 firm_id = cursor.lastrowid
 
@@ -1319,20 +1510,25 @@ class GTADatabaseClient:
         self,
         state_act_id: int,
         source_url: str,
+        source_citation: Optional[str] = None,
         dry_run: bool = False
     ) -> dict:
         """Add a source URL to a state act.
 
         Creates in api_source_list if URL is new, then links via api_state_act_source.
+        Also writes citation to api_state_act_source_log_new for admin dashboard display.
 
         Args:
             state_act_id: FK to api_state_act_log
             source_url: Source URL
+            source_citation: Full GTA citation string. If omitted, source_url is used.
             dry_run: If True, return SQL without executing
 
         Returns:
             Dict with source_id and success status
         """
+        now = datetime.now(UTC)
+        citation_text = source_citation or source_url
         conn = self._get_connection()
         cursor = conn.cursor()
 
@@ -1348,6 +1544,7 @@ class GTADatabaseClient:
             if not existing:
                 sqls.append(f"INSERT INTO api_source_list (source_url, is_collected, is_file, is_404) VALUES ('{source_url}', 0, 0, 0)")
             sqls.append(f"INSERT INTO api_state_act_source (source_id, state_act_id) VALUES (<source_id>, {state_act_id})")
+            sqls.append(f"INSERT INTO api_state_act_source_log_new (status, source, source_markdown, ...) VALUES ('NEW', '<citation>', ...)")
             return {'dry_run': True, 'sql': sqls}
 
         try:
@@ -1376,6 +1573,21 @@ class GTADatabaseClient:
                 INSERT INTO api_state_act_source (source_id, state_act_id)
                 VALUES (%s, %s)
             ''', (source_id, state_act_id))
+
+            # Determine next order_nr for this state act
+            cursor.execute(
+                'SELECT COALESCE(MAX(order_nr), 0) + 1 as next_nr FROM api_state_act_source_log_new WHERE state_act_id = %s',
+                (state_act_id,)
+            )
+            next_order = cursor.fetchone()['next_nr']
+
+            # Write citation to api_state_act_source_log_new for admin dashboard display
+            cursor.execute('''
+                INSERT INTO api_state_act_source_log_new
+                    (status, source, source_markdown, datetime_created,
+                     datetime_modified, order_nr, state_act_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', ('NEW', citation_text, citation_text, now, now, next_order, state_act_id))
 
             conn.commit()
             return {
@@ -1493,6 +1705,53 @@ class GTADatabaseClient:
                 'success': True,
                 'id': cursor.lastrowid,
                 'message': f'Level row added to intervention {intervention_id}'
+            }
+        except Exception as e:
+            conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    # ========================================================================
+    # Motive Quotes
+    # ========================================================================
+
+    async def add_motive_quote(
+        self,
+        state_act_id: int,
+        motive_quote: str,
+        source_url: Optional[str] = None,
+        dry_run: bool = False
+    ) -> dict:
+        """Add a stated motive quote to gta_stated_motive_log.
+
+        Args:
+            state_act_id: FK to api_state_act_log
+            motive_quote: The quoted text from the source
+            source_url: URL where the quote was found
+            dry_run: If True, return SQL without executing
+
+        Returns:
+            Dict with success status
+        """
+        insert_sql = '''
+            INSERT INTO gta_stated_motive_log
+                (stated_motive_name, state_act_id, stated_motive_url)
+            VALUES (%s, %s, %s)
+        '''
+        params = (motive_quote, state_act_id, source_url)
+
+        if dry_run:
+            return {'dry_run': True, 'sql': insert_sql.strip(), 'params': [str(p) for p in params]}
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(insert_sql, params)
+            conn.commit()
+            return {
+                'success': True,
+                'id': cursor.lastrowid,
+                'message': f'Motive quote added to state act {state_act_id}'
             }
         except Exception as e:
             conn.rollback()

@@ -10,17 +10,19 @@ These must never be mixed. A reviewer must not appear as entry author.
 import os
 import sys
 from typing import Optional, List
+import httpx
 from pydantic import BaseModel, Field
 from mcp.server.fastmcp import FastMCP
 
-from .api import GTADatabaseClient
+from .api import GTADatabaseClient, BastiatAPIClient
 from .source_fetcher import SourceFetcher
 from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID
 from .formatters import (
     format_step1_queue,
     format_measure_detail,
     format_source_result,
-    format_templates
+    format_templates,
+    format_guessed_hs_codes
 )
 
 
@@ -145,6 +147,10 @@ class CreateStateActInput(BaseModel):
     is_source_official: int = Field(..., description="1 if official source, 0 if not")
     date_announced: str = Field(..., description="Date announced (YYYY-MM-DD)")
     evaluation_id: int = Field(..., description="1=Red, 2=Amber, 3=Green")
+    source_citation: Optional[str] = Field(
+        default=None,
+        description="Full GTA citation string: 'Author (Date). TITLE. Publisher (Retrieved date): URL'. Stored in source_markdown and source fields. Falls back to source_url if omitted."
+    )
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
@@ -180,6 +186,11 @@ class AddProductInput(BaseModel):
     """Input for adding affected product to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     product_id: int = Field(..., description="FK to api_product_list (look up HS code via gta_mnt_lookup)")
+    prior_level: Optional[str] = Field(default=None, description="Prior tariff/level value for this product (e.g. '5.0')")
+    new_level: Optional[str] = Field(default=None, description="New tariff/level value for this product (e.g. '25.0')")
+    unit_id: Optional[int] = Field(default=None, description="FK to api_unit_list (look up via gta_mnt_lookup table='unit')")
+    date_implemented: Optional[str] = Field(default=None, description="Per-product implementation date (YYYY-MM-DD)")
+    date_removed: Optional[str] = Field(default=None, description="Per-product removal date (YYYY-MM-DD)")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
@@ -211,12 +222,21 @@ class AddSourceInput(BaseModel):
     """Input for adding a source URL to a state act."""
     state_act_id: int = Field(..., description="FK to api_state_act_log")
     source_url: str = Field(..., description="Source URL")
+    source_citation: Optional[str] = Field(default=None, description="Full GTA citation string (e.g. 'Author (Date). TITLE. Publisher (Retrieved): URL'). Stored in api_state_act_source_log_new for admin dashboard display. If omitted, source_url is used.")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
 class QueueRecalculationInput(BaseModel):
     """Input for queuing AJ/DM recalculation."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddMotiveQuoteInput(BaseModel):
+    """Input for adding a stated motive quote to a state act."""
+    state_act_id: int = Field(..., description="FK to api_state_act_log")
+    motive_quote: str = Field(..., description="The quoted text from the source justifying the motive tag")
+    source_url: Optional[str] = Field(default=None, description="URL where the quote was found")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
@@ -446,6 +466,7 @@ async def create_state_act(params: CreateStateActInput) -> str:
         is_source_official=params.is_source_official,
         date_announced=params.date_announced,
         evaluation_id=params.evaluation_id,
+        source_citation=params.source_citation,
         dry_run=params.dry_run
     )
 
@@ -527,6 +548,11 @@ async def add_product(params: AddProductInput) -> str:
     result = await db_client.add_product(
         intervention_id=params.intervention_id,
         product_id=params.product_id,
+        prior_level=params.prior_level,
+        new_level=params.new_level,
+        unit_id=params.unit_id,
+        date_implemented=params.date_implemented,
+        date_removed=params.date_removed,
         dry_run=params.dry_run
     )
 
@@ -619,6 +645,7 @@ async def add_source_tool(params: AddSourceInput) -> str:
     result = await db_client.add_source(
         state_act_id=params.state_act_id,
         source_url=params.source_url,
+        source_citation=params.source_citation,
         dry_run=params.dry_run
     )
 
@@ -677,6 +704,82 @@ async def add_level(params: AddLevelInput) -> str:
         return f"✅ {result['message']}"
     else:
         return f"❌ {result.get('error', 'Unknown error')}"
+
+
+@mcp.tool(name="gta_mnt_add_motive_quote")
+async def add_motive_quote(params: AddMotiveQuoteInput) -> str:
+    """Add a stated motive quote to a state act (gta_stated_motive_log).
+
+    Stores the actual quoted text from the source that justifies the rationale/motive tags.
+    Use after gta_mnt_add_rationale to provide the supporting quote.
+    """
+    db_client = get_db_client()
+    result = await db_client.add_motive_quote(
+        state_act_id=params.state_act_id,
+        motive_quote=params.motive_quote,
+        source_url=params.source_url,
+        dry_run=params.dry_run
+    )
+
+    if result.get('dry_run'):
+        return f"🔍 DRY RUN — Add Motive Quote\n\nSQL: `{result['sql']}`\nParams: {result['params']}"
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
+class GuessHSCodesInput(BaseModel):
+    """Input for AI-powered HS code guessing via Bastiat API."""
+    product_description: str = Field(
+        ...,
+        description="Natural language description of the product or goods (e.g. 'satellite imaging equipment', 'steel coils', 'lithium-ion batteries')"
+    )
+    target_hs_levels: Optional[List[int]] = Field(
+        default=None,
+        description="HS digit levels to return (e.g. [2, 4, 6]). Default: all levels."
+    )
+    hint_codes: Optional[List[str]] = Field(
+        default=None,
+        description="Optional HS codes to guide the search (e.g. ['8802', '8806'])"
+    )
+
+
+@mcp.tool(name="gta_mnt_guess_hs_codes")
+async def guess_hs_codes(params: GuessHSCodesInput) -> str:
+    """AI-powered HS code identification from natural language product descriptions.
+
+    Uses the Bastiat API (semantic AI model) to match product descriptions to HS codes.
+    Unlike gta_mnt_lookup(table='product'), which does substring matching on ~7K codes,
+    this tool understands product semantics (e.g. 'satellite imaging equipment' → HS 880260).
+
+    Use this when:
+    - You have a natural language product description (not an HS code number)
+    - Substring lookup returned no/poor results
+    - You need to identify HS codes for a new GTA entry
+
+    After getting results, use gta_mnt_lookup(table='product', query='<hs_code>') to get
+    the database product_id needed for gta_mnt_add_product.
+    """
+    api_key = os.getenv("GTA_API_KEY")
+    if not api_key:
+        return "❌ GTA_API_KEY environment variable not set. Cannot access Bastiat API."
+
+    try:
+        client = BastiatAPIClient(api_key=api_key)
+        result = await client.guess_hs_codes(
+            article_text=params.product_description,
+            target_hs_levels=params.target_hs_levels,
+            initial_hs_codes=params.hint_codes,
+        )
+        return format_guessed_hs_codes(result)
+    except httpx.HTTPStatusError as e:
+        return f"❌ Bastiat API error: {e.response.status_code} — {e.response.text[:200]}"
+    except httpx.TimeoutException:
+        return "❌ Bastiat API timeout (90s). Try a shorter product description."
+    except Exception as e:
+        return f"❌ Error guessing HS codes: {str(e)}"
 
 
 def main():
