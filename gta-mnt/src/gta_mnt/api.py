@@ -947,7 +947,7 @@ class GTADatabaseClient:
     ) -> dict:
         """Create a new state act (measure) in api_state_act_log.
 
-        Always creates with status_id=2 (Step 1 review).
+        Always creates with status_id=1 (In progress).
 
         Args:
             title: State act title
@@ -965,7 +965,7 @@ class GTADatabaseClient:
             Dict with state_act_id and success status
         """
         now = datetime.now(UTC)
-        status_id = 2  # Step 1 review — never create in publishable state
+        status_id = 1  # In progress — never create in publishable or review state
         citation_text = source_citation or source_url
 
         # Convert plain text description to HTML (<p> wrapped) + store markdown copy
@@ -1145,7 +1145,7 @@ class GTADatabaseClient:
             affected_flow_id, eligible_firm_id, implementation_level_id,
             intervention_area_id, date_implemented, date_announced,
             announced_as_temporary, aj_type, dm_type,
-            2,  # status_id=2 (Step 1 review), matching state act status
+            1,  # status_id=1 (In progress), matching state act status
             0, 0, 0,
             now.strftime('%Y-%m-%d'), now
         )

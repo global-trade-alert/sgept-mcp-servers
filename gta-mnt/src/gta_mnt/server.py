@@ -455,7 +455,7 @@ async def lookup(params: LookupInput) -> str:
 async def create_state_act(params: CreateStateActInput) -> str:
     """Create a new state act (measure) in the GTA database.
 
-    Always creates with status_id=2 (Step 1 review). Never creates in publishable state.
+    Always creates with status_id=1 (In progress). Never creates in publishable or review state.
     Also creates source URL entry and links it to the state act.
     """
     db_client = get_db_client()
