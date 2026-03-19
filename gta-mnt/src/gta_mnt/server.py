@@ -79,6 +79,21 @@ class ListStep2QueueInput(BaseModel):
     )
 
 
+class ListQueueByStatusInput(BaseModel):
+    """Input for listing measures by arbitrary status ID."""
+    status_id: int = Field(..., description="Status ID: 1=In progress, 2=Step 1, 3=Publishable, 6=Under revision, 19=Step 2")
+    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
+    offset: int = Field(default=0, ge=0, description="Offset for pagination")
+    implementing_jurisdictions: Optional[List[str]] = Field(
+        default=None,
+        description="Filter by jurisdiction codes (e.g., ['USA', 'CHN'])"
+    )
+    date_entered_review_gte: Optional[str] = Field(
+        default=None,
+        description="Filter by date entered review (YYYY-MM-DD)"
+    )
+
+
 class GetMeasureInput(BaseModel):
     """Input for getting measure details."""
     state_act_id: int = Field(..., description="StateAct ID")
@@ -282,6 +297,27 @@ async def list_step2_queue(params: ListStep2QueueInput) -> str:
         date_entered_review_gte=params.date_entered_review_gte
     )
     return format_step1_queue(data, queue_label="Step 2")
+
+
+STATUS_LABELS = {1: "In Progress", 2: "Step 1", 3: "Publishable", 6: "Under Revision", 19: "Step 2"}
+
+
+@mcp.tool(name="gta_mnt_list_queue_by_status")
+async def list_queue_by_status(params: ListQueueByStatusInput) -> str:
+    """List measures by any status ID. Useful for checking unpublished pipeline entries.
+
+    Status IDs: 1=In progress, 2=Step 1 review, 3=Publishable, 6=Under revision, 19=Step 2 review.
+    """
+    db_client = get_db_client()
+    data = await db_client.list_step1_queue(
+        status_id=params.status_id,
+        limit=params.limit,
+        offset=params.offset,
+        implementing_jurisdictions=params.implementing_jurisdictions,
+        date_entered_review_gte=params.date_entered_review_gte
+    )
+    label = STATUS_LABELS.get(params.status_id, f"Status {params.status_id}")
+    return format_step1_queue(data, queue_label=label)
 
 
 @mcp.tool(name="gta_mnt_get_measure")
