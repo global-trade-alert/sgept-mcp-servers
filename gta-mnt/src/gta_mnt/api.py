@@ -849,7 +849,7 @@ class GTADatabaseClient:
     ) -> dict:
         """Attach framework tag to a StateAct for tracking.
 
-        Creates framework 495 in gta_framework if it doesn't exist,
+        Ensures framework 495 exists in api_framework_log (INSERT IGNORE),
         then inserts the assignment in api_state_act_framework.
 
         Args:
@@ -863,18 +863,23 @@ class GTADatabaseClient:
         cursor = conn.cursor()
 
         try:
-            # Create framework if it doesn't exist
+            # Ensure framework row exists (INSERT IGNORE — row 495 already exists in prod)
             cursor.execute(
-                'INSERT IGNORE INTO gta_framework (id, name) VALUES (%s, %s)',
+                'INSERT IGNORE INTO api_framework_log (id, name, pinned) VALUES (%s, %s, 0)',
                 (SANCHO_FRAMEWORK_ID, framework_name)
             )
 
-            # Attach framework to state act
-            cursor.execute('''
-                INSERT INTO api_state_act_framework (framework_id, state_act_id)
-                VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE framework_id = framework_id
-            ''', (SANCHO_FRAMEWORK_ID, state_act_id))
+            # Attach framework to state act — check first to avoid duplicates
+            # (api_state_act_framework has no unique constraint on (framework_id, state_act_id))
+            cursor.execute(
+                'SELECT id FROM api_state_act_framework WHERE framework_id = %s AND state_act_id = %s',
+                (SANCHO_FRAMEWORK_ID, state_act_id)
+            )
+            if not cursor.fetchone():
+                cursor.execute('''
+                    INSERT INTO api_state_act_framework (framework_id, state_act_id)
+                    VALUES (%s, %s)
+                ''', (SANCHO_FRAMEWORK_ID, state_act_id))
             conn.commit()
 
             return {
