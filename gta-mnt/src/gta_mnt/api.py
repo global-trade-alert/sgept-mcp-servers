@@ -20,7 +20,7 @@ def _slugify(text: str, max_length: int = 490) -> str:
     slug = re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
     return slug[:max_length]
 
-from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID, LOOKUP_TABLES
+from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID, FRAMEWORK_IDS, LOOKUP_TABLES
 from .storage import ReviewStorage
 
 
@@ -849,44 +849,55 @@ class GTADatabaseClient:
     ) -> dict:
         """Attach framework tag to a StateAct for tracking.
 
-        Ensures framework 495 exists in api_framework_log (INSERT IGNORE),
+        Resolves framework_name to its ID via FRAMEWORK_IDS mapping,
+        ensures the framework row exists in api_framework_log (INSERT IGNORE),
         then inserts the assignment in api_state_act_framework.
 
         Args:
             state_act_id: StateAct ID
-            framework_name: Framework name (default: "sancho claudino review")
+            framework_name: Framework name (default: "sancho claudino review").
+                Known frameworks: "sancho claudino review" (495),
+                "sancho claudito reported" (500).
 
         Returns:
             Dict with success status and message
         """
+        framework_id = FRAMEWORK_IDS.get(framework_name)
+        if framework_id is None:
+            return {
+                'success': False,
+                'error': f'Unknown framework: {framework_name}',
+                'message': f"Unknown framework '{framework_name}'. Known: {list(FRAMEWORK_IDS.keys())}"
+            }
+
         conn = self._get_connection()
         cursor = conn.cursor()
 
         try:
-            # Ensure framework row exists (INSERT IGNORE — row 495 already exists in prod)
+            # Ensure framework row exists (INSERT IGNORE — rows already exist in prod)
             cursor.execute(
                 'INSERT IGNORE INTO api_framework_log (id, name, pinned) VALUES (%s, %s, 0)',
-                (SANCHO_FRAMEWORK_ID, framework_name)
+                (framework_id, framework_name)
             )
 
             # Attach framework to state act — check first to avoid duplicates
             # (api_state_act_framework has no unique constraint on (framework_id, state_act_id))
             cursor.execute(
                 'SELECT id FROM api_state_act_framework WHERE framework_id = %s AND state_act_id = %s',
-                (SANCHO_FRAMEWORK_ID, state_act_id)
+                (framework_id, state_act_id)
             )
             if not cursor.fetchone():
                 cursor.execute('''
                     INSERT INTO api_state_act_framework (framework_id, state_act_id)
                     VALUES (%s, %s)
-                ''', (SANCHO_FRAMEWORK_ID, state_act_id))
+                ''', (framework_id, state_act_id))
             conn.commit()
 
             return {
                 'state_act_id': state_act_id,
-                'framework_id': SANCHO_FRAMEWORK_ID,
+                'framework_id': framework_id,
                 'success': True,
-                'message': f"Framework '{framework_name}' attached to StateAct {state_act_id}"
+                'message': f"Framework '{framework_name}' (ID {framework_id}) attached to StateAct {state_act_id}"
             }
 
         except Exception as e:

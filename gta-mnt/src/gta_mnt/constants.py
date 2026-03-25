@@ -25,6 +25,16 @@ SANCHO_AUTHOR_ID = 9901
 # This framework tracks which measures have been reviewed by Sancho Claudino
 SANCHO_FRAMEWORK_ID = 495
 
+# Framework ID for "sancho claudito reported" framework
+# This framework tracks which measures were first-drafted by Sancho Claudito
+SANCHO_CLAUDITO_FRAMEWORK_ID = 500
+
+# Map framework names to IDs for dynamic lookup
+FRAMEWORK_IDS = {
+    "sancho claudino review": SANCHO_FRAMEWORK_ID,
+    "sancho claudito reported": SANCHO_CLAUDITO_FRAMEWORK_ID,
+}
+
 # Review artifact storage path
 # Each state act gets a folder with source files, comments, and review log
 REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/gta/sc-reviews"
@@ -33,7 +43,7 @@ REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thoug
 # Maps short names to (table_name, id_column, name_column)
 LOOKUP_TABLES = {
     'jurisdiction': ('api_jurisdiction_list', 'jurisdiction_id', 'jurisdiction_name'),
-    'product': ('api_product_list', 'product_id', 'description'),
+    'product': ('api_product_list', 'product_id', 'product_description'),
     'sector': ('api_sector_list', 'sector_id', 'sector_name'),
     'rationale': ('api_rationale_list', 'rationale_id', 'rationale_name'),
     'unit': ('api_unit_list', 'id', 'name'),

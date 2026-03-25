@@ -65,7 +65,7 @@ class AddFrameworkInput(BaseModel):
     state_act_id: int = Field(description="StateAct ID")
     framework_name: str = Field(
         default="sancho claudino review",
-        description="Framework name to attach"
+        description="Framework name: 'sancho claudino review' (495, reviewer) or 'sancho claudito reported' (500, author)"
     )
 
 

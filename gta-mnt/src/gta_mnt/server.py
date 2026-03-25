@@ -408,9 +408,11 @@ async def set_status(params: SetStatusInput) -> str:
 
 @mcp.tool(name="gta_mnt_add_framework")
 async def add_framework(params: AddFrameworkInput) -> str:
-    """Attach 'sancho claudino review' framework tag to a measure for tracking.
+    """Attach a framework tag to a measure for tracking.
 
-    Use this to mark that a measure has been reviewed by Sancho Claudino.
+    Supported frameworks:
+    - 'sancho claudino review' (ID 495, default) — marks a measure as reviewed by Sancho Claudino
+    - 'sancho claudito reported' (ID 500) — marks a measure as first-drafted by Sancho Claudito
     """
     db_client = get_db_client()
     result = await db_client.add_framework(
