@@ -319,7 +319,13 @@ class GTADatabaseClient:
                     i.implementation_level_id,
                     il.implementation_level_name,
                     i.unit_id,
-                    u.name as unit_name
+                    u.name as unit_name,
+                    i.announced_as_temporary,
+                    i.is_horizontal,
+                    i.chapter_id,
+                    mc.chapter_name,
+                    i.subchapter_id,
+                    ms.subchapter_name
                 FROM api_intervention_log i
                 LEFT JOIN api_intervention_type_list t ON i.intervention_type_id = t.intervention_type_id
                 LEFT JOIN api_gta_evaluation_list e ON i.gta_evaluation_id = e.gta_evaluation_id
@@ -327,6 +333,8 @@ class GTADatabaseClient:
                 LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
                 LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
                 LEFT JOIN api_unit_list u ON i.unit_id = u.id
+                LEFT JOIN api_mast_chapter_list mc ON i.chapter_id = mc.chapter_id
+                LEFT JOIN api_mast_subchapter_list ms ON i.subchapter_id = ms.subchapter_id
                 WHERE i.state_act_id = %s
             ''', (state_act_id,))
             measure['interventions'] = cursor.fetchall()
@@ -380,10 +388,33 @@ class GTADatabaseClient:
                         LEFT JOIN mtz_firm_role fr ON fi.role_id = fr.id
                         WHERE fi.intervention_id = %s
                     ''', (intervention['id'],))
-                    intervention['firms'] = cursor.fetchall()
+                    intervention['firms'] = list(cursor.fetchall())
                 except Exception as e:
                     print(f"[gta-mnt] WARNING: Firms query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['firms'] = []
+
+                # Acting agencies from legacy table (api_acting_agency_log)
+                # Stored separately from api_intervention_firm due to DB migration legacy.
+                try:
+                    cursor.execute('''
+                        SELECT
+                            aa.agency_id,
+                            aa.agency_name,
+                            aa.agency_name_original
+                        FROM api_acting_agency_log aa
+                        WHERE aa.intervention_id = %s
+                    ''', (intervention['id'],))
+                    acting_agencies = cursor.fetchall()
+                    for aa in acting_agencies:
+                        intervention['firms'].append({
+                            'firm_id': aa['agency_id'],
+                            'firm_name': aa['agency_name'],
+                            'firm_name_original': aa.get('agency_name_original', ''),
+                            'role_id': None,
+                            'role_name': 'acting agency (legacy)'
+                        })
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Acting agency query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
 
                 # Levels from api_intervention_level (Fix 4: separate table, not api_intervention_log columns)
                 try:
@@ -436,6 +467,38 @@ class GTADatabaseClient:
                 except Exception as e:
                     print(f"[gta-mnt] WARNING: Sectors query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['sectors'] = []
+
+                # Rationale tags
+                try:
+                    cursor.execute('''
+                        SELECT
+                            r.rationale_id,
+                            r.rationale_name
+                        FROM api_intervention_rationale ir
+                        JOIN api_rationale_list r ON ir.rationale_id = r.rationale_id
+                        WHERE ir.intervention_id = %s
+                    ''', (intervention['id'],))
+                    intervention['rationales'] = cursor.fetchall()
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Rationales query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
+                    intervention['rationales'] = []
+
+                # Locations (subnational taxonomy)
+                try:
+                    cursor.execute('''
+                        SELECT
+                            il.id as location_id,
+                            il.location_name,
+                            il.location_type_id,
+                            lt.location_type_name
+                        FROM api_intervention_location il
+                        LEFT JOIN api_location_type_list lt ON il.location_type_id = lt.location_type_id
+                        WHERE il.intervention_id = %s
+                    ''', (intervention['id'],))
+                    intervention['locations'] = cursor.fetchall()
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Locations query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
+                    intervention['locations'] = []
 
         # Fetch motive quotes from gta_stated_motive_log
         try:
@@ -1096,6 +1159,7 @@ class GTADatabaseClient:
         date_announced: str,
         title: Optional[str] = None,
         announced_as_temporary: int = 0,
+        is_horizontal: int = 0,
         aj_type: int = 1,
         dm_type: int = 1,
         dry_run: bool = False
@@ -1117,6 +1181,7 @@ class GTADatabaseClient:
             date_announced: YYYY-MM-DD
             title: Optional title (defaults to state act title)
             announced_as_temporary: 0/1
+            is_horizontal: 0/1 (1 if measure affects practically all sectors with uncertain intensity)
             aj_type: 1=inferred, 2=targeted, 3=excluded, 4=incidental
             dm_type: 1=inferred, 2=targeted, 3=excluded, 4=incidental
             dry_run: If True, return SQL without executing
@@ -1148,11 +1213,11 @@ class GTADatabaseClient:
                  chapter_id, subchapter_id, gta_evaluation_id,
                  affected_flow_id, eligible_firm_id, implementation_level_id,
                  intervention_area_id, date_implemented, date_announced,
-                 announced_as_temporary, aj_type, dm_type,
+                 announced_as_temporary, is_horizontal, aj_type, dm_type,
                  status_id,
                  is_in_counts, is_in_coverage, is_in_inspector,
                  date_created, last_modified)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         params = (
             state_act_id, title, description_html, description_markdown,
@@ -1160,7 +1225,7 @@ class GTADatabaseClient:
             chapter_id, subchapter_id, gta_evaluation_id,
             affected_flow_id, eligible_firm_id, implementation_level_id,
             intervention_area_id, date_implemented, date_announced,
-            announced_as_temporary, aj_type, dm_type,
+            announced_as_temporary, is_horizontal, aj_type, dm_type,
             1,  # status_id=1 (In progress), matching state act status
             0, 0, 0,
             now.strftime('%Y-%m-%d'), now
@@ -1506,6 +1571,15 @@ class GTADatabaseClient:
                 INSERT INTO api_intervention_firm (firm_id, intervention_id, role_id)
                 VALUES (%s, %s, %s)
             ''', (firm_id, intervention_id, role_id))
+
+            # Acting agencies also need a legacy table entry (api_acting_agency_log)
+            # role_id 3 = acting agency in mtz_firm_role
+            if role_id == 3:
+                cursor.execute('''
+                    INSERT INTO api_acting_agency_log
+                        (agency_name, agency_name_original, intervention_id)
+                    VALUES (%s, %s, %s)
+                ''', (firm_name, firm_name, intervention_id))
 
             conn.commit()
             return {

@@ -273,6 +273,26 @@ def format_measure_detail(measure: dict) -> str:
             lines.append(f"- **Affected Flow:** {affected_flow}")
             lines.append(f"- **Implementation Level:** {impl_level_str}")
             lines.append(f"- **Eligible Firms:** {eligible_firms}")
+            # MAST chapter/subchapter
+            chapter_name = intervention.get("chapter_name") or "N/A"
+            chapter_id = intervention.get("chapter_id")
+            subchapter_name = intervention.get("subchapter_name") or "N/A"
+            subchapter_id = intervention.get("subchapter_id")
+            lines.append(f"- **MAST Chapter:** {chapter_name} (ID: {chapter_id})")
+            if subchapter_id:
+                lines.append(f"- **MAST Subchapter:** {subchapter_name} (ID: {subchapter_id})")
+            # Announced as temporary
+            announced_temp = intervention.get("announced_as_temporary")
+            if announced_temp is not None:
+                lines.append(f"- **Announced as Temporary:** {'Yes' if announced_temp else 'No'}")
+            else:
+                lines.append(f"- **Announced as Temporary:** N/A")
+            # Horizontal flag
+            is_horiz = intervention.get("is_horizontal")
+            if is_horiz is not None:
+                lines.append(f"- **Horizontal:** {'Yes' if is_horiz else 'No'}")
+            else:
+                lines.append(f"- **Horizontal:** N/A")
             lines.append(f"- **Inception Date:** {inception_date or 'N/A'}")
             lines.append(f"- **Removal Date:** {removal_date or 'N/A'}")
             if prior_level is not None or new_level is not None:
@@ -287,10 +307,10 @@ def format_measure_detail(measure: dict) -> str:
                         lines.append(f"- **Additional level rows:** {len(level_rows) - 1}")
             lines.append("")
 
-            # Affected Jurisdictions section with type
+            # Affected Jurisdictions section — ALWAYS rendered
             affected_jurs = intervention.get("affected_jurisdictions", [])
+            lines.append("#### Affected Jurisdictions")
             if affected_jurs:
-                lines.append("#### Affected Jurisdictions")
                 for aj in affected_jurs:
                     name = aj.get("jurisdiction_name") or aj.get("iso_code") or "Unknown"
                     iso = aj.get("iso_code") or ""
@@ -299,12 +319,14 @@ def format_measure_detail(measure: dict) -> str:
                         lines.append(f"- {name} ({iso}) [{type_name}]")
                     else:
                         lines.append(f"- {name} ({iso})")
-                lines.append("")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
 
-            # Distorted Markets section
+            # Distorted Markets section — ALWAYS rendered
             distorted_markets = intervention.get("distorted_markets", [])
+            lines.append("#### Distorted Markets")
             if distorted_markets:
-                lines.append("#### Distorted Markets")
                 for dm in distorted_markets:
                     name = dm.get("jurisdiction_name") or dm.get("iso_code") or "Unknown"
                     iso = dm.get("iso_code") or ""
@@ -313,34 +335,40 @@ def format_measure_detail(measure: dict) -> str:
                         lines.append(f"- {name} ({iso}) [{type_name}]")
                     else:
                         lines.append(f"- {name} ({iso})")
-                lines.append("")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
 
-            # Products section (HS codes)
+            # Products section (HS codes) — ALWAYS rendered
             products = intervention.get("products", [])
+            lines.append("#### Products")
             if products:
-                lines.append("#### Products")
                 for prod in products:
                     pid = prod.get("product_id", "?")
                     pdesc = prod.get("product_description", "")
                     lines.append(f"- HS {pid}: {pdesc}")
-                lines.append("")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
 
-            # Sectors section (CPC)
+            # Sectors section (CPC) — ALWAYS rendered
             sectors = intervention.get("sectors", [])
+            lines.append("#### Sectors")
             if sectors:
-                lines.append("#### Sectors")
                 for sec in sectors:
                     sid = sec.get("sector_id", "?")
                     sname = sec.get("sector_name", "")
                     stype = sec.get("sector_type", "")
                     type_label = f" [{stype}]" if stype and stype != "N" else ""
                     lines.append(f"- {sid}: {sname}{type_label}")
-                lines.append("")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
 
-            # Firms section
+            # Firms section — ALWAYS rendered
             firms = intervention.get("firms", [])
+            lines.append("#### Firms")
             if firms:
-                lines.append("#### Firms")
                 for firm in firms:
                     firm_name = firm.get("firm_name") or "Unknown"
                     role_name = firm.get("role_name")
@@ -348,7 +376,34 @@ def format_measure_detail(measure: dict) -> str:
                         lines.append(f"- {firm_name} [{role_name}]")
                     else:
                         lines.append(f"- {firm_name}")
-                lines.append("")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
+
+            # Rationale Tags section — ALWAYS rendered
+            rationales = intervention.get("rationales", [])
+            lines.append("#### Rationale Tags")
+            if rationales:
+                for rat in rationales:
+                    lines.append(f"- {rat.get('rationale_name', 'Unknown')} (ID: {rat.get('rationale_id')})")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
+
+            # Locations section (subnational taxonomy) — ALWAYS rendered
+            locations = intervention.get("locations", [])
+            lines.append("#### Locations")
+            if locations:
+                for loc in locations:
+                    loc_name = loc.get("location_name") or "Unknown"
+                    loc_type = loc.get("location_type_name")
+                    if loc_type:
+                        lines.append(f"- {loc_name} [{loc_type}]")
+                    else:
+                        lines.append(f"- {loc_name}")
+            else:
+                lines.append("*None recorded*")
+            lines.append("")
 
             # Description section (full text, no truncation)
             if int_description:
@@ -412,6 +467,51 @@ def format_measure_detail(measure: dict) -> str:
     else:
         lines.append("\n## Linked Sources\n")
         lines.append("*No linked sources found in database*")
+
+    # Field Manifest — tells the reviewer exactly what data was returned
+    lines.append("\n---\n## Field Manifest\n")
+    lines.append("Fields returned by this tool (assess ONLY these):\n")
+
+    sa_fields = [
+        ("title", measure.get("title") is not None),
+        ("announcement_description", measure.get("description") is not None),
+        ("announcement_date", measure.get("announcement_date") is not None),
+        ("is_source_official", measure.get("is_source_official") is not None),
+        ("implementing_jurisdictions", bool(measure.get("implementing_jurisdictions"))),
+        ("motive_quotes", bool(measure.get("motive_quotes"))),
+        ("related_state_acts", bool(measure.get("related_state_acts"))),
+        ("linked_sources", bool(linked_sources)),
+    ]
+    lines.append("**State Act Level:**")
+    for field_name, present in sa_fields:
+        lines.append(f"- `{field_name}`: {'PRESENT' if present else 'EMPTY'}")
+
+    if interventions:
+        sample = interventions[0]
+        int_fields = [
+            ("intervention_type", sample.get("type_name") is not None),
+            ("evaluation", sample.get("evaluation_name") is not None),
+            ("affected_flow", sample.get("affected_flow_name") is not None),
+            ("eligible_firms", sample.get("eligible_firms_name") is not None),
+            ("implementation_level", sample.get("implementation_level_name") is not None),
+            ("chapter_id/chapter_name", sample.get("chapter_id") is not None),
+            ("subchapter_id/subchapter_name", sample.get("subchapter_id") is not None),
+            ("announced_as_temporary", sample.get("announced_as_temporary") is not None),
+            ("is_horizontal", sample.get("is_horizontal") is not None),
+            ("level_rows", bool(sample.get("level_rows"))),
+            ("affected_jurisdictions", bool(sample.get("affected_jurisdictions"))),
+            ("distorted_markets", bool(sample.get("distorted_markets"))),
+            ("products", bool(sample.get("products"))),
+            ("sectors", bool(sample.get("sectors"))),
+            ("firms", bool(sample.get("firms"))),
+            ("rationales", bool(sample.get("rationales"))),
+            ("locations", bool(sample.get("locations"))),
+        ]
+        lines.append("\n**Intervention Level (sample from first intervention):**")
+        for field_name, present in int_fields:
+            lines.append(f"- `{field_name}`: {'PRESENT' if present else 'EMPTY'}")
+
+    lines.append("\n**CONSTRAINT:** Sections marked `*None recorded*` mean the tool queried the database and found no data. You may flag genuinely missing data. But NEVER claim data exists when the section shows `*None recorded*` — that IS the database state.")
 
     return "\n".join(lines)
 

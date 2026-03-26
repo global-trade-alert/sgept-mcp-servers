@@ -185,6 +185,7 @@ class CreateInterventionInput(BaseModel):
     date_announced: str = Field(..., description="Announcement date (YYYY-MM-DD)")
     title: Optional[str] = Field(default=None, description="Optional title (defaults to state act title)")
     announced_as_temporary: int = Field(default=0, description="0=permanent, 1=temporary")
+    is_horizontal: int = Field(default=0, description="1 if measure affects practically all sectors with uncertain intensity. Mutually exclusive with specific products/sectors (QC-TAX-005).")
     aj_type: int = Field(default=1, description="1=inferred, 2=targeted, 3=excluded, 4=incidental")
     dm_type: int = Field(default=1, description="1=inferred, 2=targeted, 3=excluded, 4=incidental")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
@@ -540,6 +541,7 @@ async def create_intervention(params: CreateInterventionInput) -> str:
         date_announced=params.date_announced,
         title=params.title,
         announced_as_temporary=params.announced_as_temporary,
+        is_horizontal=params.is_horizontal,
         aj_type=params.aj_type,
         dm_type=params.dm_type,
         dry_run=params.dry_run
