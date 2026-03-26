@@ -33,6 +33,10 @@ class ListConversationsInput(BaseModel):
     """Input for slack_list_conversations tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     types: list[ConversationType] = Field(
         default=[
             ConversationType.PUBLIC_CHANNEL,
@@ -58,6 +62,10 @@ class ListUsersInput(BaseModel):
     """Input for slack_list_users tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     limit: int = Field(
         default=200,
         ge=1,
@@ -74,6 +82,10 @@ class GetMessagesInput(BaseModel):
     """Input for slack_get_messages tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     channel_id: str = Field(
         ...,
         description="Channel or DM ID (e.g., C1234567890, D1234567890, G1234567890)",
@@ -107,6 +119,10 @@ class GetThreadInput(BaseModel):
     """Input for slack_get_thread tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     channel_id: str = Field(
         ...,
         description="Channel ID where the thread exists",
@@ -133,6 +149,10 @@ class SendMessageInput(BaseModel):
     """Input for slack_send_message tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     channel_id: str = Field(
         ...,
         description="Channel or DM ID to send message to",
@@ -155,6 +175,10 @@ class SearchMessagesInput(BaseModel):
     """Input for slack_search_messages tool."""
     model_config = ConfigDict(extra='forbid')
 
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
     query: str = Field(
         ...,
         min_length=1,

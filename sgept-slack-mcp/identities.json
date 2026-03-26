@@ -1,0 +1,39 @@
+[
+  {
+    "name": "claudino",
+    "description": "Sancho Claudino bot",
+    "token_env": "SLACK_BOT_TOKEN",
+    "send_enabled": true,
+    "default": true
+  },
+  {
+    "name": "claudante",
+    "description": "Sancho Claudante bot — Iran tracker notifications",
+    "token_env": "SLACK_BOT_TOKEN_CLAUDANTE",
+    "send_enabled": true
+  },
+  {
+    "name": "johannes",
+    "description": "Johannes personal user token — CEO workspace, search capable",
+    "token_env": "SLACK_USER_TOKEN",
+    "send_enabled": true
+  },
+  {
+    "name": "buzessa",
+    "description": "Buzessa Claudini — DPA referee",
+    "token_env": "SLACK_BOT_TOKEN_BUZESSA",
+    "send_enabled": true
+  },
+  {
+    "name": "buzetta",
+    "description": "Buzetta Claudini — DPA analyst",
+    "token_env": "SLACK_BOT_TOKEN_BUZETTA",
+    "send_enabled": true
+  },
+  {
+    "name": "bucerca",
+    "description": "Bucerca Claudini — DPA leads search",
+    "token_env": "SLACK_BOT_TOKEN_BUCERCA",
+    "send_enabled": true
+  }
+]

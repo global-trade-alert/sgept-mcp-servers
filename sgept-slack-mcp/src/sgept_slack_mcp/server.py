@@ -15,6 +15,7 @@ from .models import (
     ResponseFormat,
 )
 from .client import SlackAPIClient, SlackClientError
+from .identities import IdentityConfig, IdentityRegistry, load_identities
 from .formatters import (
     format_conversations_markdown,
     format_conversations_json,
@@ -40,36 +41,35 @@ logger = logging.getLogger(__name__)
 # Initialize MCP server
 mcp = FastMCP("sgept_slack_mcp")
 
-# Global client instance (lazy initialization)
-_slack_client: SlackAPIClient | None = None
+# Identity registry and per-identity client instances (lazy initialization)
+_registry: IdentityRegistry | None = None
+_clients: dict[str, SlackAPIClient] = {}
 
 
-def get_slack_client() -> SlackAPIClient:
-    """
-    Get initialized Slack client with token from environment.
+def get_registry() -> IdentityRegistry:
+    """Get the identity registry, loading on first call."""
+    global _registry
+    if _registry is None:
+        _registry = load_identities()
+    return _registry
+
+
+def get_client(identity_name: str | None = None) -> tuple[SlackAPIClient, IdentityConfig]:
+    """Get a Slack client for the specified identity (or default).
+
+    Returns:
+        Tuple of (client, identity_config) for the resolved identity.
 
     Raises:
-        ValueError: If SLACK_USER_TOKEN is not set
+        ValueError: If the identity doesn't exist or has no valid token.
     """
-    global _slack_client
+    registry = get_registry()
+    identity = registry.resolve(identity_name)
 
-    if _slack_client is not None:
-        return _slack_client
+    if identity.name not in _clients:
+        _clients[identity.name] = SlackAPIClient(identity.token)
 
-    token = os.getenv("SLACK_BOT_TOKEN") or os.getenv("SLACK_USER_TOKEN")
-    if not token:
-        raise ValueError(
-            "SLACK_BOT_TOKEN or SLACK_USER_TOKEN environment variable not set. "
-            "Set a bot token (xoxb-) or user token (xoxp-)."
-        )
-
-    _slack_client = SlackAPIClient(token)
-    return _slack_client
-
-
-def is_send_enabled() -> bool:
-    """Check if send functionality is enabled (disabled by default for safety)."""
-    return os.getenv("SLACK_ENABLE_SEND", "false").lower() == "true"
+    return _clients[identity.name], identity
 
 
 # ============================================================================
@@ -98,7 +98,7 @@ async def slack_list_conversations(params: ListConversationsInput) -> str:
         - List only DMs: types=["im","mpim"]
     """
     try:
-        client = get_slack_client()
+        client, _ = get_client(params.identity)
         conversations = await client.list_conversations(
             types=params.types,
             limit=params.limit,
@@ -134,7 +134,7 @@ async def slack_list_users(params: ListUsersInput) -> str:
         - Identify bot vs human users
     """
     try:
-        client = get_slack_client()
+        client, _ = get_client(params.identity)
         users = await client.list_users(limit=params.limit)
 
         if params.response_format == ResponseFormat.JSON:
@@ -173,7 +173,7 @@ async def slack_get_messages(params: GetMessagesInput) -> str:
         - Messages since yesterday: channel_id="C1234567890", oldest="1705363200.000000"
     """
     try:
-        client = get_slack_client()
+        client, _ = get_client(params.identity)
         messages = await client.get_messages(
             channel_id=params.channel_id,
             limit=params.limit,
@@ -215,7 +215,7 @@ async def slack_get_thread(params: GetThreadInput) -> str:
         channel_id="C1234567890", thread_ts="1705363200.123456"
     """
     try:
-        client = get_slack_client()
+        client, _ = get_client(params.identity)
         messages = await client.get_thread(
             channel_id=params.channel_id,
             thread_ts=params.thread_ts,
@@ -258,17 +258,17 @@ async def slack_send_message(params: SendMessageInput) -> str:
     Example:
         channel_id="C1234567890", text="Hello team!"
     """
-    # Security check: sending must be explicitly enabled
-    if not is_send_enabled():
-        return (
-            "Error: Message sending is DISABLED for safety.\n\n"
-            "To enable, set the environment variable:\n"
-            "  SLACK_ENABLE_SEND=true\n\n"
-            "This is a security feature to prevent accidental messages."
-        )
-
     try:
-        client = get_slack_client()
+        client, identity = get_client(params.identity)
+
+        # Security check: sending must be explicitly enabled for this identity
+        if not identity.send_enabled:
+            return (
+                f"Error: Message sending is DISABLED for identity '{identity.name}'.\n\n"
+                "This identity does not have send_enabled=true in identities.json.\n"
+                "This is a security feature to prevent accidental messages."
+            )
+
         response = await client.send_message(
             channel_id=params.channel_id,
             text=params.text,
@@ -310,7 +310,7 @@ async def slack_search_messages(params: SearchMessagesInput) -> str:
         - Combined: "from:@alice in:#engineering bug fix"
     """
     try:
-        client = get_slack_client()
+        client, _ = get_client(params.identity)
         results = await client.search_messages(
             query=params.query,
             limit=params.limit,
@@ -392,29 +392,23 @@ def get_channel_types_help() -> str:
 
 def main() -> None:
     """Run the MCP server."""
-    # Validate token is present at startup
-    token = os.getenv("SLACK_BOT_TOKEN") or os.getenv("SLACK_USER_TOKEN")
-    if not token:
-        print(
-            "ERROR: No Slack token set.\n"
-            "Set SLACK_BOT_TOKEN (xoxb-) or SLACK_USER_TOKEN (xoxp-).\n",
-            file=sys.stderr,
-        )
+    try:
+        registry = load_identities()
+        # Pre-populate the global registry so tools don't need to reload
+        global _registry
+        _registry = registry
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Validate token format
-    if not token.startswith(("xoxp-", "xoxb-")):
-        print(
-            "ERROR: Invalid token format.\n"
-            "Token must start with 'xoxp-' (user) or 'xoxb-' (bot).\n",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    # Log startup (without revealing token)
-    send_status = "ENABLED" if is_send_enabled() else "DISABLED (default)"
-    logger.info(f"Starting SGEPT Slack MCP Server")
-    logger.info(f"Message sending: {send_status}")
+    # Log startup (without revealing tokens)
+    logger.info("Starting SGEPT Slack MCP Server (multi-identity)")
+    logger.info(f"Identities loaded: {', '.join(registry.names)}")
+    logger.info(f"Default identity: {registry.default_name}")
+    for name in registry.names:
+        identity = registry.resolve(name)
+        send = "send=ON" if identity.send_enabled else "send=OFF"
+        logger.info(f"  {name}: {identity.description} ({send})")
 
     # Run MCP server
     mcp.run()

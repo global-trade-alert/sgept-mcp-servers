@@ -62,7 +62,7 @@ class SlackAPIClient:
         Initialize Slack API client.
 
         Args:
-            token: Slack user token (must start with 'xoxp-')
+            token: Slack token (xoxp- user token or xoxb- bot token)
             cache_ttl: Cache TTL in seconds (default: 5 minutes)
 
         Raises:
@@ -77,10 +77,9 @@ class SlackAPIClient:
         """Validate token format without logging the token value."""
         if not token:
             raise ValueError("Slack token is required")
-        if not token.startswith("xoxp-"):
+        if not token.startswith(("xoxp-", "xoxb-")):
             raise ValueError(
-                "Invalid token format: must be a user token (xoxp-*). "
-                "Bot tokens (xoxb-*) are not supported."
+                "Invalid token format: must be a user token (xoxp-*) or bot token (xoxb-*)."
             )
 
     def _get_error_message(self, error: str, **kwargs: Any) -> str:
