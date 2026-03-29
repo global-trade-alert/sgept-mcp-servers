@@ -37,7 +37,7 @@ FRAMEWORK_IDS = {
 
 # Review artifact storage path
 # Each state act gets a folder with source files, comments, and review log
-REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/gta/sc-reviews"
+REVIEW_STORAGE_PATH = "/home/deploy/jf-private/jf-thought/sgept-monitoring/gta/sc-reviews"
 
 # Lookup table mapping for gta_mnt_lookup tool
 # Maps short names to (table_name, id_column, name_column)
