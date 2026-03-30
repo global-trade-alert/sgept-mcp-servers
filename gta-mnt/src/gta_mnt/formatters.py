@@ -204,8 +204,12 @@ def format_measure_detail(measure: dict) -> str:
     source_field = measure.get("source") or ""
     source_content = source_markdown or source_text or source_field
 
+    author_id = measure.get("author_id")
+    author_name = measure.get("author_name") or "Unknown"
+
     lines = [
         f"# StateAct {state_act_id}: {title}\n",
+        f"**Author:** {author_name} (ID: {author_id})" if author_id else "**Author:** Unknown",
         f"**Implementing Jurisdiction:** {impl_jur_str}",
         f"**Status:** {status_name} (ID: {status_id})",
         f"**Official Source:** {'Yes' if is_official else 'No'}",

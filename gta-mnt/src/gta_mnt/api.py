@@ -233,9 +233,12 @@ class GTADatabaseClient:
                     m.announcement_date,
                     m.date_created as creation_date,
                     m.last_modified as last_update,
-                    s.status_name
+                    s.status_name,
+                    m.author_id,
+                    u.username as author_name
                 FROM gta_measure m
                 LEFT JOIN api_state_act_status_list s ON m.status_id = s.status_id
+                LEFT JOIN auth_user u ON m.author_id = u.id
                 WHERE m.id = %s
             ''', (state_act_id,))
             measure = cursor.fetchone()
@@ -258,9 +261,12 @@ class GTADatabaseClient:
                         sa.date_announced as announcement_date,
                         sa.date_created as creation_date,
                         sa.last_modified as last_update,
-                        s.status_name
+                        s.status_name,
+                        sa.author_id,
+                        u.username as author_name
                     FROM api_state_act_log sa
                     LEFT JOIN api_state_act_status_list s ON sa.status_id = s.status_id
+                    LEFT JOIN auth_user u ON sa.author_id = u.id
                     WHERE sa.state_act_id = %s
                 ''', (state_act_id,))
                 measure = cursor.fetchone()
@@ -278,9 +284,12 @@ class GTADatabaseClient:
                         sa.date_announced as announcement_date,
                         sa.date_created as creation_date,
                         sa.last_modified as last_update,
-                        s.status_name
+                        s.status_name,
+                        sa.author_id,
+                        u.username as author_name
                     FROM api_state_act_log sa
                     LEFT JOIN api_state_act_status_list s ON sa.status_id = s.status_id
+                    LEFT JOIN auth_user u ON sa.author_id = u.id
                     WHERE sa.state_act_id = %s
                 ''', (state_act_id,))
                 measure = cursor.fetchone()
