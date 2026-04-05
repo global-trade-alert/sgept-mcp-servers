@@ -17,6 +17,10 @@ from .models import (
     SlackSearchResult,
     SendMessageResponse,
     ConversationType,
+    ReactionInfo,
+    GetReactionsResponse,
+    UserPresenceResponse,
+    CreateChannelResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -543,6 +547,181 @@ class SlackAPIClient:
             ))
 
         return results
+
+    async def add_reaction(
+        self,
+        channel: str,
+        timestamp: str,
+        emoji: str,
+    ) -> SendMessageResponse:
+        """
+        Add an emoji reaction to a message.
+
+        Args:
+            channel: Channel ID where the message exists
+            timestamp: Message timestamp to react to
+            emoji: Emoji name without colons (e.g., 'thumbsup')
+
+        Returns:
+            Response indicating success or failure
+        """
+        try:
+            await self._call_with_retry(
+                "reactions_add",
+                channel=channel,
+                timestamp=timestamp,
+                name=emoji,
+            )
+            return SendMessageResponse(ok=True, ts=timestamp, channel_id=channel)
+        except SlackClientError as e:
+            return SendMessageResponse(ok=False, error=str(e))
+
+    async def get_reactions(
+        self,
+        channel: str,
+        timestamp: str,
+    ) -> GetReactionsResponse:
+        """
+        Get reactions on a message.
+
+        Args:
+            channel: Channel ID where the message exists
+            timestamp: Message timestamp to get reactions for
+
+        Returns:
+            Response with list of reactions
+        """
+        try:
+            result = await self._call_with_retry(
+                "reactions_get",
+                channel=channel,
+                timestamp=timestamp,
+                full=True,
+            )
+            message = result.get("message", {})
+            raw_reactions = message.get("reactions", [])
+
+            reactions = [
+                ReactionInfo(
+                    emoji=r.get("name", ""),
+                    count=r.get("count", 0),
+                    users=r.get("users", []),
+                )
+                for r in raw_reactions
+            ]
+            return GetReactionsResponse(ok=True, reactions=reactions)
+        except SlackClientError as e:
+            return GetReactionsResponse(ok=False, error=str(e))
+
+    async def get_user_presence(
+        self,
+        user_id: str,
+    ) -> UserPresenceResponse:
+        """
+        Get a user's presence and DND status.
+
+        Args:
+            user_id: User ID to check
+
+        Returns:
+            Response with presence and DND info
+        """
+        try:
+            presence_result = await self._call_with_retry(
+                "users_getPresence",
+                user=user_id,
+            )
+            presence = presence_result.get("presence", "away")
+
+            # Also fetch DND info
+            try:
+                dnd_result = await self._call_with_retry(
+                    "dnd_info",
+                    user=user_id,
+                )
+                dnd_enabled = dnd_result.get("dnd_enabled", False)
+                dnd_next_expiry = dnd_result.get("next_dnd_end_ts")
+            except SlackClientError:
+                dnd_enabled = False
+                dnd_next_expiry = None
+
+            return UserPresenceResponse(
+                ok=True,
+                presence=presence,
+                dnd_enabled=dnd_enabled,
+                dnd_next_expiry=dnd_next_expiry,
+            )
+        except SlackClientError as e:
+            return UserPresenceResponse(ok=False, error=str(e))
+
+    async def send_block_kit(
+        self,
+        channel: str,
+        blocks: list,
+        text: str,
+        thread_ts: Optional[str] = None,
+    ) -> SendMessageResponse:
+        """
+        Send a Block Kit message to a channel or DM.
+
+        Args:
+            channel: Channel or DM ID
+            blocks: Block Kit blocks (list of block dicts)
+            text: Fallback text for notifications
+            thread_ts: Reply in thread if provided
+
+        Returns:
+            Send result with message ts
+        """
+        kwargs: dict[str, Any] = {
+            "channel": channel,
+            "blocks": blocks,
+            "text": text,
+            "unfurl_links": False,
+            "unfurl_media": False,
+        }
+        if thread_ts:
+            kwargs["thread_ts"] = thread_ts
+
+        try:
+            result = await self._call_with_retry("chat_postMessage", **kwargs)
+            return SendMessageResponse(
+                ok=True,
+                ts=result.get("ts"),
+                channel_id=result.get("channel"),
+            )
+        except SlackClientError as e:
+            return SendMessageResponse(ok=False, error=str(e))
+
+    async def create_channel(
+        self,
+        name: str,
+        is_private: bool = False,
+    ) -> CreateChannelResponse:
+        """
+        Create a new Slack channel.
+
+        Args:
+            name: Channel name (will be used as-is, caller should slugify)
+            is_private: Create as private channel
+
+        Returns:
+            Response with channel ID and name
+        """
+        try:
+            result = await self._call_with_retry(
+                "conversations_create",
+                name=name,
+                is_private=is_private,
+            )
+            channel = result.get("channel", {})
+            return CreateChannelResponse(
+                ok=True,
+                channel_id=channel.get("id"),
+                channel_name=channel.get("name"),
+            )
+        except SlackClientError as e:
+            return CreateChannelResponse(ok=False, error=str(e))
 
     def invalidate_cache(self) -> None:
         """Invalidate all cached data (useful after errors)."""

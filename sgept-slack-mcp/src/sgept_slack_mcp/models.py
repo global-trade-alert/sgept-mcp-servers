@@ -169,6 +169,10 @@ class SendMessageInput(BaseModel):
         description="Reply in thread if provided (thread parent timestamp)",
         pattern=r"^\d+\.\d+$"
     )
+    force: bool = Field(
+        default=False,
+        description="Bypass anti-noise rate limit for unsolicited DMs (default: false)"
+    )
 
 
 class SearchMessagesInput(BaseModel):
@@ -198,6 +202,130 @@ class SearchMessagesInput(BaseModel):
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN,
         description="Output format: 'markdown' for human-readable or 'json' for machine-readable"
+    )
+
+
+class AddReactionInput(BaseModel):
+    """Input for slack_add_reaction tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel: str = Field(
+        ...,
+        description="Channel ID where the message exists",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    timestamp: str = Field(
+        ...,
+        description="Message timestamp to react to (e.g., '1234567890.123456')",
+        pattern=r"^\d+\.\d+$"
+    )
+    emoji: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Emoji name without colons (e.g., 'thumbsup', 'white_check_mark')"
+    )
+
+
+class GetReactionsInput(BaseModel):
+    """Input for slack_get_reactions tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel: str = Field(
+        ...,
+        description="Channel ID where the message exists",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    timestamp: str = Field(
+        ...,
+        description="Message timestamp to get reactions for (e.g., '1234567890.123456')",
+        pattern=r"^\d+\.\d+$"
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable or 'json' for machine-readable"
+    )
+
+
+class GetUserPresenceInput(BaseModel):
+    """Input for slack_get_user_presence tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    user_id: str = Field(
+        ...,
+        description="User ID to check presence for (e.g., 'U1234567890')",
+        pattern=r"^U[A-Z0-9]{8,}$"
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable or 'json' for machine-readable"
+    )
+
+
+class SendBlockKitInput(BaseModel):
+    """Input for slack_send_block_kit tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel: str = Field(
+        ...,
+        description="Channel or DM ID to send to",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    blocks: str = Field(
+        ...,
+        min_length=2,
+        description="Block Kit blocks as JSON string (array of block objects)"
+    )
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=40000,
+        description="Fallback text for notifications and accessibility"
+    )
+    thread_ts: Optional[str] = Field(
+        default=None,
+        description="Reply in thread if provided (thread parent timestamp)",
+        pattern=r"^\d+\.\d+$"
+    )
+    force: bool = Field(
+        default=False,
+        description="Bypass anti-noise rate limit for unsolicited DMs (default: false)"
+    )
+
+
+class CreateChannelInput(BaseModel):
+    """Input for slack_create_channel tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=80,
+        description="Channel name (will be slugified: lowercased, spaces to hyphens)"
+    )
+    is_private: bool = Field(
+        default=False,
+        description="Create as private channel (default: public)"
     )
 
 
@@ -254,4 +382,35 @@ class SendMessageResponse(BaseModel):
     ok: bool
     ts: Optional[str] = None
     channel_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+class ReactionInfo(BaseModel):
+    """A single reaction on a message."""
+    emoji: str
+    count: int
+    users: list[str] = Field(default_factory=list)
+
+
+class GetReactionsResponse(BaseModel):
+    """Response from getting reactions on a message."""
+    ok: bool
+    reactions: list[ReactionInfo] = Field(default_factory=list)
+    error: Optional[str] = None
+
+
+class UserPresenceResponse(BaseModel):
+    """Response from getting user presence."""
+    ok: bool
+    presence: Optional[str] = None  # "active" or "away"
+    dnd_enabled: bool = False
+    dnd_next_expiry: Optional[int] = None  # Unix timestamp
+    error: Optional[str] = None
+
+
+class CreateChannelResponse(BaseModel):
+    """Response from creating a channel."""
+    ok: bool
+    channel_id: Optional[str] = None
+    channel_name: Optional[str] = None
     error: Optional[str] = None

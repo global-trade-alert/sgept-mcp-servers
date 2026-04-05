@@ -9,6 +9,9 @@ from .models import (
     SlackMessage,
     SlackSearchResult,
     SendMessageResponse,
+    GetReactionsResponse,
+    UserPresenceResponse,
+    CreateChannelResponse,
 )
 
 # Character limit for responses (prevent context overflow)
@@ -254,4 +257,89 @@ def format_send_response_markdown(response: SendMessageResponse) -> str:
 
 def format_send_response_json(response: SendMessageResponse) -> str:
     """Format send message response as JSON."""
+    return json.dumps(response.model_dump(), indent=2)
+
+
+# ============================================================================
+# Reaction Formatters
+# ============================================================================
+
+def format_reactions_markdown(response: GetReactionsResponse) -> str:
+    """Format reactions response as markdown."""
+    if not response.ok:
+        return f"## Failed to Get Reactions\n\nError: {response.error}"
+
+    if not response.reactions:
+        return "No reactions on this message."
+
+    lines = [
+        "## Message Reactions",
+        "",
+        f"Found {len(response.reactions)} reaction(s):",
+        "",
+        "| Emoji | Count | Users |",
+        "|-------|-------|-------|",
+    ]
+
+    for reaction in response.reactions:
+        users_str = ", ".join(reaction.users[:5])
+        if len(reaction.users) > 5:
+            users_str += f" (+{len(reaction.users) - 5} more)"
+        lines.append(f"| :{reaction.emoji}: | {reaction.count} | {users_str} |")
+
+    return truncate_response("\n".join(lines))
+
+
+def format_reactions_json(response: GetReactionsResponse) -> str:
+    """Format reactions response as JSON."""
+    return truncate_response(json.dumps(response.model_dump(), indent=2))
+
+
+# ============================================================================
+# User Presence Formatters
+# ============================================================================
+
+def format_user_presence_markdown(response: UserPresenceResponse) -> str:
+    """Format user presence response as markdown."""
+    if not response.ok:
+        return f"## Failed to Get Presence\n\nError: {response.error}"
+
+    lines = [
+        "## User Presence",
+        "",
+        f"- **Status:** {response.presence}",
+        f"- **DND:** {'Enabled' if response.dnd_enabled else 'Disabled'}",
+    ]
+
+    if response.dnd_next_expiry:
+        from datetime import datetime, timezone
+        dt = datetime.fromtimestamp(response.dnd_next_expiry, tz=timezone.utc)
+        lines.append(f"- **DND expires:** {dt.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+
+    return "\n".join(lines)
+
+
+def format_user_presence_json(response: UserPresenceResponse) -> str:
+    """Format user presence response as JSON."""
+    return json.dumps(response.model_dump(), indent=2)
+
+
+# ============================================================================
+# Create Channel Formatters
+# ============================================================================
+
+def format_create_channel_markdown(response: CreateChannelResponse) -> str:
+    """Format create channel response as markdown."""
+    if response.ok:
+        return (
+            f"## Channel Created Successfully\n\n"
+            f"- Name: `{response.channel_name}`\n"
+            f"- ID: `{response.channel_id}`"
+        )
+    else:
+        return f"## Failed to Create Channel\n\nError: {response.error}"
+
+
+def format_create_channel_json(response: CreateChannelResponse) -> str:
+    """Format create channel response as JSON."""
     return json.dumps(response.model_dump(), indent=2)

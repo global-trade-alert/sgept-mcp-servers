@@ -1,8 +1,12 @@
 """SGEPT Slack MCP Server - Exposes Slack workspace via MCP protocol."""
 
+import json
 import os
+import re
 import sys
 import logging
+from datetime import date
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from .models import (
@@ -12,6 +16,11 @@ from .models import (
     GetThreadInput,
     SendMessageInput,
     SearchMessagesInput,
+    AddReactionInput,
+    GetReactionsInput,
+    GetUserPresenceInput,
+    SendBlockKitInput,
+    CreateChannelInput,
     ResponseFormat,
 )
 from .client import SlackAPIClient, SlackClientError
@@ -29,6 +38,12 @@ from .formatters import (
     format_search_results_json,
     format_send_response_markdown,
     format_send_response_json,
+    format_reactions_markdown,
+    format_reactions_json,
+    format_user_presence_markdown,
+    format_user_presence_json,
+    format_create_channel_markdown,
+    format_create_channel_json,
 )
 
 # Configure logging - never log token values
@@ -269,11 +284,19 @@ async def slack_send_message(params: SendMessageInput) -> str:
                 "This is a security feature to prevent accidental messages."
             )
 
+        # Anti-noise rate limit check
+        rate_limit_error = _check_unsolicited_rate_limit(params.channel_id, identity, params.force)
+        if rate_limit_error:
+            return rate_limit_error
+
         response = await client.send_message(
             channel_id=params.channel_id,
             text=params.text,
             thread_ts=params.thread_ts,
         )
+
+        if response.ok:
+            _record_unsolicited_send(params.channel_id, identity)
 
         return format_send_response_markdown(response)
 
@@ -320,6 +343,304 @@ async def slack_search_messages(params: SearchMessagesInput) -> str:
         if params.response_format == ResponseFormat.JSON:
             return format_search_results_json(results, params.query)
         return format_search_results_markdown(results, params.query)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+# ============================================================================
+# Anti-noise rate limiting for unsolicited DMs
+# ============================================================================
+
+_SEND_COUNTS_PATH = Path.home() / ".metis" / "slack_send_counts.json"
+
+
+def _is_dm_channel(channel_id: str) -> bool:
+    """Check if a channel ID is a DM (starts with 'D')."""
+    return channel_id.startswith("D")
+
+
+def _check_unsolicited_rate_limit(channel_id: str, identity: IdentityConfig, force: bool) -> str | None:
+    """Check if an unsolicited DM send should be rate-limited.
+
+    Returns an error message string if rate-limited, or None if allowed.
+    Only applies to DM channels from bot identities (token starts with xoxb-).
+    """
+    if force:
+        return None
+
+    if not _is_dm_channel(channel_id):
+        return None
+
+    # Only rate-limit bot identities
+    if not identity.token.startswith("xoxb-"):
+        return None
+
+    max_per_day = int(os.getenv("METIS_MAX_UNSOLICITED_PER_DAY", "3"))
+    today = date.today().isoformat()
+
+    # Load existing counts
+    counts: dict = {}
+    if _SEND_COUNTS_PATH.exists():
+        try:
+            counts = json.loads(_SEND_COUNTS_PATH.read_text())
+        except (json.JSONDecodeError, OSError):
+            counts = {}
+
+    # Clean old dates
+    counts = {k: v for k, v in counts.items() if k == today}
+
+    today_count = counts.get(today, 0)
+    if today_count >= max_per_day:
+        return (
+            f"Error: Anti-noise rate limit reached ({max_per_day} unsolicited DMs/day).\n"
+            f"Today's count: {today_count}/{max_per_day}.\n"
+            f"Set force=true to bypass, or adjust METIS_MAX_UNSOLICITED_PER_DAY."
+        )
+
+    return None
+
+
+def _record_unsolicited_send(channel_id: str, identity: IdentityConfig) -> None:
+    """Record an unsolicited DM send for rate limiting."""
+    if not _is_dm_channel(channel_id):
+        return
+    if not identity.token.startswith("xoxb-"):
+        return
+
+    today = date.today().isoformat()
+    counts: dict = {}
+    if _SEND_COUNTS_PATH.exists():
+        try:
+            counts = json.loads(_SEND_COUNTS_PATH.read_text())
+        except (json.JSONDecodeError, OSError):
+            counts = {}
+
+    counts = {k: v for k, v in counts.items() if k == today}
+    counts[today] = counts.get(today, 0) + 1
+
+    _SEND_COUNTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _SEND_COUNTS_PATH.write_text(json.dumps(counts))
+
+
+# ============================================================================
+# New MCP Tools
+# ============================================================================
+
+@mcp.tool(
+    name="slack_add_reaction",
+    annotations={
+        "title": "Add Slack Reaction",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def slack_add_reaction(params: AddReactionInput) -> str:
+    """Add an emoji reaction to a Slack message.
+
+    Args:
+        channel: Channel ID where the message exists
+        timestamp: Message timestamp to react to
+        emoji: Emoji name without colons (e.g., 'thumbsup', 'white_check_mark')
+
+    Example:
+        channel="C1234567890", timestamp="1705363200.123456", emoji="thumbsup"
+    """
+    try:
+        client, _ = get_client(params.identity)
+        response = await client.add_reaction(
+            channel=params.channel,
+            timestamp=params.timestamp,
+            emoji=params.emoji,
+        )
+
+        if response.ok:
+            return f"Reaction :{params.emoji}: added to message `{params.timestamp}` in `{params.channel}`."
+        return f"Error: {response.error}"
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_get_reactions",
+    annotations={
+        "title": "Get Slack Reactions",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def slack_get_reactions(params: GetReactionsInput) -> str:
+    """Get reactions on a Slack message.
+
+    Returns all emoji reactions with counts and user IDs.
+
+    Args:
+        channel: Channel ID where the message exists
+        timestamp: Message timestamp to get reactions for
+
+    Example:
+        channel="C1234567890", timestamp="1705363200.123456"
+    """
+    try:
+        client, _ = get_client(params.identity)
+        response = await client.get_reactions(
+            channel=params.channel,
+            timestamp=params.timestamp,
+        )
+
+        if params.response_format == ResponseFormat.JSON:
+            return format_reactions_json(response)
+        return format_reactions_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_get_user_presence",
+    annotations={
+        "title": "Get User Presence",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def slack_get_user_presence(params: GetUserPresenceInput) -> str:
+    """Check a user's online/DND status.
+
+    Returns presence (active/away) and Do Not Disturb status.
+
+    Args:
+        user_id: User ID to check (e.g., 'U1234567890')
+
+    Example:
+        user_id="U1234567890"
+    """
+    try:
+        client, _ = get_client(params.identity)
+        response = await client.get_user_presence(user_id=params.user_id)
+
+        if params.response_format == ResponseFormat.JSON:
+            return format_user_presence_json(response)
+        return format_user_presence_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_send_block_kit",
+    annotations={
+        "title": "Send Block Kit Message",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def slack_send_block_kit(params: SendBlockKitInput) -> str:
+    """Send a Block Kit interactive message to a Slack channel or DM.
+
+    WARNING: This tool is DISABLED by default for safety.
+    Enable with send_enabled=true on the identity.
+
+    Args:
+        channel: Channel or DM ID to send to
+        blocks: Block Kit blocks as JSON string (array of block objects)
+        text: Fallback text for notifications and accessibility
+        thread_ts: Reply in thread if provided
+        force: Bypass anti-noise rate limit for unsolicited DMs
+
+    Example:
+        channel="C1234567890", blocks='[{"type":"section","text":{"type":"mrkdwn","text":"Hello!"}}]', text="Hello!"
+    """
+    try:
+        client, identity = get_client(params.identity)
+
+        if not identity.send_enabled:
+            return (
+                f"Error: Message sending is DISABLED for identity '{identity.name}'.\n\n"
+                "This identity does not have send_enabled=true in identities.json.\n"
+                "This is a security feature to prevent accidental messages."
+            )
+
+        # Anti-noise rate limit check
+        rate_limit_error = _check_unsolicited_rate_limit(params.channel, identity, params.force)
+        if rate_limit_error:
+            return rate_limit_error
+
+        # Parse blocks JSON
+        try:
+            blocks = json.loads(params.blocks)
+        except json.JSONDecodeError as e:
+            return f"Error: Invalid blocks JSON: {e}"
+
+        response = await client.send_block_kit(
+            channel=params.channel,
+            blocks=blocks,
+            text=params.text,
+            thread_ts=params.thread_ts,
+        )
+
+        if response.ok:
+            _record_unsolicited_send(params.channel, identity)
+
+        return format_send_response_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_create_channel",
+    annotations={
+        "title": "Create Slack Channel",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def slack_create_channel(params: CreateChannelInput) -> str:
+    """Create a new Slack channel.
+
+    The channel name will be slugified (lowercased, spaces replaced with hyphens,
+    special characters removed).
+
+    Args:
+        name: Channel name (will be slugified)
+        is_private: Create as private channel (default: public)
+
+    Example:
+        name="Project Updates", is_private=false
+    """
+    try:
+        client, _ = get_client(params.identity)
+
+        # Slugify the name: lowercase, spaces to hyphens, remove special chars
+        slug = params.name.lower().strip()
+        slug = re.sub(r'\s+', '-', slug)
+        slug = re.sub(r'[^a-z0-9\-_]', '', slug)
+        slug = re.sub(r'-+', '-', slug).strip('-')
+
+        if not slug:
+            return "Error: Channel name is empty after slugification."
+
+        response = await client.create_channel(
+            name=slug,
+            is_private=params.is_private,
+        )
+
+        if params.identity:
+            pass  # response_format not on this model, always markdown
+
+        return format_create_channel_markdown(response)
 
     except (SlackClientError, ValueError) as e:
         return f"Error: {e}"

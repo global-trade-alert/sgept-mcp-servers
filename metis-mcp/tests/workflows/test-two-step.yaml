@@ -1,0 +1,32 @@
+id: test-two-step
+name: "Test Two-Step Workflow"
+version: 1
+steps:
+  - id: step_one
+    name: "First Step"
+    actor: human
+    inputs:
+      - name: brief
+        required: true
+    outputs:
+      - name: result
+        required: true
+    gate:
+      type: schema
+      schema:
+        required: [result]
+    next: [step_two]
+  - id: step_two
+    name: "Second Step"
+    actor: agent:general
+    inputs:
+      - name: result
+        required: true
+    outputs:
+      - name: final_output
+        required: true
+    gate:
+      type: schema
+      schema:
+        required: [final_output]
+    next: []
