@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -105,6 +107,7 @@ class WorkflowEngine:
                 outputs=[StepOutput(**o) for o in step_raw.get("outputs", [])],
                 gate=gate,
                 next=step_raw.get("next", []),
+                permitted_tools=step_raw.get("permitted_tools", []),
             )
             steps.append(step)
 
@@ -196,6 +199,9 @@ class WorkflowEngine:
             },
         )
 
+        # Write enforcement state for the first step
+        self.write_enforcement_state(instance_id)
+
         return instance
 
     def advance(
@@ -284,6 +290,8 @@ class WorkflowEngine:
                 instance_id=instance_id,
                 details={"workflow_id": instance.workflow_id},
             )
+            # Clear enforcement state on completion
+            self.clear_enforcement_state()
             return {
                 "status": "completed",
                 "workflow_id": instance.workflow_id,
@@ -298,6 +306,9 @@ class WorkflowEngine:
 
         instance.current_step_id = next_step_id
         instance.step_states[next_step_id].status = StepStatus.IN_PROGRESS
+
+        # Update enforcement state for the new step
+        self.write_enforcement_state(instance_id)
 
         return {
             "status": "advanced",
@@ -338,6 +349,95 @@ class WorkflowEngine:
             "updated_at": instance.updated_at.isoformat(),
             "correlation_id": instance.correlation_id,
         }
+
+    # ------------------------------------------------------------------
+    # Enforcement State (hook integration)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _enforcement_dir() -> Path | None:
+        """Return the enforcement directory from env, or None if unset."""
+        env_dir = os.environ.get("METIS_ENFORCEMENT_DIR")
+        if env_dir:
+            return Path(env_dir)
+        return None
+
+    def write_enforcement_state(
+        self, instance_id: str, enforcement_dir: str | Path | None = None
+    ) -> Path | None:
+        """Write .metis-workflow-state.json for hook enforcement.
+
+        Called after start_workflow() and advance() to update the state file
+        whenever the current step changes.
+
+        Args:
+            instance_id: The workflow instance to write state for.
+            enforcement_dir: Directory to write the state file to.
+                If None, reads from METIS_ENFORCEMENT_DIR env var.
+                If still None, does nothing (enforcement disabled).
+
+        Returns:
+            Path to the written state file, or None if enforcement is disabled.
+        """
+        if enforcement_dir is None:
+            enforcement_dir = self._enforcement_dir()
+        if enforcement_dir is None:
+            return None
+
+        enforcement_dir = Path(enforcement_dir)
+        enforcement_dir.mkdir(parents=True, exist_ok=True)
+
+        instance = self._instances.get(instance_id)
+        if instance is None:
+            return None
+
+        workflow = self._workflows.get(instance.workflow_id)
+        if workflow is None:
+            return None
+
+        current_step = workflow.get_step(instance.current_step_id)
+        if current_step is None:
+            return None
+
+        state = {
+            "instance_id": instance_id,
+            "workflow_id": instance.workflow_id,
+            "current_step_id": instance.current_step_id,
+            "current_step_actor": current_step.actor,
+            "permitted_tools": current_step.permitted_tools,
+            "blocked_tools": [],
+            "step_started_at": datetime.now(timezone.utc).isoformat(),
+            "enforce": len(current_step.permitted_tools) > 0,
+        }
+
+        state_file = enforcement_dir / ".metis-workflow-state.json"
+        with open(state_file, "w") as f:
+            json.dump(state, f, indent=2)
+
+        return state_file
+
+    def clear_enforcement_state(
+        self, enforcement_dir: str | Path | None = None
+    ) -> bool:
+        """Remove .metis-workflow-state.json when a workflow completes.
+
+        Args:
+            enforcement_dir: Directory containing the state file.
+                If None, reads from METIS_ENFORCEMENT_DIR env var.
+
+        Returns:
+            True if the file was removed, False otherwise.
+        """
+        if enforcement_dir is None:
+            enforcement_dir = self._enforcement_dir()
+        if enforcement_dir is None:
+            return False
+
+        state_file = Path(enforcement_dir) / ".metis-workflow-state.json"
+        if state_file.exists():
+            state_file.unlink()
+            return True
+        return False
 
     def list_instances(
         self,

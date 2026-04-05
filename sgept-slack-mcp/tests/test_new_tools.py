@@ -1,4 +1,5 @@
-"""Tests for the 5 new Slack MCP tools: reactions, presence, block kit, create channel."""
+"""Tests for the 5 new Slack MCP tools: reactions, presence, block kit, create channel,
+schedule message, delete scheduled message."""
 
 import json
 import os
@@ -12,12 +13,16 @@ from sgept_slack_mcp.models import (
     GetUserPresenceInput,
     SendBlockKitInput,
     CreateChannelInput,
+    ScheduleMessageInput,
+    DeleteScheduledMessageInput,
     ReactionInfo,
     GetReactionsResponse,
     UserPresenceResponse,
     CreateChannelResponse,
     SendMessageResponse,
     SendMessageInput,
+    ScheduleMessageResponse,
+    DeleteScheduledMessageResponse,
     ResponseFormat,
 )
 from sgept_slack_mcp.client import SlackAPIClient, SlackClientError
@@ -28,6 +33,10 @@ from sgept_slack_mcp.formatters import (
     format_user_presence_json,
     format_create_channel_markdown,
     format_create_channel_json,
+    format_scheduled_message_markdown,
+    format_scheduled_message_json,
+    format_delete_scheduled_message_markdown,
+    format_delete_scheduled_message_json,
 )
 
 
@@ -477,3 +486,249 @@ class TestAntiNoiseRateLimiting:
         _record_unsolicited_send("C1234567890", identity)
         # File should not be created for channel messages
         assert not test_counts_path.exists()
+
+
+# ============================================================================
+# Schedule Message Model Tests
+# ============================================================================
+
+class TestScheduleMessageModels:
+    """Tests for schedule/delete scheduled message Pydantic models."""
+
+    def test_schedule_message_input_valid(self):
+        inp = ScheduleMessageInput(
+            channel="C1234567890",
+            text="Good morning!",
+            post_at=1705400000,
+        )
+        assert inp.text == "Good morning!"
+        assert inp.post_at == 1705400000
+        assert inp.identity is None
+        assert inp.thread_ts is None
+        assert inp.blocks is None
+
+    def test_schedule_message_input_with_optional_fields(self):
+        inp = ScheduleMessageInput(
+            channel="C1234567890",
+            text="Threaded reply",
+            post_at=1705400000,
+            thread_ts="1705363200.123456",
+            blocks='[{"type":"section"}]',
+            identity="claudino",
+        )
+        assert inp.thread_ts == "1705363200.123456"
+        assert inp.blocks == '[{"type":"section"}]'
+        assert inp.identity == "claudino"
+
+    def test_schedule_message_input_rejects_bad_channel(self):
+        with pytest.raises(Exception):
+            ScheduleMessageInput(
+                channel="invalid",
+                text="Hello",
+                post_at=1705400000,
+            )
+
+    def test_schedule_message_input_rejects_empty_text(self):
+        with pytest.raises(Exception):
+            ScheduleMessageInput(
+                channel="C1234567890",
+                text="",
+                post_at=1705400000,
+            )
+
+    def test_delete_scheduled_message_input_valid(self):
+        inp = DeleteScheduledMessageInput(
+            channel="C1234567890",
+            scheduled_message_id="Q1234ABCD5678",
+        )
+        assert inp.scheduled_message_id == "Q1234ABCD5678"
+        assert inp.identity is None
+
+    def test_delete_scheduled_message_input_rejects_bad_channel(self):
+        with pytest.raises(Exception):
+            DeleteScheduledMessageInput(
+                channel="invalid",
+                scheduled_message_id="Q1234ABCD5678",
+            )
+
+    def test_delete_scheduled_message_input_rejects_empty_id(self):
+        with pytest.raises(Exception):
+            DeleteScheduledMessageInput(
+                channel="C1234567890",
+                scheduled_message_id="",
+            )
+
+    def test_schedule_message_response_model(self):
+        resp = ScheduleMessageResponse(
+            ok=True,
+            scheduled_message_id="Q1234ABCD5678",
+            channel="C1234567890",
+            post_at=1705400000,
+        )
+        assert resp.ok
+        assert resp.scheduled_message_id == "Q1234ABCD5678"
+        assert resp.post_at == 1705400000
+
+    def test_delete_scheduled_message_response_model(self):
+        resp = DeleteScheduledMessageResponse(ok=True)
+        assert resp.ok
+        assert resp.error is None
+
+
+# ============================================================================
+# Schedule Message Client Tests (mocked Slack API)
+# ============================================================================
+
+@pytest.mark.asyncio
+class TestClientScheduleMessage:
+    """Tests for SlackAPIClient.schedule_message."""
+
+    @pytest.fixture
+    def client_with_mock(self):
+        with patch('sgept_slack_mcp.client.AsyncWebClient') as mock_class:
+            mock_web = AsyncMock()
+            mock_class.return_value = mock_web
+            mock_web.chat_scheduleMessage = AsyncMock(return_value={
+                "ok": True,
+                "scheduled_message_id": "Q1234ABCD5678",
+                "channel": "C1234567890",
+                "post_at": 1705400000,
+            })
+            mock_web.users_list = AsyncMock(return_value={
+                "ok": True, "members": [], "response_metadata": {"next_cursor": ""}
+            })
+            client = SlackAPIClient("xoxb-test-token")
+            return client, mock_web
+
+    async def test_schedule_message_success(self, client_with_mock):
+        client, mock_web = client_with_mock
+        resp = await client.schedule_message("C1234567890", "Hello!", 1705400000)
+        assert resp.ok is True
+        assert resp.scheduled_message_id == "Q1234ABCD5678"
+        assert resp.channel == "C1234567890"
+        assert resp.post_at == 1705400000
+        call_kwargs = mock_web.chat_scheduleMessage.call_args[1]
+        assert call_kwargs["channel"] == "C1234567890"
+        assert call_kwargs["text"] == "Hello!"
+        assert call_kwargs["post_at"] == 1705400000
+
+    async def test_schedule_message_with_thread(self, client_with_mock):
+        client, mock_web = client_with_mock
+        resp = await client.schedule_message(
+            "C1234567890", "Reply!", 1705400000, thread_ts="1705363200.123456"
+        )
+        call_kwargs = mock_web.chat_scheduleMessage.call_args[1]
+        assert call_kwargs["thread_ts"] == "1705363200.123456"
+
+    async def test_schedule_message_with_blocks(self, client_with_mock):
+        client, mock_web = client_with_mock
+        blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": "Hello"}}]
+        resp = await client.schedule_message(
+            "C1234567890", "Hello!", 1705400000, blocks=blocks
+        )
+        call_kwargs = mock_web.chat_scheduleMessage.call_args[1]
+        assert call_kwargs["blocks"] == blocks
+
+    async def test_schedule_message_error(self, client_with_mock):
+        client, mock_web = client_with_mock
+        mock_web.chat_scheduleMessage = AsyncMock(
+            side_effect=SlackClientError("time_in_past")
+        )
+        resp = await client.schedule_message("C1234567890", "Hello!", 1000)
+        assert resp.ok is False
+        assert "time_in_past" in resp.error
+
+
+@pytest.mark.asyncio
+class TestClientDeleteScheduledMessage:
+    """Tests for SlackAPIClient.delete_scheduled_message."""
+
+    @pytest.fixture
+    def client_with_mock(self):
+        with patch('sgept_slack_mcp.client.AsyncWebClient') as mock_class:
+            mock_web = AsyncMock()
+            mock_class.return_value = mock_web
+            mock_web.chat_deleteScheduledMessage = AsyncMock(return_value={"ok": True})
+            mock_web.users_list = AsyncMock(return_value={
+                "ok": True, "members": [], "response_metadata": {"next_cursor": ""}
+            })
+            client = SlackAPIClient("xoxb-test-token")
+            return client, mock_web
+
+    async def test_delete_scheduled_message_success(self, client_with_mock):
+        client, mock_web = client_with_mock
+        resp = await client.delete_scheduled_message("C1234567890", "Q1234ABCD5678")
+        assert resp.ok is True
+        call_kwargs = mock_web.chat_deleteScheduledMessage.call_args[1]
+        assert call_kwargs["channel"] == "C1234567890"
+        assert call_kwargs["scheduled_message_id"] == "Q1234ABCD5678"
+
+    async def test_delete_scheduled_message_error(self, client_with_mock):
+        client, mock_web = client_with_mock
+        mock_web.chat_deleteScheduledMessage = AsyncMock(
+            side_effect=SlackClientError("invalid_scheduled_message_id")
+        )
+        resp = await client.delete_scheduled_message("C1234567890", "QBADID")
+        assert resp.ok is False
+        assert "invalid_scheduled_message_id" in resp.error
+
+
+# ============================================================================
+# Schedule Message Formatter Tests
+# ============================================================================
+
+class TestScheduledMessageFormatters:
+    """Tests for scheduled message formatters."""
+
+    def test_scheduled_message_markdown_success(self):
+        resp = ScheduleMessageResponse(
+            ok=True,
+            scheduled_message_id="Q1234ABCD5678",
+            channel="C1234567890",
+            post_at=1705400000,
+        )
+        result = format_scheduled_message_markdown(resp)
+        assert "Scheduled Successfully" in result
+        assert "Q1234ABCD5678" in result
+        assert "C1234567890" in result
+
+    def test_scheduled_message_markdown_error(self):
+        resp = ScheduleMessageResponse(ok=False, error="time_in_past")
+        result = format_scheduled_message_markdown(resp)
+        assert "Failed" in result
+        assert "time_in_past" in result
+
+    def test_scheduled_message_json(self):
+        resp = ScheduleMessageResponse(
+            ok=True,
+            scheduled_message_id="Q1234ABCD5678",
+            channel="C1234567890",
+            post_at=1705400000,
+        )
+        result = format_scheduled_message_json(resp)
+        data = json.loads(result)
+        assert data["ok"] is True
+        assert data["scheduled_message_id"] == "Q1234ABCD5678"
+        assert data["post_at"] == 1705400000
+
+
+class TestDeleteScheduledMessageFormatters:
+    """Tests for delete scheduled message formatters."""
+
+    def test_delete_scheduled_message_markdown_success(self):
+        resp = DeleteScheduledMessageResponse(ok=True)
+        result = format_delete_scheduled_message_markdown(resp)
+        assert "Deleted Successfully" in result
+
+    def test_delete_scheduled_message_markdown_error(self):
+        resp = DeleteScheduledMessageResponse(ok=False, error="invalid_scheduled_message_id")
+        result = format_delete_scheduled_message_markdown(resp)
+        assert "Failed" in result
+        assert "invalid_scheduled_message_id" in result
+
+    def test_delete_scheduled_message_json(self):
+        resp = DeleteScheduledMessageResponse(ok=True)
+        result = format_delete_scheduled_message_json(resp)
+        data = json.loads(result)
+        assert data["ok"] is True
+        assert data["error"] is None

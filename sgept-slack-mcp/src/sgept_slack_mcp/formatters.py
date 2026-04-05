@@ -12,6 +12,8 @@ from .models import (
     GetReactionsResponse,
     UserPresenceResponse,
     CreateChannelResponse,
+    ScheduleMessageResponse,
+    DeleteScheduledMessageResponse,
 )
 
 # Character limit for responses (prevent context overflow)
@@ -342,4 +344,48 @@ def format_create_channel_markdown(response: CreateChannelResponse) -> str:
 
 def format_create_channel_json(response: CreateChannelResponse) -> str:
     """Format create channel response as JSON."""
+    return json.dumps(response.model_dump(), indent=2)
+
+
+# ============================================================================
+# Schedule Message Formatters
+# ============================================================================
+
+def format_scheduled_message_markdown(response: ScheduleMessageResponse) -> str:
+    """Format schedule message response as markdown."""
+    if response.ok:
+        from datetime import datetime, timezone
+        post_at_str = ""
+        if response.post_at:
+            dt = datetime.fromtimestamp(response.post_at, tz=timezone.utc)
+            post_at_str = dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+        return (
+            f"## Message Scheduled Successfully\n\n"
+            f"- Channel: `{response.channel}`\n"
+            f"- Scheduled Message ID: `{response.scheduled_message_id}`\n"
+            f"- Scheduled For: {post_at_str}"
+        )
+    else:
+        return f"## Failed to Schedule Message\n\nError: {response.error}"
+
+
+def format_scheduled_message_json(response: ScheduleMessageResponse) -> str:
+    """Format schedule message response as JSON."""
+    return json.dumps(response.model_dump(), indent=2)
+
+
+# ============================================================================
+# Delete Scheduled Message Formatters
+# ============================================================================
+
+def format_delete_scheduled_message_markdown(response: DeleteScheduledMessageResponse) -> str:
+    """Format delete scheduled message response as markdown."""
+    if response.ok:
+        return "## Scheduled Message Deleted Successfully"
+    else:
+        return f"## Failed to Delete Scheduled Message\n\nError: {response.error}"
+
+
+def format_delete_scheduled_message_json(response: DeleteScheduledMessageResponse) -> str:
+    """Format delete scheduled message response as JSON."""
     return json.dumps(response.model_dump(), indent=2)

@@ -21,6 +21,8 @@ from .models import (
     GetUserPresenceInput,
     SendBlockKitInput,
     CreateChannelInput,
+    ScheduleMessageInput,
+    DeleteScheduledMessageInput,
     ResponseFormat,
 )
 from .client import SlackAPIClient, SlackClientError
@@ -44,6 +46,10 @@ from .formatters import (
     format_user_presence_json,
     format_create_channel_markdown,
     format_create_channel_json,
+    format_scheduled_message_markdown,
+    format_scheduled_message_json,
+    format_delete_scheduled_message_markdown,
+    format_delete_scheduled_message_json,
 )
 
 # Configure logging - never log token values
@@ -641,6 +647,98 @@ async def slack_create_channel(params: CreateChannelInput) -> str:
             pass  # response_format not on this model, always markdown
 
         return format_create_channel_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_schedule_message",
+    annotations={
+        "title": "Schedule Slack Message",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def slack_schedule_message(params: ScheduleMessageInput) -> str:
+    """Schedule a message for future delivery (timezone-appropriate sending).
+
+    WARNING: This tool is DISABLED by default for safety.
+    Enable with send_enabled=true on the identity.
+
+    Args:
+        channel: Channel or DM ID to send to
+        text: Message text (supports Slack markdown)
+        post_at: Unix timestamp for when to send the message (must be in the future)
+        thread_ts: Reply in thread if provided
+        blocks: Block Kit blocks as JSON string (array of block objects)
+
+    Example:
+        channel="C1234567890", text="Good morning!", post_at=1705400000
+    """
+    try:
+        client, identity = get_client(params.identity)
+
+        if not identity.send_enabled:
+            return (
+                f"Error: Message sending is DISABLED for identity '{identity.name}'.\n\n"
+                "This identity does not have send_enabled=true in identities.json.\n"
+                "This is a security feature to prevent accidental messages."
+            )
+
+        # Parse blocks JSON if provided
+        parsed_blocks = None
+        if params.blocks:
+            try:
+                parsed_blocks = json.loads(params.blocks)
+            except json.JSONDecodeError as e:
+                return f"Error: Invalid blocks JSON: {e}"
+
+        response = await client.schedule_message(
+            channel=params.channel,
+            text=params.text,
+            post_at=params.post_at,
+            thread_ts=params.thread_ts,
+            blocks=parsed_blocks,
+        )
+
+        return format_scheduled_message_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_delete_scheduled_message",
+    annotations={
+        "title": "Delete Scheduled Slack Message",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def slack_delete_scheduled_message(params: DeleteScheduledMessageInput) -> str:
+    """Cancel a scheduled message before it is sent.
+
+    Args:
+        channel: Channel ID where the scheduled message was targeting
+        scheduled_message_id: The scheduled_message_id returned when the message was scheduled
+
+    Example:
+        channel="C1234567890", scheduled_message_id="Q1234ABCD5678"
+    """
+    try:
+        client, _ = get_client(params.identity)
+
+        response = await client.delete_scheduled_message(
+            channel=params.channel,
+            scheduled_message_id=params.scheduled_message_id,
+        )
+
+        return format_delete_scheduled_message_markdown(response)
 
     except (SlackClientError, ValueError) as e:
         return f"Error: {e}"

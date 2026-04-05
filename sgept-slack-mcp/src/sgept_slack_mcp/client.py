@@ -21,6 +21,8 @@ from .models import (
     GetReactionsResponse,
     UserPresenceResponse,
     CreateChannelResponse,
+    ScheduleMessageResponse,
+    DeleteScheduledMessageResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -722,6 +724,73 @@ class SlackAPIClient:
             )
         except SlackClientError as e:
             return CreateChannelResponse(ok=False, error=str(e))
+
+    async def schedule_message(
+        self,
+        channel: str,
+        text: str,
+        post_at: int,
+        thread_ts: Optional[str] = None,
+        blocks: Optional[list] = None,
+    ) -> ScheduleMessageResponse:
+        """
+        Schedule a message for future delivery.
+
+        Args:
+            channel: Channel or DM ID
+            text: Message text
+            post_at: Unix timestamp for when to send
+            thread_ts: Reply in thread if provided
+            blocks: Block Kit blocks (list of block dicts)
+
+        Returns:
+            Response with scheduled_message_id, channel, post_at
+        """
+        kwargs: dict[str, Any] = {
+            "channel": channel,
+            "text": text,
+            "post_at": post_at,
+        }
+        if thread_ts:
+            kwargs["thread_ts"] = thread_ts
+        if blocks:
+            kwargs["blocks"] = blocks
+
+        try:
+            result = await self._call_with_retry("chat_scheduleMessage", **kwargs)
+            return ScheduleMessageResponse(
+                ok=True,
+                scheduled_message_id=result.get("scheduled_message_id"),
+                channel=result.get("channel"),
+                post_at=result.get("post_at"),
+            )
+        except SlackClientError as e:
+            return ScheduleMessageResponse(ok=False, error=str(e))
+
+    async def delete_scheduled_message(
+        self,
+        channel: str,
+        scheduled_message_id: str,
+    ) -> DeleteScheduledMessageResponse:
+        """
+        Delete a scheduled message before it is sent.
+
+        Args:
+            channel: Channel ID where the scheduled message was targeting
+            scheduled_message_id: The scheduled_message_id to cancel
+
+        Returns:
+            Response indicating success or failure
+        """
+        try:
+            await self._call_with_retry(
+                "chat_deleteScheduledMessage",
+                channel=channel,
+                scheduled_message_id=scheduled_message_id,
+            )
+            return DeleteScheduledMessageResponse(ok=True)
+        except SlackClientError as e:
+            return DeleteScheduledMessageResponse(ok=False, error=str(e))
 
     def invalidate_cache(self) -> None:
         """Invalidate all cached data (useful after errors)."""

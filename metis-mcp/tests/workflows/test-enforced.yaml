@@ -1,0 +1,48 @@
+id: test-enforced
+name: "Test Enforced Workflow"
+version: 1
+steps:
+  - id: research
+    name: "Research Phase"
+    actor: agent:researcher
+    permitted_tools: [Read, Grep, Glob, WebSearch]
+    inputs:
+      - name: topic
+        required: true
+    outputs:
+      - name: findings
+        required: true
+    gate:
+      type: schema
+      schema:
+        required: [findings]
+    next: [draft]
+  - id: draft
+    name: "Drafting Phase"
+    actor: agent:drafter
+    permitted_tools: [Read, Grep, Glob, Write, Edit]
+    inputs:
+      - name: findings
+        required: true
+    outputs:
+      - name: document
+        required: true
+    gate:
+      type: schema
+      schema:
+        required: [document]
+    next: [review]
+  - id: review
+    name: "Review Phase"
+    actor: human
+    inputs:
+      - name: document
+        required: true
+    outputs:
+      - name: approval
+        required: true
+    gate:
+      type: schema
+      schema:
+        required: [approval]
+    next: []

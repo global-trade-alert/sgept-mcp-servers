@@ -69,6 +69,7 @@ class StepDef(BaseModel):
     outputs: list[StepOutput] = Field(default_factory=list)
     gate: Optional[Gate] = None
     next: list[str] = Field(default_factory=list)
+    permitted_tools: list[str] = Field(default_factory=list)
 
 
 class WorkflowDef(BaseModel):

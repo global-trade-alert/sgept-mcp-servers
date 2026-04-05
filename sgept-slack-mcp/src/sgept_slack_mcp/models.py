@@ -329,6 +329,60 @@ class CreateChannelInput(BaseModel):
     )
 
 
+class ScheduleMessageInput(BaseModel):
+    """Input for slack_schedule_message tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel: str = Field(
+        ...,
+        description="Channel or DM ID to send to",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=40000,
+        description="Message text (supports Slack markdown)"
+    )
+    post_at: int = Field(
+        ...,
+        description="Unix timestamp for when to send the message (must be in the future)"
+    )
+    thread_ts: Optional[str] = Field(
+        default=None,
+        description="Reply in thread if provided (thread parent timestamp)",
+        pattern=r"^\d+\.\d+$"
+    )
+    blocks: Optional[str] = Field(
+        default=None,
+        description="Block Kit blocks as JSON string (array of block objects)"
+    )
+
+
+class DeleteScheduledMessageInput(BaseModel):
+    """Input for slack_delete_scheduled_message tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel: str = Field(
+        ...,
+        description="Channel ID where the scheduled message was targeting",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    scheduled_message_id: str = Field(
+        ...,
+        min_length=1,
+        description="The scheduled_message_id returned when the message was scheduled"
+    )
+
+
 # ============================================================================
 # Response Models (Output Schemas)
 # ============================================================================
@@ -413,4 +467,19 @@ class CreateChannelResponse(BaseModel):
     ok: bool
     channel_id: Optional[str] = None
     channel_name: Optional[str] = None
+    error: Optional[str] = None
+
+
+class ScheduleMessageResponse(BaseModel):
+    """Response from scheduling a message."""
+    ok: bool
+    scheduled_message_id: Optional[str] = None
+    channel: Optional[str] = None
+    post_at: Optional[int] = None
+    error: Optional[str] = None
+
+
+class DeleteScheduledMessageResponse(BaseModel):
+    """Response from deleting a scheduled message."""
+    ok: bool
     error: Optional[str] = None
