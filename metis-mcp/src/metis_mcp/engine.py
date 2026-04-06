@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
@@ -25,6 +26,8 @@ from .models import (
     WorkflowInstance,
     WorkflowStatus,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class EngineError(Exception):
@@ -50,10 +53,100 @@ class WorkflowEngine:
     and advances them through steps with gate validation.
     """
 
-    def __init__(self, audit_log: AuditLog | None = None):
+    def __init__(
+        self,
+        audit_log: AuditLog | None = None,
+        persistence_dir: str | Path | None = None,
+    ):
         self._workflows: dict[str, WorkflowDef] = {}
         self._instances: dict[str, WorkflowInstance] = {}
         self._audit = audit_log or AuditLog()
+
+        # Resolve persistence directory: explicit param > env var > None (disabled)
+        if persistence_dir is None:
+            persistence_dir = os.environ.get("METIS_PERSISTENCE_DIR")
+        if persistence_dir is not None:
+            self._persistence_dir: Path | None = Path(persistence_dir)
+            self._persistence_dir.mkdir(parents=True, exist_ok=True)
+            (self._persistence_dir / "completed").mkdir(exist_ok=True)
+            self._load_instances()
+        else:
+            self._persistence_dir = None
+
+    # ------------------------------------------------------------------
+    # Instance Persistence
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _serialize_instance(instance: WorkflowInstance) -> dict:
+        """Serialize a WorkflowInstance to a JSON-compatible dict."""
+        data = instance.model_dump()
+        for key in ("created_at", "updated_at"):
+            if isinstance(data[key], datetime):
+                data[key] = data[key].isoformat()
+        data["status"] = instance.status.value
+        for step_id, state in data["step_states"].items():
+            state["status"] = instance.step_states[step_id].status.value
+        return data
+
+    @staticmethod
+    def _deserialize_instance(data: dict) -> WorkflowInstance:
+        """Reconstruct a WorkflowInstance from a serialized dict."""
+        for key in ("created_at", "updated_at"):
+            if isinstance(data[key], str):
+                data[key] = datetime.fromisoformat(data[key])
+        data["status"] = WorkflowStatus(data["status"])
+        step_states = {}
+        for step_id, state_data in data["step_states"].items():
+            step_states[step_id] = StepState(
+                status=StepStatus(state_data["status"]),
+                output=state_data.get("output", {}),
+            )
+        data["step_states"] = step_states
+        return WorkflowInstance(**data)
+
+    def _save_instance(self, instance_id: str) -> None:
+        """Persist a workflow instance to disk as JSON (atomic write)."""
+        if self._persistence_dir is None:
+            return
+        instance = self._instances.get(instance_id)
+        if instance is None:
+            return
+
+        data = self._serialize_instance(instance)
+        target = self._persistence_dir / f"{instance_id}.json"
+        tmp = self._persistence_dir / f"{instance_id}.json.tmp"
+        with open(tmp, "w") as f:
+            json.dump(data, f, indent=2)
+        tmp.rename(target)
+
+    def _load_instances(self) -> None:
+        """Load all persisted workflow instances from disk."""
+        if self._persistence_dir is None:
+            return
+        count = 0
+        for json_file in self._persistence_dir.glob("*.json"):
+            if json_file.name.endswith(".tmp"):
+                continue
+            try:
+                with open(json_file) as f:
+                    data = json.load(f)
+                instance = self._deserialize_instance(data)
+                self._instances[instance.instance_id] = instance
+                count += 1
+            except Exception:
+                logger.warning("Failed to load instance from %s", json_file, exc_info=True)
+        if count:
+            logger.info("Loaded %d persisted workflow instance(s)", count)
+
+    def _delete_instance(self, instance_id: str) -> None:
+        """Move a completed instance file to the completed/ subdirectory."""
+        if self._persistence_dir is None:
+            return
+        source = self._persistence_dir / f"{instance_id}.json"
+        if source.exists():
+            dest = self._persistence_dir / "completed" / f"{instance_id}.json"
+            source.rename(dest)
 
     # ------------------------------------------------------------------
     # Workflow Definition Management
@@ -70,8 +163,16 @@ class WorkflowEngine:
 
         count = 0
         for yaml_file in sorted(directory.glob("*.yaml")):
-            self.load_workflow_file(yaml_file)
-            count += 1
+            if yaml_file.name.startswith("_"):
+                continue  # Skip schema/meta files
+            try:
+                self.load_workflow_file(yaml_file)
+                count += 1
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(
+                    f"Skipping invalid workflow {yaml_file.name}: {e}"
+                )
         return count
 
     def load_workflow_file(self, path: str | Path) -> WorkflowDef:
@@ -79,6 +180,11 @@ class WorkflowEngine:
         path = Path(path)
         with open(path) as f:
             raw = yaml.safe_load(f)
+
+        if not isinstance(raw, dict) or "id" not in raw or "steps" not in raw:
+            raise EngineError(
+                f"Invalid workflow file {path.name}: missing 'id' or 'steps'"
+            )
 
         workflow = self._parse_workflow(raw)
         self._workflows[workflow.id] = workflow
@@ -202,6 +308,9 @@ class WorkflowEngine:
         # Write enforcement state for the first step
         self.write_enforcement_state(instance_id)
 
+        # Persist to disk
+        self._save_instance(instance_id)
+
         return instance
 
     def advance(
@@ -291,7 +400,10 @@ class WorkflowEngine:
                 details={"workflow_id": instance.workflow_id},
             )
             # Clear enforcement state on completion
-            self.clear_enforcement_state()
+            self.clear_enforcement_state(instance_id=instance_id)
+            # Move persisted file to completed/
+            self._save_instance(instance_id)
+            self._delete_instance(instance_id)
             return {
                 "status": "completed",
                 "workflow_id": instance.workflow_id,
@@ -309,6 +421,9 @@ class WorkflowEngine:
 
         # Update enforcement state for the new step
         self.write_enforcement_state(instance_id)
+
+        # Persist updated state to disk
+        self._save_instance(instance_id)
 
         return {
             "status": "advanced",
@@ -410,32 +525,45 @@ class WorkflowEngine:
             "enforce": len(current_step.permitted_tools) > 0,
         }
 
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        # Namespace by instance_id so concurrent workflows don't clobber each other
+        state_file = enforcement_dir / f".metis-workflow-state-{instance_id}.json"
         with open(state_file, "w") as f:
             json.dump(state, f, indent=2)
 
         return state_file
 
     def clear_enforcement_state(
-        self, enforcement_dir: str | Path | None = None
+        self, enforcement_dir: str | Path | None = None,
+        instance_id: str | None = None,
     ) -> bool:
-        """Remove .metis-workflow-state.json when a workflow completes.
+        """Remove enforcement state file when a workflow completes.
 
         Args:
             enforcement_dir: Directory containing the state file.
                 If None, reads from METIS_ENFORCEMENT_DIR env var.
+            instance_id: Instance to clear. If None, clears all (legacy compat).
 
         Returns:
-            True if the file was removed, False otherwise.
+            True if file(s) were removed, False otherwise.
         """
         if enforcement_dir is None:
             enforcement_dir = self._enforcement_dir()
         if enforcement_dir is None:
             return False
 
-        state_file = Path(enforcement_dir) / ".metis-workflow-state.json"
-        if state_file.exists():
-            state_file.unlink()
+        removed = False
+        enforcement_path = Path(enforcement_dir)
+        if instance_id:
+            state_file = enforcement_path / f".metis-workflow-state-{instance_id}.json"
+            if state_file.exists():
+                state_file.unlink()
+                removed = True
+        else:
+            # Legacy: clean up old singleton file
+            old_file = enforcement_path / ".metis-workflow-state.json"
+            if old_file.exists():
+                old_file.unlink()
+                removed = True
             return True
         return False
 

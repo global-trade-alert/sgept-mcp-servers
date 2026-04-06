@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -58,6 +59,11 @@ def engine_no_enforcement(audit_log):
         os.environ["METIS_ENFORCEMENT_DIR"] = old_val
 
 
+def _state_file(enforcement_dir, instance_id):
+    """Helper to get the namespaced enforcement state file path."""
+    return enforcement_dir / f".metis-workflow-state-{instance_id}.json"
+
+
 class TestEnforcementStateWrite:
     """Test write_enforcement_state produces correct JSON."""
 
@@ -65,7 +71,7 @@ class TestEnforcementStateWrite:
         instance = engine_with_enforcement.start_workflow(
             "test-enforced", {"topic": "trade policy"}
         )
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        state_file = _state_file(enforcement_dir, instance.instance_id)
         assert state_file.exists()
 
         state = json.loads(state_file.read_text())
@@ -85,7 +91,7 @@ class TestEnforcementStateWrite:
             instance.instance_id, {"findings": "important findings"}
         )
 
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        state_file = _state_file(enforcement_dir, instance.instance_id)
         state = json.loads(state_file.read_text())
         assert state["current_step_id"] == "draft"
         assert state["current_step_actor"] == "agent:drafter"
@@ -106,21 +112,20 @@ class TestEnforcementStateWrite:
             instance.instance_id, {"approval": "approved"}
         )
 
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        state_file = _state_file(enforcement_dir, instance.instance_id)
         assert not state_file.exists()
 
     def test_no_enforcement_dir_writes_nothing(self, engine_no_enforcement):
         instance = engine_no_enforcement.start_workflow(
             "test-enforced", {"topic": "trade policy"}
         )
-        # No METIS_ENFORCEMENT_DIR set, so nothing should be written anywhere
         result = engine_no_enforcement.write_enforcement_state(instance.instance_id)
         assert result is None
 
     def test_step_without_permitted_tools_sets_enforce_false(
         self, engine_with_enforcement, enforcement_dir
     ):
-        """The review step has no permitted_tools → enforce=false."""
+        """The review step has no permitted_tools -> enforce=false."""
         instance = engine_with_enforcement.start_workflow(
             "test-enforced", {"topic": "trade policy"}
         )
@@ -131,7 +136,7 @@ class TestEnforcementStateWrite:
             instance.instance_id, {"document": "draft doc"}
         )
 
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        state_file = _state_file(enforcement_dir, instance.instance_id)
         state = json.loads(state_file.read_text())
         assert state["current_step_id"] == "review"
         assert state["permitted_tools"] == []
@@ -148,17 +153,17 @@ class TestEnforcementStateWrite:
         result = engine_with_enforcement.write_enforcement_state(
             instance.instance_id, enforcement_dir=custom_dir
         )
-        assert result == custom_dir / ".metis-workflow-state.json"
+        assert result == custom_dir / f".metis-workflow-state-{instance.instance_id}.json"
         assert result.exists()
 
     def test_workflow_without_permitted_tools_not_enforced(
         self, engine_with_enforcement, enforcement_dir
     ):
-        """test-two-step has no permitted_tools on any step → enforce=false."""
+        """test-two-step has no permitted_tools on any step -> enforce=false."""
         instance = engine_with_enforcement.start_workflow(
             "test-two-step", {"brief": "test brief"}
         )
-        state_file = enforcement_dir / ".metis-workflow-state.json"
+        state_file = _state_file(enforcement_dir, instance.instance_id)
         state = json.loads(state_file.read_text())
         assert state["enforce"] is False
 
@@ -202,7 +207,11 @@ class TestHookScript:
         if state_file_content is not None:
             claude_dir = Path(project_dir) / ".claude"
             claude_dir.mkdir(parents=True, exist_ok=True)
-            state_path = claude_dir / ".metis-workflow-state.json"
+            # Use fresh timestamp so staleness check doesn't filter it out
+            state_file_content = dict(state_file_content)
+            state_file_content["step_started_at"] = datetime.now(timezone.utc).isoformat()
+            instance_id = state_file_content.get("instance_id", "test-123")
+            state_path = claude_dir / f".metis-workflow-state-{instance_id}.json"
             state_path.write_text(json.dumps(state_file_content))
 
         env = os.environ.copy()
