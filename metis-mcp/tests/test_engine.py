@@ -289,3 +289,98 @@ class TestAuditLog:
 
         for entry in entries:
             assert entry["instance_id"] == instance.instance_id
+
+
+class TestPersistence:
+    """Test file-based instance persistence."""
+
+    def _make_engine(self, tmp_path, audit_path=None):
+        """Create an engine with persistence enabled and test workflows loaded."""
+        audit = AuditLog(audit_dir=audit_path or tmp_path / "audit")
+        eng = WorkflowEngine(audit_log=audit, persistence_dir=tmp_path / "state")
+        eng.load_workflows(WORKFLOWS_DIR)
+        return eng
+
+    def test_instance_persisted_on_start(self, tmp_path):
+        """Starting a workflow writes instance to disk."""
+        eng = self._make_engine(tmp_path)
+        instance = eng.start_workflow("test-two-step", {"brief": "test brief"})
+
+        state_dir = tmp_path / "state"
+        persisted = list(state_dir.glob("*.json"))
+        assert len(persisted) == 1
+        assert persisted[0].name == f"{instance.instance_id}.json"
+
+    def test_instance_persisted_on_advance(self, tmp_path):
+        """Advancing a step updates the persisted state."""
+        eng = self._make_engine(tmp_path)
+        instance = eng.start_workflow("test-two-step", {"brief": "test brief"})
+        eng.advance(instance.instance_id, {"result": "step one done"})
+
+        state_file = tmp_path / "state" / f"{instance.instance_id}.json"
+        import json
+        data = json.loads(state_file.read_text())
+        assert data["current_step_id"] == "step_two"
+        assert data["step_states"]["step_one"]["status"] == "completed"
+
+    def test_instances_loaded_on_init(self, tmp_path):
+        """A new engine loads existing instances from disk."""
+        eng1 = self._make_engine(tmp_path)
+        instance = eng1.start_workflow("test-two-step", {"brief": "test brief"})
+        iid = instance.instance_id
+
+        # Create a second engine pointing at the same persistence dir
+        eng2 = self._make_engine(tmp_path)
+        state = eng2.get_state(iid)
+        assert state["workflow_id"] == "test-two-step"
+        assert state["status"] == "running"
+        assert state["current_step_id"] == "step_one"
+
+    def test_completed_instance_moved_to_completed(self, tmp_path):
+        """Completed workflow moves to completed/ subdir."""
+        eng = self._make_engine(tmp_path)
+        instance = eng.start_workflow("test-two-step", {"brief": "test brief"})
+        iid = instance.instance_id
+
+        eng.advance(iid, {"result": "step one done"})
+        eng.advance(iid, {"final_output": "all done"})
+
+        state_dir = tmp_path / "state"
+        # Active file should be gone
+        assert not (state_dir / f"{iid}.json").exists()
+        # Should be in completed/
+        completed_file = state_dir / "completed" / f"{iid}.json"
+        assert completed_file.exists()
+
+    def test_persistence_survives_restart(self, tmp_path):
+        """Full cycle: start, advance, restart engine, continue advancing."""
+        eng1 = self._make_engine(tmp_path)
+        instance = eng1.start_workflow("test-two-step", {"brief": "test brief"})
+        iid = instance.instance_id
+
+        # Advance step 1
+        eng1.advance(iid, {"result": "step one done"})
+
+        # Simulate restart: create a new engine
+        eng2 = self._make_engine(tmp_path)
+        state = eng2.get_state(iid)
+        assert state["current_step_id"] == "step_two"
+        assert state["step_states"]["step_one"]["status"] == "completed"
+        assert state["step_states"]["step_two"]["status"] == "in_progress"
+
+        # Advance step 2 on the new engine
+        result = eng2.advance(iid, {"final_output": "all done"})
+        assert result["status"] == "completed"
+
+    def test_no_persistence_dir_works(self, tmp_path):
+        """Engine works fine without persistence (backward compat)."""
+        audit = AuditLog(audit_dir=tmp_path / "audit")
+        eng = WorkflowEngine(audit_log=audit)
+        eng.load_workflows(WORKFLOWS_DIR)
+
+        instance = eng.start_workflow("test-two-step", {"brief": "test brief"})
+        result = eng.advance(instance.instance_id, {"result": "done"})
+        assert result["status"] == "advanced"
+
+        result = eng.advance(instance.instance_id, {"final_output": "done"})
+        assert result["status"] == "completed"

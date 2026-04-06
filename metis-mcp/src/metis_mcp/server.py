@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP("metis_mcp")
 
 # Engine instance (initialized in main or by register_engine_tools)
-engine = WorkflowEngine()
+# Reads METIS_PERSISTENCE_DIR env var for file-based instance persistence.
+# Example .mcp.json env: "METIS_PERSISTENCE_DIR": "/path/to/metis-state"
+engine = WorkflowEngine(
+    persistence_dir=os.environ.get("METIS_PERSISTENCE_DIR"),
+)
 
 
 def register_engine_tools(mcp_server: FastMCP, eng: WorkflowEngine) -> None:
