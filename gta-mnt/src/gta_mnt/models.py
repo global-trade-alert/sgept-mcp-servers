@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 class Step1QueueInput(BaseModel):
     """Input parameters for listing Step 1 review queue."""
-    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return")
+    limit: Optional[int] = Field(default=None, ge=1, description="Max measures to return. Omit or null to return all.")
     offset: int = Field(default=0, ge=0, description="Offset for pagination")
     implementing_jurisdictions: Optional[list[str]] = Field(
         default=None,
@@ -19,6 +19,10 @@ class Step1QueueInput(BaseModel):
     date_entered_review_gte: Optional[str] = Field(
         default=None,
         description="Filter by date entered review (YYYY-MM-DD)"
+    )
+    exclude_framework_id: Optional[int] = Field(
+        default=None,
+        description="Exclude measures that have this framework ID attached (e.g., 495 for 'sancho claudino review')"
     )
 
 

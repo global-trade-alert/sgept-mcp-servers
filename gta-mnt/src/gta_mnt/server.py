@@ -53,7 +53,7 @@ def get_source_fetcher() -> SourceFetcher:
 # Input models for tools
 class ListStep1QueueInput(BaseModel):
     """Input for listing Step 1 review queue."""
-    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
+    limit: Optional[int] = Field(default=None, ge=1, description="Max measures to return. Omit or null to return all.")
     offset: int = Field(default=0, ge=0, description="Offset for pagination")
     implementing_jurisdictions: Optional[List[str]] = Field(
         default=None,
@@ -62,12 +62,16 @@ class ListStep1QueueInput(BaseModel):
     date_entered_review_gte: Optional[str] = Field(
         default=None,
         description="Filter by date entered review (YYYY-MM-DD)"
+    )
+    exclude_framework_id: Optional[int] = Field(
+        default=None,
+        description="Exclude measures that have this framework ID attached (e.g., 495 for 'sancho claudino review')"
     )
 
 
 class ListStep2QueueInput(BaseModel):
     """Input for listing Step 2 review queue."""
-    limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
+    limit: Optional[int] = Field(default=None, ge=1, description="Max measures to return. Omit or null to return all.")
     offset: int = Field(default=0, ge=0, description="Offset for pagination")
     implementing_jurisdictions: Optional[List[str]] = Field(
         default=None,
@@ -76,6 +80,10 @@ class ListStep2QueueInput(BaseModel):
     date_entered_review_gte: Optional[str] = Field(
         default=None,
         description="Filter by date entered review (YYYY-MM-DD)"
+    )
+    exclude_framework_id: Optional[int] = Field(
+        default=None,
+        description="Exclude measures that have this framework ID attached (e.g., 495 for 'sancho claudino review')"
     )
 
 
@@ -272,13 +280,15 @@ async def list_step1_queue(params: ListStep1QueueInput) -> str:
     """List measures awaiting Step 1 review, ordered by status_time DESC (most recent first).
 
     Uses api_state_act_status_log for accurate ordering.
+    Pass exclude_framework_id=495 to exclude measures already reviewed by Sancho Claudino.
     """
     db_client = get_db_client()
     data = await db_client.list_step1_queue(
         limit=params.limit,
         offset=params.offset,
         implementing_jurisdictions=params.implementing_jurisdictions,
-        date_entered_review_gte=params.date_entered_review_gte
+        date_entered_review_gte=params.date_entered_review_gte,
+        exclude_framework_id=params.exclude_framework_id
     )
     return format_step1_queue(data)
 
@@ -288,6 +298,7 @@ async def list_step2_queue(params: ListStep2QueueInput) -> str:
     """List measures awaiting Step 2 review (status 19), ordered by status_time DESC.
 
     Uses api_state_act_status_log for accurate ordering.
+    Pass exclude_framework_id=495 to exclude measures already reviewed by Sancho Claudino.
     """
     db_client = get_db_client()
     data = await db_client.list_step1_queue(
@@ -295,7 +306,8 @@ async def list_step2_queue(params: ListStep2QueueInput) -> str:
         limit=params.limit,
         offset=params.offset,
         implementing_jurisdictions=params.implementing_jurisdictions,
-        date_entered_review_gte=params.date_entered_review_gte
+        date_entered_review_gte=params.date_entered_review_gte,
+        exclude_framework_id=params.exclude_framework_id
     )
     return format_step1_queue(data, queue_label="Step 2")
 

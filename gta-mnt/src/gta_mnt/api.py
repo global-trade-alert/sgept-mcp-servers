@@ -123,10 +123,11 @@ class GTADatabaseClient:
     async def list_step1_queue(
         self,
         status_id: int = 2,
-        limit: int = 20,
+        limit: Optional[int] = None,
         offset: int = 0,
         implementing_jurisdictions: Optional[list[str]] = None,
-        date_entered_review_gte: Optional[str] = None
+        date_entered_review_gte: Optional[str] = None,
+        exclude_framework_id: Optional[int] = None
     ) -> dict:
         """List measures awaiting review by status.
 
@@ -134,10 +135,11 @@ class GTADatabaseClient:
         status_time ordering (most recent first).
 
         Args:
-            limit: Max measures to return (1-100)
+            limit: Max measures to return. None = no limit (return all).
             offset: Pagination offset
             implementing_jurisdictions: Filter by jurisdiction codes
             date_entered_review_gte: Filter by date entered review (YYYY-MM-DD)
+            exclude_framework_id: Exclude measures that have this framework attached
 
         Returns:
             Dict with 'results' list and 'count' int
@@ -158,9 +160,21 @@ class GTADatabaseClient:
             FROM api_state_act_log sa
             LEFT JOIN api_state_act_status_log sl
                 ON sa.state_act_id = sl.state_act_id AND sl.state_act_status_id = sa.status_id
-            WHERE sa.status_id = %s
         '''
-        params = [status_id]
+        params = []
+
+        if exclude_framework_id is not None:
+            query += '''
+            LEFT JOIN api_state_act_framework saf
+                ON sa.state_act_id = saf.state_act_id AND saf.framework_id = %s
+            '''
+            params.append(exclude_framework_id)
+
+        query += ' WHERE sa.status_id = %s'
+        params.append(status_id)
+
+        if exclude_framework_id is not None:
+            query += ' AND saf.id IS NULL'
 
         # TODO: Jurisdiction filtering would require joining through interventions
         # For now, filter by jurisdiction is not supported in list view
@@ -173,19 +187,37 @@ class GTADatabaseClient:
             params.append(date_entered_review_gte)
 
         query += ' ORDER BY sl.status_time DESC'
-        query += f' LIMIT %s OFFSET %s'
-        params.extend([limit, offset])
+
+        if limit is not None:
+            query += ' LIMIT %s OFFSET %s'
+            params.extend([limit, offset])
+        elif offset > 0:
+            query += ' LIMIT 18446744073709551615 OFFSET %s'
+            params.append(offset)
 
         cursor.execute(query, params)
         results = cursor.fetchall()
 
-        # Get total count
+        # Get total count (with same framework exclusion)
         count_query = '''
             SELECT COUNT(DISTINCT sa.state_act_id) as count
             FROM api_state_act_log sa
-            WHERE sa.status_id = %s
         '''
-        cursor.execute(count_query, (status_id,))
+        count_params = []
+        if exclude_framework_id is not None:
+            count_query += '''
+            LEFT JOIN api_state_act_framework saf
+                ON sa.state_act_id = saf.state_act_id AND saf.framework_id = %s
+            '''
+            count_params.append(exclude_framework_id)
+
+        count_query += ' WHERE sa.status_id = %s'
+        count_params.append(status_id)
+
+        if exclude_framework_id is not None:
+            count_query += ' AND saf.id IS NULL'
+
+        cursor.execute(count_query, count_params)
         count = cursor.fetchone()['count']
 
         return {
