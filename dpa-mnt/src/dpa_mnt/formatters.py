@@ -181,6 +181,16 @@ def format_event_detail(event_data: dict) -> str:
             pa_str = ", ".join(p.get("policy_area_name", "N/A") for p in policy_areas)
             lines.append(f"- **Additional Policy Areas:** {pa_str}")
 
+        issues = event_data.get("issues", [])
+        if issues:
+            issue_str = ", ".join(i.get("issue_name", "N/A") for i in issues)
+            lines.append(f"- **Thematic Issues:** {issue_str}")
+
+        rationales = event_data.get("rationales", [])
+        if rationales:
+            rat_str = ", ".join(r.get("rationale_name", "N/A") for r in rationales)
+            lines.append(f"- **Stated Rationales:** {rat_str}")
+
         lines.append("")
 
     # Development
@@ -198,6 +208,22 @@ def format_event_detail(event_data: dict) -> str:
             rel_title = rel.get("intervention_title") or "N/A"
             rel_type = rel.get("relationship_name") or "N/A"
             lines.append(f"- INT-{rel_id}: {rel_title} [{rel_type}]")
+        lines.append("")
+
+    # Agents/Firms
+    agents = event_data.get("agents", [])
+    if agents:
+        lines.append(f"## Agents/Firms ({len(agents)})\n")
+        for agent in agents:
+            atype = agent.get("agent_type_name") or "Unknown type"
+            role = agent.get("role_name") or ""
+            firm = agent.get("firm_name")
+            parts = [f"**{atype}**"]
+            if firm:
+                parts.append(f"({firm})")
+            if role:
+                parts.append(f"[{role}]")
+            lines.append(f"- {' '.join(parts)}")
         lines.append("")
 
     # Sources
@@ -361,6 +387,19 @@ def format_intervention_context(data: dict) -> str:
             rel_title = rel.get("intervention_title") or "N/A"
             rel_type = rel.get("relationship_name") or "N/A"
             lines.append(f"- INT-{rel_id}: {rel_title} [{rel_type}]")
+        lines.append("")
+
+    # Development siblings (other interventions sharing same development_id)
+    dev_siblings = data.get("development_siblings", [])
+    if dev_siblings:
+        lines.append(f"## Development Siblings ({len(dev_siblings)} other interventions in same development)\n")
+        for sib in dev_siblings:
+            sid = sib.get("intervention_id", "N/A")
+            stitle = sib.get("intervention_title") or "N/A"
+            spa = sib.get("policy_area_name") or "N/A"
+            sinst = sib.get("intervention_type_name") or "N/A"
+            sstatus = sib.get("current_status_name") or "N/A"
+            lines.append(f"- INT-{sid}: {stitle} | {spa} | {sinst} | {sstatus}")
         lines.append("")
 
     return "\n".join(lines)

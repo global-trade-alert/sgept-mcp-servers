@@ -280,7 +280,7 @@ class DPADatabaseClient:
                 LEFT JOIN lux_relationship_list rl ON ri.relation_id = rl.relation_id
                 WHERE ri.intervention_id_1 = %s
             ''', (intervention_id,))
-            related1 = cursor.fetchall()
+            related1 = list(cursor.fetchall())
 
             cursor.execute('''
                 SELECT
@@ -293,9 +293,50 @@ class DPADatabaseClient:
                 LEFT JOIN lux_relationship_list rl ON ri.relation_id = rl.relation_id
                 WHERE ri.intervention_id_2 = %s
             ''', (intervention_id,))
-            related2 = cursor.fetchall()
+            related2 = list(cursor.fetchall())
 
             result['related_interventions'] = related1 + related2
+
+            # 7b. Intervention issues (thematic tags)
+            cursor.execute('''
+                SELECT il.issue_id, il.issue_name
+                FROM lux_intervention_issue_log iil
+                JOIN lux_issue_list il ON iil.issue_id = il.issue_id
+                WHERE iil.intervention_id = %s
+                ORDER BY il.issue_name
+            ''', (intervention_id,))
+            result['issues'] = cursor.fetchall()
+
+            # 7c. Intervention rationales (stated policy objectives)
+            cursor.execute('''
+                SELECT rl.rationale_id, rl.rationale_name
+                FROM lux_intervention_rationale ir
+                JOIN lux_rationale_list rl ON ir.rationale_id = rl.rationale_id
+                WHERE ir.intervention_id = %s
+                ORDER BY rl.rationale_name
+            ''', (intervention_id,))
+            result['rationales'] = cursor.fetchall()
+
+            # 7d. Agents/firms linked to intervention events (for OP-005)
+            cursor.execute('''
+                SELECT DISTINCT
+                    a.agent_id,
+                    a.agent_type_id,
+                    at2.agent_type_name,
+                    a.relationship_role_id,
+                    rr.role_name,
+                    f.firm_name
+                FROM lux_event_agent ea
+                JOIN lux_agent_log a ON ea.agent_id = a.agent_id
+                LEFT JOIN lux_agent_type_list at2 ON a.agent_type_id = at2.agent_type_id
+                LEFT JOIN lux_relationship_role_list rr ON a.relationship_role_id = rr.role_id
+                LEFT JOIN lux_agent_firm af ON a.agent_id = af.agent_id
+                LEFT JOIN mtz_firm_log f ON af.firm_id = f.firm_id
+                WHERE ea.event_id IN (
+                    SELECT event_id FROM lux_event_log WHERE intervention_id = %s
+                )
+            ''', (intervention_id,))
+            result['agents'] = cursor.fetchall()
         else:
             result['intervention'] = {}
             result['economic_activities'] = []
@@ -303,6 +344,9 @@ class DPADatabaseClient:
             result['policy_areas'] = []
             result['development'] = {}
             result['related_interventions'] = []
+            result['issues'] = []
+            result['rationales'] = []
+            result['agents'] = []
 
         # 8. Sources (via lux_event_source → lux_source_log, with file info)
         # display_on_flag: 1 = primary source shown on front page, 0 = background/contextual
@@ -631,7 +675,7 @@ class DPADatabaseClient:
             LEFT JOIN lux_relationship_list rl ON ri.relation_id = rl.relation_id
             WHERE ri.intervention_id_1 = %s
         ''', (intervention_id,))
-        related1 = cursor.fetchall()
+        related1 = list(cursor.fetchall())
 
         cursor.execute('''
             SELECT
@@ -644,7 +688,30 @@ class DPADatabaseClient:
             LEFT JOIN lux_relationship_list rl ON ri.relation_id = rl.relation_id
             WHERE ri.intervention_id_2 = %s
         ''', (intervention_id,))
-        related2 = cursor.fetchall()
+        related2 = list(cursor.fetchall())
+
+        # Development siblings (all interventions sharing same development_id)
+        dev_siblings = []
+        development_id = intervention.get('development_id') if intervention else None
+        if development_id:
+            cursor.execute('''
+                SELECT
+                    i.intervention_id,
+                    i.intervention_title,
+                    i.policy_area_id,
+                    pa.policy_area_name,
+                    i.intervention_type_id,
+                    it.intervention_type_name,
+                    i.current_status_id,
+                    cs.current_status_name
+                FROM lux_intervention_log i
+                LEFT JOIN lux_policy_area_list pa ON i.policy_area_id = pa.policy_area_id
+                LEFT JOIN lux_intervention_type_list it ON i.intervention_type_id = it.intervention_type_id
+                LEFT JOIN lux_current_status_list cs ON i.current_status_id = cs.current_status_id
+                WHERE i.development_id = %s AND i.intervention_id != %s
+                ORDER BY i.intervention_id
+            ''', (development_id, intervention_id))
+            dev_siblings = cursor.fetchall()
 
         return {
             'intervention': intervention,
@@ -652,7 +719,8 @@ class DPADatabaseClient:
             'implementing_jurisdictions': implementers,
             'economic_activities': econ_activities,
             'events': events,
-            'related_interventions': related1 + related2
+            'related_interventions': related1 + related2,
+            'development_siblings': dev_siblings
         }
 
     # ========================================================================
@@ -682,3 +750,28 @@ class DPADatabaseClient:
         results = cursor.fetchall()
 
         return {'results': results}
+
+    async def lookup_event_analysts(self, event_ids: list[int]) -> dict:
+        """Look up the analyst (creator) for each event via lux_event_status_log.
+
+        Returns the user who set status_id=1 (in progress / created) for each event,
+        plus user name from auth_user.
+        """
+        if not event_ids:
+            return {'analysts': []}
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        placeholders = ', '.join(['%s'] * len(event_ids))
+        cursor.execute(f'''
+            SELECT esl.event_id, esl.user_id, au.first_name, au.last_name
+            FROM lux_event_status_log esl
+            LEFT JOIN auth_user au ON esl.user_id = au.id
+            WHERE esl.event_id IN ({placeholders}) AND esl.status_id = 1
+            GROUP BY esl.event_id, esl.user_id, au.first_name, au.last_name
+            ORDER BY esl.event_id
+        ''', event_ids)
+        rows = list(cursor.fetchall())
+
+        return {'analysts': rows}

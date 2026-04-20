@@ -103,6 +103,11 @@ class GetInterventionContextInput(BaseModel):
     intervention_id: int = Field(..., description="Intervention ID (from get_event result)")
 
 
+class LookupEventAnalystsInput(BaseModel):
+    """Input for looking up analysts who created events."""
+    event_ids: List[int] = Field(..., description="List of event IDs to look up creators for")
+
+
 class LogReviewInput(BaseModel):
     """Input for logging a review."""
     event_id: int = Field(..., description="Event ID")
@@ -288,6 +293,27 @@ async def log_review(params: LogReviewInput) -> str:
     )
 
     return f"Review log saved.\n\nEvent: {params.event_id}\nIntervention: {params.intervention_id}\nDecision: {params.decision}\nLog: {log_path}"
+
+
+@mcp.tool(name="dpa_mnt_lookup_analysts")
+async def lookup_event_analysts(params: LookupEventAnalystsInput) -> str:
+    """Look up which analyst created each event.
+
+    Returns the user who set status_id=1 (created/in progress) for each event,
+    with their name. Useful for Slack notifications after batch reviews.
+    """
+    db_client = get_db_client()
+    data = await db_client.lookup_event_analysts(params.event_ids)
+
+    if not data['analysts']:
+        return "No analyst records found for the given event IDs."
+
+    lines = ["# Event Analysts\n"]
+    for row in data['analysts']:
+        name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip() or "Unknown"
+        lines.append(f"- Event {row['event_id']}: user_id={row['user_id']} ({name})")
+
+    return '\n'.join(lines)
 
 
 def main():
