@@ -14,6 +14,9 @@ This separation is a hard constraint. Mixing the two corrupts the audit trail â€
 a reviewer must never appear as the author of the entry they might later review.
 """
 
+import os
+from pathlib import Path
+
 # Sancho Claudino â€” REVIEWER only (comments, status changes, framework tags)
 SANCHO_REVIEWER_ID = 9900
 SANCHO_USER_ID = SANCHO_REVIEWER_ID  # Backwards compat for existing review tools
@@ -35,9 +38,15 @@ FRAMEWORK_IDS = {
     "sancho claudito reported": SANCHO_CLAUDITO_FRAMEWORK_ID,
 }
 
-# Review artifact storage path
-# Each state act gets a folder with source files, comments, and review log
-REVIEW_STORAGE_PATH = "/home/deploy/jf-private/jf-thought/sgept-monitoring/gta/sc-reviews"
+# Review artifact storage path. Each state act gets a folder with source files,
+# comments, and a review log. Override per environment:
+#   export GTA_MNT_REVIEW_STORAGE_PATH=/path/to/sc-reviews
+# Production deployments should point this at the persistent volume mounted by
+# the enclosing deployment unit (historically: /home/deploy/jf-private/...).
+REVIEW_STORAGE_PATH = os.getenv(
+    "GTA_MNT_REVIEW_STORAGE_PATH",
+    str(Path.home() / ".gta-mnt" / "sc-reviews"),
+)
 
 # Lookup table mapping for gta_mnt_lookup tool
 # Maps short names to (table_name, id_column, name_column)

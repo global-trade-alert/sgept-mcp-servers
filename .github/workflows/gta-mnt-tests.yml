@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+    paths:
+      - 'gta-mnt/**'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    paths:
+      - 'gta-mnt/**'
+      - '.github/workflows/tests.yml'
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gta-mnt
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run pytest
+        run: uv run pytest -v --cov=gta_mnt --cov-report=term-missing

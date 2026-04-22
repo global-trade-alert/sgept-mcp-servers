@@ -1,0 +1,19 @@
+{
+  "count": 2,
+  "results": [
+    {
+      "id": 12345,
+      "title": "US tariff on steel imports from China",
+      "status_time": "2026-04-18",
+      "status_id": 2,
+      "is_source_official": 1
+    },
+    {
+      "id": 12346,
+      "title": "EU subsidy for green hydrogen production",
+      "status_time": "2026-04-17",
+      "status_id": 2,
+      "is_source_official": 1
+    }
+  ]
+}

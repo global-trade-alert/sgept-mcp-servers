@@ -7,16 +7,23 @@ Two automated users with strictly separated roles:
 These must never be mixed. A reviewer must not appear as entry author.
 """
 
+import asyncio
 import os
 import sys
 from typing import Optional, List
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.exceptions import ToolError
 
 from .api import GTADatabaseClient, BastiatAPIClient
 from .source_fetcher import SourceFetcher
-from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID
+from .constants import (
+    SANCHO_USER_ID,
+    SANCHO_AUTHOR_ID,
+    SANCHO_FRAMEWORK_ID,
+    FRAMEWORK_IDS,
+)
 from .formatters import (
     format_step1_queue,
     format_measure_detail,
@@ -28,6 +35,17 @@ from .formatters import (
 
 # Initialize FastMCP server
 mcp = FastMCP("gta_mnt")
+
+
+# Shared base for all MCP tool inputs. Strips whitespace on strings,
+# rejects unknown fields (catches LLM field-name drift like `status_id`
+# vs `new_status_id`), and revalidates on attribute assignment.
+class _StrictInput(BaseModel):
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        extra='forbid',
+        validate_assignment=True,
+    )
 
 # Global singletons (lazy-initialized)
 _db_client: Optional[GTADatabaseClient] = None
@@ -51,7 +69,7 @@ def get_source_fetcher() -> SourceFetcher:
 
 
 # Input models for tools
-class ListStep1QueueInput(BaseModel):
+class ListStep1QueueInput(_StrictInput):
     """Input for listing Step 1 review queue."""
     limit: Optional[int] = Field(default=None, ge=1, description="Max measures to return. Omit or null to return all.")
     offset: int = Field(default=0, ge=0, description="Offset for pagination")
@@ -69,7 +87,7 @@ class ListStep1QueueInput(BaseModel):
     )
 
 
-class ListStep2QueueInput(BaseModel):
+class ListStep2QueueInput(_StrictInput):
     """Input for listing Step 2 review queue."""
     limit: Optional[int] = Field(default=None, ge=1, description="Max measures to return. Omit or null to return all.")
     offset: int = Field(default=0, ge=0, description="Offset for pagination")
@@ -87,7 +105,7 @@ class ListStep2QueueInput(BaseModel):
     )
 
 
-class ListQueueByStatusInput(BaseModel):
+class ListQueueByStatusInput(_StrictInput):
     """Input for listing measures by arbitrary status ID."""
     status_id: int = Field(..., description="Status ID: 1=In progress, 2=Step 1, 3=Publishable, 6=Under revision, 19=Step 2")
     limit: int = Field(default=20, ge=1, le=100, description="Max measures to return (1-100)")
@@ -102,46 +120,60 @@ class ListQueueByStatusInput(BaseModel):
     )
 
 
-class GetMeasureInput(BaseModel):
+class GetMeasureInput(_StrictInput):
     """Input for getting measure details."""
     state_act_id: int = Field(..., description="StateAct ID")
     include_interventions: bool = Field(default=True, description="Include nested interventions")
     include_comments: bool = Field(default=True, description="Include existing comments")
 
 
-class GetSourceInput(BaseModel):
+class GetSourceInput(_StrictInput):
     """Input for getting source content."""
     state_act_id: int = Field(..., description="StateAct ID")
     source_index: int = Field(default=0, ge=0, description="Which source to fetch (0-indexed)")
     fetch_content: bool = Field(default=True, description="Fetch and extract content")
 
 
-class AddCommentInput(BaseModel):
+class AddCommentInput(_StrictInput):
     """Input for adding a comment."""
     measure_id: int = Field(..., description="StateAct ID")
     comment_text: str = Field(..., description="Full comment text (structured per spec)")
     template_id: Optional[int] = Field(default=None, description="Optional template ID")
 
 
-class SetStatusInput(BaseModel):
+_VALID_STATUS_IDS = {1, 2, 3, 6, 19}
+
+
+class SetStatusInput(_StrictInput):
     """Input for setting status."""
     state_act_id: int = Field(..., description="StateAct ID")
     new_status_id: int = Field(..., description="Status ID (2=Step1, 3=Publishable, 6=Under revision, 19=Step2)")
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
 
+    @field_validator('new_status_id')
+    @classmethod
+    def _status_id_must_be_known(cls, v: int) -> int:
+        if v not in _VALID_STATUS_IDS:
+            raise ValueError(
+                f"new_status_id must be one of {{1, 2, 3, 6, 19}} "
+                "(1=In progress, 2=Step 1 review, 3=Publishable, 6=Under revision, 19=Step 2 review); "
+                f"got {v}"
+            )
+        return v
 
-class AddFrameworkInput(BaseModel):
+
+class AddFrameworkInput(_StrictInput):
     """Input for adding framework tag."""
     state_act_id: int = Field(..., description="StateAct ID")
     framework_name: str = Field(default="sancho claudino review", description="Framework name")
 
 
-class ListTemplatesInput(BaseModel):
+class ListTemplatesInput(_StrictInput):
     """Input for listing templates."""
     include_checklist: bool = Field(default=False, description="Include checklist templates")
 
 
-class LogReviewInput(BaseModel):
+class LogReviewInput(_StrictInput):
     """Input for logging a review."""
     state_act_id: int = Field(..., description="StateAct ID")
     source_url: str = Field(..., description="Source URL used for validation")
@@ -155,14 +187,14 @@ class LogReviewInput(BaseModel):
 # Entry Creation Input Models
 # ========================================================================
 
-class LookupInput(BaseModel):
+class LookupInput(_StrictInput):
     """Input for looking up reference table values."""
     table: str = Field(..., description="Table short name: jurisdiction, product, sector, rationale, unit, firm, intervention_type, mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm, implementation_level, intervention_area, firm_role, level_type")
     query: str = Field(..., description="Search string (matched with LIKE %%query%%)")
     limit: int = Field(default=20, ge=1, le=100, description="Max results to return")
 
 
-class CreateStateActInput(BaseModel):
+class CreateStateActInput(_StrictInput):
     """Input for creating a new state act (measure)."""
     title: str = Field(..., description="State act title")
     description: str = Field(..., description="Announcement description text")
@@ -177,7 +209,7 @@ class CreateStateActInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class CreateInterventionInput(BaseModel):
+class CreateInterventionInput(_StrictInput):
     """Input for creating a new intervention."""
     state_act_id: int = Field(..., description="FK to state act (from gta_mnt_create_state_act)")
     description: str = Field(..., description="Intervention description text")
@@ -199,14 +231,14 @@ class CreateInterventionInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddIJInput(BaseModel):
+class AddIJInput(_StrictInput):
     """Input for adding implementing jurisdiction to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     jurisdiction_id: int = Field(..., description="FK to api_jurisdiction_list (look up via gta_mnt_lookup)")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddProductInput(BaseModel):
+class AddProductInput(_StrictInput):
     """Input for adding affected product to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     product_id: int = Field(..., description="FK to api_product_list (look up HS code via gta_mnt_lookup)")
@@ -218,7 +250,7 @@ class AddProductInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddSectorInput(BaseModel):
+class AddSectorInput(_StrictInput):
     """Input for adding affected sector to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     sector_id: int = Field(..., description="FK to api_sector_list")
@@ -226,14 +258,14 @@ class AddSectorInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddRationaleInput(BaseModel):
+class AddRationaleInput(_StrictInput):
     """Input for adding rationale/motive to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     rationale_id: int = Field(..., description="FK to api_rationale_list")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddFirmInput(BaseModel):
+class AddFirmInput(_StrictInput):
     """Input for adding a firm to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     firm_name: str = Field(..., description="Firm name (looked up or created in mtz_firm_log)")
@@ -242,7 +274,7 @@ class AddFirmInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddSourceInput(BaseModel):
+class AddSourceInput(_StrictInput):
     """Input for adding a source URL to a state act."""
     state_act_id: int = Field(..., description="FK to api_state_act_log")
     source_url: str = Field(..., description="Source URL")
@@ -250,13 +282,13 @@ class AddSourceInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class QueueRecalculationInput(BaseModel):
+class QueueRecalculationInput(_StrictInput):
     """Input for queuing AJ/DM recalculation."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddMotiveQuoteInput(BaseModel):
+class AddMotiveQuoteInput(_StrictInput):
     """Input for adding a stated motive quote to a state act."""
     state_act_id: int = Field(..., description="FK to api_state_act_log")
     motive_quote: str = Field(..., description="The quoted text from the source justifying the motive tag")
@@ -264,7 +296,7 @@ class AddMotiveQuoteInput(BaseModel):
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
-class AddLevelInput(BaseModel):
+class AddLevelInput(_StrictInput):
     """Input for adding a level row to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     prior_level: Optional[str] = Field(default=None, description="Prior level value")
@@ -283,7 +315,7 @@ async def list_step1_queue(params: ListStep1QueueInput) -> str:
     Pass exclude_framework_id=495 to exclude measures already reviewed by Sancho Claudino.
     """
     db_client = get_db_client()
-    data = await db_client.list_step1_queue(
+    data = await asyncio.to_thread(db_client.list_step1_queue, 
         limit=params.limit,
         offset=params.offset,
         implementing_jurisdictions=params.implementing_jurisdictions,
@@ -301,7 +333,7 @@ async def list_step2_queue(params: ListStep2QueueInput) -> str:
     Pass exclude_framework_id=495 to exclude measures already reviewed by Sancho Claudino.
     """
     db_client = get_db_client()
-    data = await db_client.list_step1_queue(
+    data = await asyncio.to_thread(db_client.list_step1_queue, 
         status_id=19,
         limit=params.limit,
         offset=params.offset,
@@ -322,7 +354,7 @@ async def list_queue_by_status(params: ListQueueByStatusInput) -> str:
     Status IDs: 1=In progress, 2=Step 1 review, 3=Publishable, 6=Under revision, 19=Step 2 review.
     """
     db_client = get_db_client()
-    data = await db_client.list_step1_queue(
+    data = await asyncio.to_thread(db_client.list_step1_queue, 
         status_id=params.status_id,
         limit=params.limit,
         offset=params.offset,
@@ -340,7 +372,7 @@ async def get_measure(params: GetMeasureInput) -> str:
     Returns full measure data for validation.
     """
     db_client = get_db_client()
-    measure = await db_client.get_measure(
+    measure = await asyncio.to_thread(db_client.get_measure, 
         state_act_id=params.state_act_id,
         include_interventions=params.include_interventions,
         include_comments=params.include_comments
@@ -359,7 +391,7 @@ async def get_source(params: GetSourceInput) -> str:
     source_fetcher = get_source_fetcher()
 
     # First get measure to retrieve source URLs
-    measure = await db_client.get_measure(
+    measure = await asyncio.to_thread(db_client.get_measure, 
         state_act_id=params.state_act_id,
         include_interventions=False,
         include_comments=False
@@ -367,8 +399,17 @@ async def get_source(params: GetSourceInput) -> str:
 
     # Check how many sources are available
     sources = measure.get('sources', [])
+    if not sources:
+        raise ToolError(
+            f"StateAct {params.state_act_id} has no linked sources. "
+            "Cannot fetch source content."
+        )
     if params.source_index >= len(sources):
-        return f"❌ Source index {params.source_index} out of range. StateAct {params.state_act_id} has {len(sources)} source(s) (indices 0-{len(sources)-1})."
+        raise ToolError(
+            f"source_index {params.source_index} out of range. "
+            f"StateAct {params.state_act_id} has {len(sources)} source(s) "
+            f"(valid indices 0-{len(sources) - 1})."
+        )
 
     # Fetch source using SourceFetcher
     source_result = await source_fetcher.get_source(
@@ -388,7 +429,7 @@ async def add_comment(params: AddCommentInput) -> str:
     Supports issue comments, verification comments, and review complete comments.
     """
     db_client = get_db_client()
-    result = await db_client.add_comment(
+    result = await asyncio.to_thread(db_client.add_comment, 
         measure_id=params.measure_id,
         comment_text=params.comment_text,
         template_id=params.template_id
@@ -407,7 +448,7 @@ async def set_status(params: SetStatusInput) -> str:
     Creates entry in api_state_act_status_log.
     """
     db_client = get_db_client()
-    result = await db_client.set_status(
+    result = await asyncio.to_thread(db_client.set_status, 
         state_act_id=params.state_act_id,
         new_status_id=params.new_status_id,
         comment=params.comment
@@ -427,8 +468,15 @@ async def add_framework(params: AddFrameworkInput) -> str:
     - 'sancho claudino review' (ID 495, default) — marks a measure as reviewed by Sancho Claudino
     - 'sancho claudito reported' (ID 500) — marks a measure as first-drafted by Sancho Claudito
     """
+    if params.framework_name not in FRAMEWORK_IDS:
+        known = ", ".join(f"'{name}'" for name in FRAMEWORK_IDS)
+        raise ToolError(
+            f"Unknown framework_name '{params.framework_name}'. "
+            f"Supported frameworks: {known}."
+        )
+
     db_client = get_db_client()
-    result = await db_client.add_framework(
+    result = await asyncio.to_thread(db_client.add_framework,
         state_act_id=params.state_act_id,
         framework_name=params.framework_name
     )
@@ -443,7 +491,7 @@ async def add_framework(params: AddFrameworkInput) -> str:
 async def list_templates(params: ListTemplatesInput) -> str:
     """List available comment templates for standardized feedback."""
     db_client = get_db_client()
-    data = await db_client.list_templates(
+    data = await asyncio.to_thread(db_client.list_templates, 
         include_checklist=params.include_checklist
     )
     return format_templates(data)
@@ -483,7 +531,7 @@ async def lookup(params: LookupInput) -> str:
     implementation_level, intervention_area, firm_role, level_type.
     """
     db_client = get_db_client()
-    result = await db_client.lookup(
+    result = await asyncio.to_thread(db_client.lookup, 
         table=params.table,
         query=params.query,
         limit=params.limit
@@ -510,7 +558,7 @@ async def create_state_act(params: CreateStateActInput) -> str:
     Also creates source URL entry and links it to the state act.
     """
     db_client = get_db_client()
-    result = await db_client.create_state_act(
+    result = await asyncio.to_thread(db_client.create_state_act, 
         title=params.title,
         description=params.description,
         source_url=params.source_url,
@@ -538,7 +586,7 @@ async def create_intervention(params: CreateInterventionInput) -> str:
     Use gta_mnt_lookup to find IDs for intervention_type, chapter, subchapter, etc.
     """
     db_client = get_db_client()
-    result = await db_client.create_intervention(
+    result = await asyncio.to_thread(db_client.create_intervention, 
         state_act_id=params.state_act_id,
         description=params.description,
         intervention_type_id=params.intervention_type_id,
@@ -575,7 +623,7 @@ async def add_ij(params: AddIJInput) -> str:
     Use gta_mnt_lookup with table='jurisdiction' to find the jurisdiction_id.
     """
     db_client = get_db_client()
-    result = await db_client.add_ij(
+    result = await asyncio.to_thread(db_client.add_ij, 
         intervention_id=params.intervention_id,
         jurisdiction_id=params.jurisdiction_id,
         dry_run=params.dry_run
@@ -597,7 +645,7 @@ async def add_product(params: AddProductInput) -> str:
     Use gta_mnt_lookup with table='product' to find the product_id from HS code description.
     """
     db_client = get_db_client()
-    result = await db_client.add_product(
+    result = await asyncio.to_thread(db_client.add_product, 
         intervention_id=params.intervention_id,
         product_id=params.product_id,
         prior_level=params.prior_level,
@@ -624,7 +672,7 @@ async def add_sector(params: AddSectorInput) -> str:
     Use gta_mnt_lookup with table='sector' to find the sector_id.
     """
     db_client = get_db_client()
-    result = await db_client.add_sector(
+    result = await asyncio.to_thread(db_client.add_sector, 
         intervention_id=params.intervention_id,
         sector_id=params.sector_id,
         sector_type=params.sector_type,
@@ -647,7 +695,7 @@ async def add_rationale(params: AddRationaleInput) -> str:
     Use gta_mnt_lookup with table='rationale' to find the rationale_id.
     """
     db_client = get_db_client()
-    result = await db_client.add_rationale(
+    result = await asyncio.to_thread(db_client.add_rationale, 
         intervention_id=params.intervention_id,
         rationale_id=params.rationale_id,
         dry_run=params.dry_run
@@ -669,7 +717,7 @@ async def add_firm(params: AddFirmInput) -> str:
     Firm roles: 1=beneficiary, 2=target, 3=acting agency, 4=petitioner, 5=exempted, 6=intermediary.
     """
     db_client = get_db_client()
-    result = await db_client.add_firm(
+    result = await asyncio.to_thread(db_client.add_firm, 
         intervention_id=params.intervention_id,
         firm_name=params.firm_name,
         role_id=params.role_id,
@@ -694,7 +742,7 @@ async def add_source_tool(params: AddSourceInput) -> str:
     Note: gta_mnt_create_state_act already adds the primary source. Use this for additional sources.
     """
     db_client = get_db_client()
-    result = await db_client.add_source(
+    result = await asyncio.to_thread(db_client.add_source, 
         state_act_id=params.state_act_id,
         source_url=params.source_url,
         source_citation=params.source_citation,
@@ -718,7 +766,7 @@ async def queue_recalculation(params: QueueRecalculationInput) -> str:
     The population_procedure runs asynchronously and populates api_intervention_aj and api_intervention_dm.
     """
     db_client = get_db_client()
-    result = await db_client.queue_recalculation(
+    result = await asyncio.to_thread(db_client.queue_recalculation, 
         intervention_id=params.intervention_id,
         dry_run=params.dry_run
     )
@@ -739,7 +787,7 @@ async def add_level(params: AddLevelInput) -> str:
     Use gta_mnt_lookup with table='unit' or table='level_type' to find IDs.
     """
     db_client = get_db_client()
-    result = await db_client.add_level(
+    result = await asyncio.to_thread(db_client.add_level, 
         intervention_id=params.intervention_id,
         prior_level=params.prior_level,
         new_level=params.new_level,
@@ -766,7 +814,7 @@ async def add_motive_quote(params: AddMotiveQuoteInput) -> str:
     Use after gta_mnt_add_rationale to provide the supporting quote.
     """
     db_client = get_db_client()
-    result = await db_client.add_motive_quote(
+    result = await asyncio.to_thread(db_client.add_motive_quote, 
         state_act_id=params.state_act_id,
         motive_quote=params.motive_quote,
         source_url=params.source_url,
@@ -782,7 +830,7 @@ async def add_motive_quote(params: AddMotiveQuoteInput) -> str:
         return f"❌ {result.get('error', 'Unknown error')}"
 
 
-class GuessHSCodesInput(BaseModel):
+class GuessHSCodesInput(_StrictInput):
     """Input for AI-powered HS code guessing via Bastiat API."""
     product_description: str = Field(
         ...,
@@ -816,7 +864,10 @@ async def guess_hs_codes(params: GuessHSCodesInput) -> str:
     """
     api_key = os.getenv("GTA_API_KEY")
     if not api_key:
-        return "❌ GTA_API_KEY environment variable not set. Cannot access Bastiat API."
+        raise ToolError(
+            "GTA_API_KEY environment variable not set. "
+            "Cannot access Bastiat API for HS code inference."
+        )
 
     try:
         client = BastiatAPIClient(api_key=api_key)
@@ -827,11 +878,72 @@ async def guess_hs_codes(params: GuessHSCodesInput) -> str:
         )
         return format_guessed_hs_codes(result)
     except httpx.HTTPStatusError as e:
-        return f"❌ Bastiat API error: {e.response.status_code} — {e.response.text[:200]}"
-    except httpx.TimeoutException:
-        return "❌ Bastiat API timeout (90s). Try a shorter product description."
-    except Exception as e:
-        return f"❌ Error guessing HS codes: {str(e)}"
+        raise ToolError(
+            f"Bastiat API returned {e.response.status_code}: "
+            f"{e.response.text[:200]}"
+        ) from e
+    except httpx.TimeoutException as e:
+        raise ToolError(
+            "Bastiat API timed out after 90s. "
+            "Try a shorter product_description."
+        ) from e
+
+
+# ========================================================================
+# MCP Resources — agent-facing reference docs
+# ========================================================================
+
+from .resources_loader import load_resource as _load_resource  # noqa: E402
+
+
+@mcp.resource(
+    "gta-mnt://review-criteria",
+    name="Sancho Claudino Review Criteria",
+    description="Minimum field-surface for a Step-1 review, criticality rubric, and verdict→tool-call mapping.",
+    mime_type="text/markdown",
+)
+def _res_review_criteria() -> str:
+    return _load_resource("review_criteria")
+
+
+@mcp.resource(
+    "gta-mnt://status-id-decision-tree",
+    name="Status ID Decision Tree",
+    description="Which of the five valid status IDs (1/2/3/6/19) to use, with flow diagrams for reviewer and author paths.",
+    mime_type="text/markdown",
+)
+def _res_status_tree() -> str:
+    return _load_resource("status_id_decision_tree")
+
+
+@mcp.resource(
+    "gta-mnt://comment-templates",
+    name="Comment Template Catalogue",
+    description="Canonical issue / verification / review-complete comment structures, and which formatter helper to call.",
+    mime_type="text/markdown",
+)
+def _res_comment_templates() -> str:
+    return _load_resource("comment_templates")
+
+
+@mcp.resource(
+    "gta-mnt://framework-ids",
+    name="Framework IDs",
+    description="The two framework IDs (495 Sancho Claudino review, 500 Sancho Claudito reported) — when to attach each.",
+    mime_type="text/markdown",
+)
+def _res_framework_ids() -> str:
+    return _load_resource("framework_ids")
+
+
+@mcp.resource(
+    "gta-mnt://source-extraction-notes",
+    name="Source Extraction Notes",
+    description="S3 / URL / PDF / HTML extraction gotchas for gta_mnt_get_source. Read before chasing source-mismatch bugs.",
+    mime_type="text/markdown",
+)
+def _res_source_extraction() -> str:
+    return _load_resource("source_extraction_notes")
 
 
 def main():

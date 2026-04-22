@@ -120,7 +120,7 @@ class GTADatabaseClient:
     # WS2: List Step 1 Queue
     # ========================================================================
 
-    async def list_step1_queue(
+    def list_step1_queue(
         self,
         status_id: int = 2,
         limit: Optional[int] = None,
@@ -229,7 +229,7 @@ class GTADatabaseClient:
     # WS3: Get Measure Detail
     # ========================================================================
 
-    async def get_measure(
+    def get_measure(
         self,
         state_act_id: int,
         include_interventions: bool = True,
@@ -346,7 +346,7 @@ class GTADatabaseClient:
                 SELECT
                     i.intervention_id as id,
                     i.state_act_id as measure_id,
-                    i.description,
+                    i.description as legacy_description,
                     i.gta_evaluation_id as evaluation_id,
                     e.gta_evaluation_name as evaluation_name,
                     i.affected_flow_id,
@@ -363,6 +363,12 @@ class GTADatabaseClient:
                     u.name as unit_name,
                     i.announced_as_temporary,
                     i.is_horizontal,
+                    i.freeze_aj,
+                    i.freeze_dm,
+                    i.aj_type as default_aj_type,
+                    i.dm_type as default_dm_type,
+                    i.intervention_area_id,
+                    ia.name as intervention_area_name,
                     i.chapter_id,
                     mc.chapter_name,
                     i.subchapter_id,
@@ -374,11 +380,37 @@ class GTADatabaseClient:
                 LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
                 LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
                 LEFT JOIN api_unit_list u ON i.unit_id = u.id
+                LEFT JOIN api_intervention_area_list ia ON i.intervention_area_id = ia.id
                 LEFT JOIN api_mast_chapter_list mc ON i.chapter_id = mc.chapter_id
                 LEFT JOIN api_mast_subchapter_list ms ON i.subchapter_id = ms.subchapter_id
                 WHERE i.state_act_id = %s
             ''', (state_act_id,))
             measure['interventions'] = cursor.fetchall()
+
+            # Aggregate canonical intervention description from api_intervention_description_log.
+            # Django's Intervention.description @property reads this; api_intervention_log.description
+            # is a legacy shadow column that new submissions do NOT write to.
+            for intervention in measure['interventions']:
+                try:
+                    cursor.execute('''
+                        SELECT id, description, description_markdown, status, order_nr
+                        FROM api_intervention_description_log
+                        WHERE intervention_id = %s AND status != 'DELETED'
+                        ORDER BY order_nr
+                    ''', (intervention['id'],))
+                    rows = cursor.fetchall()
+                    intervention['description_rows'] = rows
+                    if rows:
+                        intervention['description'] = '\n'.join(r['description'] or '' for r in rows)
+                        intervention['description_markdown'] = '\n'.join(r['description_markdown'] or '' for r in rows)
+                    else:
+                        # Fall back to legacy column (old pre-migration entries)
+                        intervention['description'] = intervention.get('legacy_description') or ''
+                        intervention['description_markdown'] = ''
+                except Exception as e:
+                    print(f"[gta-mnt] WARNING: Description log query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
+                    intervention['description'] = intervention.get('legacy_description') or ''
+                    intervention['description_rows'] = []
 
             # Get affected jurisdictions, distorted markets, firms, and levels for each intervention
             for intervention in measure['interventions']:
@@ -478,14 +510,28 @@ class GTADatabaseClient:
                     print(f"[gta-mnt] WARNING: Levels query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['level_rows'] = []
 
-                # Products (HS codes)
+                # Products (HS codes) — HS6 from api_intervention_product, with per-product
+                # tariff fields. Higher-level (HS8/10/12/14) tariff lines come from separate tables below.
                 try:
                     cursor.execute('''
                         SELECT
                             p.product_id,
-                            p.product_description
+                            p.product_description,
+                            ip.prior_level,
+                            ip.new_level,
+                            ip.unit_id as product_unit_id,
+                            pu.name as product_unit_name,
+                            ip.tariff_peak as is_tariff_peak,
+                            ip.is_tariff_line_official,
+                            ip.is_positively_affected,
+                            ip.is_investigated_only,
+                            ip.date_implemented as product_date_implemented,
+                            ip.date_removed as product_date_removed,
+                            ip.is_in_original,
+                            ip.is_completely_captured
                         FROM api_intervention_product ip
                         JOIN api_product_list p ON ip.product_id = p.product_id
+                        LEFT JOIN api_unit_list pu ON ip.unit_id = pu.id
                         WHERE ip.intervention_id = %s
                     ''', (intervention['id'],))
                     intervention['products'] = cursor.fetchall()
@@ -493,13 +539,54 @@ class GTADatabaseClient:
                     print(f"[gta-mnt] WARNING: Products query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['products'] = []
 
-                # Sectors (CPC)
+                # Higher-level tariff line codes (HS8/10/12/14).
+                # Serializer stores codes > HS6 in separate tables; composite id is
+                # concatenated HS code + jurisdiction id (3-digit zero-padded).
+                for level in (8, 10, 12, 14):
+                    table = (
+                        f'api_intervention_product_level{level}'
+                        if level <= 10
+                        else f'api_intervention_product_level{level}_log'
+                    )
+                    key = f'products_level{level}'
+                    try:
+                        cursor.execute(f'''
+                            SELECT
+                                ipl.product_level{level}_id as composite_id,
+                                ipl.prior_value,
+                                ipl.new_value,
+                                ipl.date_implemented,
+                                ipl.date_removed,
+                                ipl.unit_id,
+                                u.name as unit_name,
+                                ipl.is_tariff_peak,
+                                ipl.is_tariff_line_official,
+                                ipl.is_positively_affected,
+                                ipl.is_investigated_only
+                            FROM {table} ipl
+                            LEFT JOIN api_unit_list u ON ipl.unit_id = u.id
+                            WHERE ipl.intervention_id = %s
+                        ''', (intervention['id'],))
+                        rows = cursor.fetchall()
+                        # Decompose composite_id into (hs_code, jurisdiction_id) if possible
+                        for r in rows:
+                            cid = str(r.get('composite_id') or '')
+                            if len(cid) > 3:
+                                r['hs_code'] = cid[:-3]
+                                r['jurisdiction_suffix'] = cid[-3:]
+                        intervention[key] = rows
+                    except Exception as e:
+                        # Tables may be absent in legacy envs — silently empty.
+                        intervention[key] = []
+
+                # Sectors (CPC). type column: N=Normal, A=Added, D=Deleted.
                 try:
                     cursor.execute('''
                         SELECT
                             s.sector_id,
                             s.sector_name,
-                            isec.type as sector_type
+                            isec.type as sector_type,
+                            isec.is_investigated_only
                         FROM api_intervention_sector isec
                         JOIN api_sector_list s ON isec.sector_id = s.sector_id
                         WHERE isec.intervention_id = %s
@@ -524,22 +611,60 @@ class GTADatabaseClient:
                     print(f"[gta-mnt] WARNING: Rationales query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['rationales'] = []
 
-                # Locations (subnational taxonomy)
+                # Locations (subnational taxonomy). jurisdiction_id is non-nullable per model.
                 try:
                     cursor.execute('''
                         SELECT
                             il.id as location_id,
                             il.location_name,
                             il.location_type_id,
-                            lt.location_type_name
+                            lt.location_type_name,
+                            il.jurisdiction_id,
+                            j.iso_code as jurisdiction_iso,
+                            j.jurisdiction_name
                         FROM api_intervention_location il
                         LEFT JOIN api_location_type_list lt ON il.location_type_id = lt.location_type_id
+                        LEFT JOIN api_jurisdiction_list j ON il.jurisdiction_id = j.jurisdiction_id
                         WHERE il.intervention_id = %s
                     ''', (intervention['id'],))
                     intervention['locations'] = cursor.fetchall()
                 except Exception as e:
                     print(f"[gta-mnt] WARNING: Locations query failed for intervention {intervention['id']}: {e}", file=sys.stderr)
                     intervention['locations'] = []
+
+                # Themes
+                try:
+                    cursor.execute('''
+                        SELECT theme_id FROM api_intervention_theme WHERE intervention_id = %s
+                    ''', (intervention['id'],))
+                    intervention['themes'] = [r['theme_id'] for r in cursor.fetchall()]
+                except Exception:
+                    intervention['themes'] = []
+
+                # Multi-date log (amendments, staged implementation, etc.)
+                try:
+                    cursor.execute('''
+                        SELECT d.id, d.date, d.type_id, dt.name as date_type_name
+                        FROM api_intervention_date_log d
+                        LEFT JOIN api_intervention_date_type_list dt ON d.type_id = dt.id
+                        WHERE d.intervention_id = %s
+                        ORDER BY d.date
+                    ''', (intervention['id'],))
+                    intervention['intervention_dates'] = cursor.fetchall()
+                except Exception:
+                    intervention['intervention_dates'] = []
+
+                # Investigation status history (trade-defence lifecycle)
+                try:
+                    cursor.execute('''
+                        SELECT id, investigation_status_id, date
+                        FROM api_investigation_status_log
+                        WHERE intervention_id = %s
+                        ORDER BY date
+                    ''', (intervention['id'],))
+                    intervention['investigation_history'] = cursor.fetchall()
+                except Exception:
+                    intervention['investigation_history'] = []
 
         # Fetch motive quotes from gta_stated_motive_log
         try:
@@ -578,9 +703,25 @@ class GTADatabaseClient:
         sources = []
         tables_tried = []
 
-        # Always fetch source citation URLs from api_state_act_source + api_source_list
-        # This is the authoritative source citation table (what the website displays).
-        # The legacy gta_measure.source field is often stale/wrong.
+        # Canonical source citation text comes from api_state_act_source_log_new
+        # (model StateActSource). Admin dashboard reads this table; the legacy
+        # api_state_act_log.source / source_markdown columns are NOT the display path.
+        state_act_sources = []
+        try:
+            cursor.execute('''
+                SELECT id, source, source_markdown, status, order_nr
+                FROM api_state_act_source_log_new
+                WHERE state_act_id = %s AND status != 'DELETED'
+                ORDER BY order_nr
+            ''', (state_act_id,))
+            state_act_sources = cursor.fetchall()
+            tables_tried.append(('api_state_act_source_log_new', len(state_act_sources)))
+        except Exception as e:
+            tables_tried.append(('api_state_act_source_log_new', f'error: {str(e)[:50]}'))
+        measure['state_act_sources'] = state_act_sources
+
+        # Source URL index — api_state_act_source (junction) + api_source_list (URL store).
+        # Distinct from citation text above; these are the raw URLs registered against the SA.
         source_citations = []
         try:
             cursor.execute('''
@@ -672,21 +813,6 @@ class GTADatabaseClient:
             except Exception as e:
                 tables_tried.append(('api_state_act_file', f'error: {str(e)[:50]}'))
 
-        # Debug: List columns in key tables
-        try:
-            cursor.execute('DESCRIBE gta_state_act_source')
-            columns = [row['Field'] for row in cursor.fetchall()]
-            tables_tried.append(('gta_state_act_source_cols', ', '.join(columns)))
-        except Exception as e:
-            tables_tried.append(('gta_state_act_source_cols', f'error'))
-
-        try:
-            cursor.execute('DESCRIBE api_source_list')
-            columns = [row['Field'] for row in cursor.fetchall()]
-            tables_tried.append(('api_source_list_cols', ', '.join(columns[:8])))
-        except Exception as e:
-            tables_tried.append(('api_source_list_cols', f'error'))
-
         # Try 5: gta_source table (might be junction with measure_id)
         if not sources:
             try:
@@ -751,22 +877,19 @@ class GTADatabaseClient:
 
         measure['sources'] = sources
 
-        # Fetch related state acts and their intervention-level levels
+        # Fetch related state acts from the canonical table api_related_state_act_log
+        # (model RelatedStateActLog). Bidirectional — serializer writes both directions.
         try:
             cursor.execute('''
-                SELECT rm.related_measure_id as id
-                FROM gta_related_measures rm
-                WHERE rm.measure_id = %s
-            ''', (state_act_id,))
+                SELECT related_state_act_id as id
+                FROM api_related_state_act_log
+                WHERE state_act_id = %s
+                UNION
+                SELECT state_act_id as id
+                FROM api_related_state_act_log
+                WHERE related_state_act_id = %s
+            ''', (state_act_id, state_act_id))
             related_ids = [r['id'] for r in cursor.fetchall()]
-
-            # Also fetch reverse relationships
-            cursor.execute('''
-                SELECT rm.measure_id as id
-                FROM gta_related_measures rm
-                WHERE rm.related_measure_id = %s
-            ''', (state_act_id,))
-            related_ids += [r['id'] for r in cursor.fetchall()]
             related_ids = list(set(related_ids))
 
             related_state_acts = []
@@ -836,7 +959,7 @@ class GTADatabaseClient:
     # WS6: Set Status
     # ========================================================================
 
-    async def set_status(
+    def set_status(
         self,
         state_act_id: int,
         new_status_id: int,
@@ -890,7 +1013,7 @@ class GTADatabaseClient:
     # WS5: Add Comment
     # ========================================================================
 
-    async def add_comment(
+    def add_comment(
         self,
         measure_id: int,
         comment_text: str,
@@ -946,7 +1069,7 @@ class GTADatabaseClient:
     # WS7: Add Framework
     # ========================================================================
 
-    async def add_framework(
+    def add_framework(
         self,
         state_act_id: int,
         framework_name: str = "sancho claudino review"
@@ -1016,7 +1139,7 @@ class GTADatabaseClient:
     # Entry Creation: Lookup
     # ========================================================================
 
-    async def lookup(
+    def lookup(
         self,
         table: str,
         query: str,
@@ -1054,7 +1177,7 @@ class GTADatabaseClient:
     # Entry Creation: Create State Act
     # ========================================================================
 
-    async def create_state_act(
+    def create_state_act(
         self,
         title: str,
         description: str,
@@ -1184,7 +1307,7 @@ class GTADatabaseClient:
     # Entry Creation: Create Intervention
     # ========================================================================
 
-    async def create_intervention(
+    def create_intervention(
         self,
         state_act_id: int,
         description: str,
@@ -1328,7 +1451,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Implementing Jurisdiction
     # ========================================================================
 
-    async def add_ij(
+    def add_ij(
         self,
         intervention_id: int,
         jurisdiction_id: int,
@@ -1380,7 +1503,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Product
     # ========================================================================
 
-    async def add_product(
+    def add_product(
         self,
         intervention_id: int,
         product_id: int,
@@ -1460,7 +1583,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Sector
     # ========================================================================
 
-    async def add_sector(
+    def add_sector(
         self,
         intervention_id: int,
         sector_id: int,
@@ -1511,7 +1634,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Rationale
     # ========================================================================
 
-    async def add_rationale(
+    def add_rationale(
         self,
         intervention_id: int,
         rationale_id: int,
@@ -1559,7 +1682,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Firm
     # ========================================================================
 
-    async def add_firm(
+    def add_firm(
         self,
         intervention_id: int,
         firm_name: str,
@@ -1637,7 +1760,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Source
     # ========================================================================
 
-    async def add_source(
+    def add_source(
         self,
         state_act_id: int,
         source_url: str,
@@ -1735,7 +1858,7 @@ class GTADatabaseClient:
     # Entry Creation: Queue Recalculation
     # ========================================================================
 
-    async def queue_recalculation(
+    def queue_recalculation(
         self,
         intervention_id: int,
         dry_run: bool = False
@@ -1792,7 +1915,7 @@ class GTADatabaseClient:
     # Entry Creation: Add Intervention Level
     # ========================================================================
 
-    async def add_level(
+    def add_level(
         self,
         intervention_id: int,
         prior_level: Optional[str] = None,
@@ -1845,7 +1968,7 @@ class GTADatabaseClient:
     # Motive Quotes
     # ========================================================================
 
-    async def add_motive_quote(
+    def add_motive_quote(
         self,
         state_act_id: int,
         motive_quote: str,
@@ -1892,7 +2015,7 @@ class GTADatabaseClient:
     # WS10: List Templates
     # ========================================================================
 
-    async def list_templates(
+    def list_templates(
         self,
         include_checklist: bool = False
     ) -> dict:

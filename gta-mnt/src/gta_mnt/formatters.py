@@ -3,6 +3,23 @@
 from typing import Optional, Any
 
 
+# Hard cap on tool-response size. LLM clients (including the MCP host that
+# drives the Sancho review agent) start silently dropping or summarising
+# oversized responses beyond ~100K characters. Producing a truncated
+# response with an explicit pagination hint is strictly better than shipping
+# a 400KB measure detail that the agent then misreads.
+CHARACTER_LIMIT = 100_000
+
+
+def _truncate(text: str, hint: str) -> str:
+    """Cap `text` at CHARACTER_LIMIT. Append `hint` when truncation occurs."""
+    if len(text) <= CHARACTER_LIMIT:
+        return text
+    marker = f"\n\n---\n[truncated: response exceeded {CHARACTER_LIMIT:,} characters. {hint}]"
+    keep = CHARACTER_LIMIT - len(marker)
+    return text[:keep] + marker
+
+
 def format_issue_comment(
     field: str,
     criticality: str,
@@ -159,7 +176,10 @@ def format_step1_queue(data: dict, queue_label: str = "Step 1") -> str:
 
         lines.append(f"| {state_act_id} | {title} | {status_time} |")
 
-    return "\n".join(lines)
+    return _truncate(
+        "\n".join(lines),
+        hint="use `limit` and `offset` to paginate further.",
+    )
 
 
 # ============================================================================
@@ -197,12 +217,21 @@ def format_measure_detail(measure: dict) -> str:
     # Get source info
     source_info = measure.get("source_info", {})
 
-    # Primary citation: source_markdown contains the full formatted citation
-    # (e.g. "Author (Date). TITLE. Publisher (Retrieved date): URL")
-    source_markdown = measure.get("source_markdown") or ""
-    source_text = measure.get("source_text") or ""
-    source_field = measure.get("source") or ""
-    source_content = source_markdown or source_text or source_field
+    # Canonical source citation text: api_state_act_source_log_new (StateActSource)
+    # is what the admin dashboard displays. Legacy columns (source, source_markdown
+    # on api_state_act_log) are retained only as a fallback for pre-migration entries.
+    state_act_sources = measure.get("state_act_sources") or []
+    if state_act_sources:
+        source_content = '\n\n'.join(
+            (s.get('source') or s.get('source_markdown') or '').strip()
+            for s in state_act_sources
+            if (s.get('source') or s.get('source_markdown'))
+        )
+    else:
+        source_markdown = measure.get("source_markdown") or ""
+        source_text = measure.get("source_text") or ""
+        source_field = measure.get("source") or ""
+        source_content = source_markdown or source_text or source_field
 
     author_id = measure.get("author_id")
     author_name = measure.get("author_name") or "Unknown"
@@ -277,6 +306,27 @@ def format_measure_detail(measure: dict) -> str:
             lines.append(f"- **Affected Flow:** {affected_flow}")
             lines.append(f"- **Implementation Level:** {impl_level_str}")
             lines.append(f"- **Eligible Firms:** {eligible_firms}")
+            # Intervention area (goods/services/procurement/migration)
+            area_name = intervention.get("intervention_area_name")
+            area_id = intervention.get("intervention_area_id")
+            if area_name or area_id:
+                lines.append(f"- **Intervention Area:** {area_name or 'N/A'} (ID: {area_id})")
+            # Intervention-level default AJ/DM type + freeze flags (applied post-recalculation)
+            default_aj = intervention.get("default_aj_type")
+            default_dm = intervention.get("default_dm_type")
+            freeze_aj = intervention.get("freeze_aj")
+            freeze_dm = intervention.get("freeze_dm")
+            _type_label = {1: "Inferred", 2: "Targeted", 3: "Excluded", 4: "Incidental"}
+            if default_aj is not None:
+                lines.append(
+                    f"- **Default AJ Type:** {_type_label.get(default_aj, default_aj)} ({default_aj})"
+                    + (f"  |  **Freeze AJ:** {'Yes' if freeze_aj else 'No'}" if freeze_aj is not None else "")
+                )
+            if default_dm is not None:
+                lines.append(
+                    f"- **Default DM Type:** {_type_label.get(default_dm, default_dm)} ({default_dm})"
+                    + (f"  |  **Freeze DM:** {'Yes' if freeze_dm else 'No'}" if freeze_dm is not None else "")
+                )
             # MAST chapter/subchapter
             chapter_name = intervention.get("chapter_name") or "N/A"
             chapter_id = intervention.get("chapter_id")
@@ -343,27 +393,73 @@ def format_measure_detail(measure: dict) -> str:
                 lines.append("*None recorded*")
             lines.append("")
 
-            # Products section (HS codes) — ALWAYS rendered
+            # Products section (HS6) — ALWAYS rendered, with per-product tariff fields
             products = intervention.get("products", [])
-            lines.append("#### Products")
+            lines.append("#### Products (HS6)")
             if products:
                 for prod in products:
                     pid = prod.get("product_id", "?")
                     pdesc = prod.get("product_description", "")
-                    lines.append(f"- HS {pid}: {pdesc}")
+                    prior = prod.get("prior_level")
+                    new = prod.get("new_level")
+                    unit = prod.get("product_unit_name")
+                    flags = []
+                    if prod.get("is_tariff_peak"):
+                        flags.append("tariff_peak")
+                    if prod.get("is_tariff_line_official"):
+                        flags.append("official")
+                    if prod.get("is_positively_affected"):
+                        flags.append("positively_affected")
+                    if prod.get("is_investigated_only"):
+                        flags.append("investigated_only")
+                    suffix_parts = []
+                    if prior is not None or new is not None:
+                        prior_s = prior if prior is not None else "—"
+                        new_s = new if new is not None else "—"
+                        unit_s = f" {unit}" if unit else ""
+                        suffix_parts.append(f"{prior_s} → {new_s}{unit_s}")
+                    if flags:
+                        suffix_parts.append(f"[{', '.join(flags)}]")
+                    suffix = f"  |  {' '.join(suffix_parts)}" if suffix_parts else ""
+                    lines.append(f"- HS {pid}: {pdesc}{suffix}")
             else:
                 lines.append("*None recorded*")
             lines.append("")
 
+            # Higher-level tariff lines (HS8/HS10/HS12/HS14)
+            for level in (8, 10, 12, 14):
+                key = f"products_level{level}"
+                rows = intervention.get(key) or []
+                if not rows:
+                    continue
+                lines.append(f"#### Products (HS{level} tariff lines)")
+                for r in rows:
+                    hs = r.get("hs_code") or r.get("composite_id")
+                    jur = r.get("jurisdiction_suffix")
+                    prior = r.get("prior_value")
+                    new = r.get("new_value")
+                    unit = r.get("unit_name")
+                    prior_s = prior if prior is not None else "—"
+                    new_s = new if new is not None else "—"
+                    unit_s = f" {unit}" if unit else ""
+                    jur_s = f" (jur {jur})" if jur else ""
+                    lines.append(f"- HS{level} {hs}{jur_s}: {prior_s} → {new_s}{unit_s}")
+                lines.append("")
+
             # Sectors section (CPC) — ALWAYS rendered
+            # Type legend: N=Normal, A=Added, D=Deleted
             sectors = intervention.get("sectors", [])
             lines.append("#### Sectors")
             if sectors:
+                _sector_type_label = {"N": "Normal", "A": "Added", "D": "Deleted"}
                 for sec in sectors:
                     sid = sec.get("sector_id", "?")
                     sname = sec.get("sector_name", "")
                     stype = sec.get("sector_type", "")
-                    type_label = f" [{stype}]" if stype and stype != "N" else ""
+                    type_readable = _sector_type_label.get(stype, stype)
+                    type_label = f" [{type_readable}]" if stype else ""
+                    if sec.get("is_investigated_only"):
+                        type_label += " [investigated_only]"
                     lines.append(f"- {sid}: {sname}{type_label}")
             else:
                 lines.append("*None recorded*")
@@ -401,13 +497,42 @@ def format_measure_detail(measure: dict) -> str:
                 for loc in locations:
                     loc_name = loc.get("location_name") or "Unknown"
                     loc_type = loc.get("location_type_name")
+                    jur_iso = loc.get("jurisdiction_iso") or ""
+                    jur_name = loc.get("jurisdiction_name") or ""
+                    jur_suffix = f" — {jur_name} ({jur_iso})" if jur_name else ""
                     if loc_type:
-                        lines.append(f"- {loc_name} [{loc_type}]")
+                        lines.append(f"- {loc_name} [{loc_type}]{jur_suffix}")
                     else:
-                        lines.append(f"- {loc_name}")
+                        lines.append(f"- {loc_name}{jur_suffix}")
             else:
                 lines.append("*None recorded*")
             lines.append("")
+
+            # Themes
+            themes = intervention.get("themes") or []
+            if themes:
+                lines.append("#### Themes")
+                for tid in themes:
+                    lines.append(f"- theme_id {tid}")
+                lines.append("")
+
+            # Multi-date events (amendments, staged implementation)
+            int_dates = intervention.get("intervention_dates") or []
+            if int_dates:
+                lines.append("#### Multi-date Events")
+                for d in int_dates:
+                    date_val = d.get("date")
+                    dtn = d.get("date_type_name") or d.get("type_id")
+                    lines.append(f"- {date_val}: {dtn}")
+                lines.append("")
+
+            # Investigation status history (trade-defence lifecycle)
+            inv_hist = intervention.get("investigation_history") or []
+            if inv_hist:
+                lines.append("#### Investigation Status History")
+                for h in inv_hist:
+                    lines.append(f"- {h.get('date')}: status_id {h.get('investigation_status_id')}")
+                lines.append("")
 
             # Description section (full text, no truncation)
             if int_description:
@@ -481,10 +606,13 @@ def format_measure_detail(measure: dict) -> str:
         ("announcement_description", measure.get("description") is not None),
         ("announcement_date", measure.get("announcement_date") is not None),
         ("is_source_official", measure.get("is_source_official") is not None),
+        ("evaluation_id (state act)", measure.get("evaluation_id") is not None),
         ("implementing_jurisdictions", bool(measure.get("implementing_jurisdictions"))),
         ("motive_quotes", bool(measure.get("motive_quotes"))),
         ("related_state_acts", bool(measure.get("related_state_acts"))),
-        ("linked_sources", bool(linked_sources)),
+        ("state_act_sources (citation text)", bool(measure.get("state_act_sources"))),
+        ("source_citations (URL index)", bool(measure.get("source_citations"))),
+        ("linked_sources (files)", bool(linked_sources)),
     ]
     lines.append("**State Act Level:**")
     for field_name, present in sa_fields:
@@ -498,18 +626,31 @@ def format_measure_detail(measure: dict) -> str:
             ("affected_flow", sample.get("affected_flow_name") is not None),
             ("eligible_firms", sample.get("eligible_firms_name") is not None),
             ("implementation_level", sample.get("implementation_level_name") is not None),
+            ("intervention_area", sample.get("intervention_area_name") is not None),
             ("chapter_id/chapter_name", sample.get("chapter_id") is not None),
             ("subchapter_id/subchapter_name", sample.get("subchapter_id") is not None),
             ("announced_as_temporary", sample.get("announced_as_temporary") is not None),
             ("is_horizontal", sample.get("is_horizontal") is not None),
+            ("freeze_aj", sample.get("freeze_aj") is not None),
+            ("freeze_dm", sample.get("freeze_dm") is not None),
+            ("default_aj_type", sample.get("default_aj_type") is not None),
+            ("default_dm_type", sample.get("default_dm_type") is not None),
+            ("description (from api_intervention_description_log)", bool(sample.get("description_rows"))),
             ("level_rows", bool(sample.get("level_rows"))),
             ("affected_jurisdictions", bool(sample.get("affected_jurisdictions"))),
             ("distorted_markets", bool(sample.get("distorted_markets"))),
-            ("products", bool(sample.get("products"))),
+            ("products (HS6 with per-product levels)", bool(sample.get("products"))),
+            ("products_level8", bool(sample.get("products_level8"))),
+            ("products_level10", bool(sample.get("products_level10"))),
+            ("products_level12", bool(sample.get("products_level12"))),
+            ("products_level14", bool(sample.get("products_level14"))),
             ("sectors", bool(sample.get("sectors"))),
             ("firms", bool(sample.get("firms"))),
             ("rationales", bool(sample.get("rationales"))),
-            ("locations", bool(sample.get("locations"))),
+            ("locations (with jurisdiction)", bool(sample.get("locations"))),
+            ("themes", bool(sample.get("themes"))),
+            ("intervention_dates (multi-date log)", bool(sample.get("intervention_dates"))),
+            ("investigation_history", bool(sample.get("investigation_history"))),
         ]
         lines.append("\n**Intervention Level (sample from first intervention):**")
         for field_name, present in int_fields:
@@ -517,7 +658,10 @@ def format_measure_detail(measure: dict) -> str:
 
     lines.append("\n**CONSTRAINT:** Sections marked `*None recorded*` mean the tool queried the database and found no data. You may flag genuinely missing data. But NEVER claim data exists when the section shows `*None recorded*` — that IS the database state.")
 
-    return "\n".join(lines)
+    return _truncate(
+        "\n".join(lines),
+        hint="re-call gta_mnt_get_measure with include_interventions=False or include_comments=False for a smaller payload.",
+    )
 
 
 # ============================================================================
@@ -542,15 +686,14 @@ def format_source_result(source_result) -> str:
 
     if source_result.content:
         lines.append("## Extracted Content\n")
-        # Truncate very long content
-        content = source_result.content
-        if len(content) > 50000:
-            content = content[:50000] + "\n\n[... content truncated for brevity ...]"
-        lines.append(content)
+        lines.append(source_result.content)
     else:
         lines.append("*Content not fetched (fetch_content=False)*")
 
-    return "\n".join(lines)
+    return _truncate(
+        "\n".join(lines),
+        hint="re-call gta_mnt_get_source with fetch_content=False, then read the archived file at the returned path.",
+    )
 
 
 # ============================================================================

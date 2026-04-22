@@ -1,0 +1,9 @@
+{
+  "field": "intervention_type",
+  "criticality": "Critical",
+  "current_value": "Subsidy",
+  "suggested_value": "Export tax",
+  "rationale": "Source clearly states the new charge is an outbound duty on iron-ore shipments, not a subsidy to iron-ore producers.",
+  "source_quote": "Article 3: An export tax of 5% applies to all iron-ore consignments exceeding 10,000 tonnes.",
+  "source_ref": "Official Gazette, 15 Jan 2026"
+}
