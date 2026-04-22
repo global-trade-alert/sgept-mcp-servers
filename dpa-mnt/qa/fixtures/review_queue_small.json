@@ -1,0 +1,23 @@
+{
+  "count": 2,
+  "results": [
+    {
+      "event_id": 50123,
+      "event_title": "Proposed amendment to data protection regulation",
+      "event_type_name": "Bill Introduction",
+      "action_type_name": "Announcement",
+      "gov_branch_name": "Legislature",
+      "gov_body_name": "Bundestag",
+      "status_time": "2026-04-18"
+    },
+    {
+      "event_id": 50124,
+      "event_title": "Guidance on cross-border data transfers",
+      "event_type_name": "Guidance",
+      "action_type_name": "Publication",
+      "gov_branch_name": "Executive",
+      "gov_body_name": "Data Protection Commission",
+      "status_time": "2026-04-17"
+    }
+  ]
+}

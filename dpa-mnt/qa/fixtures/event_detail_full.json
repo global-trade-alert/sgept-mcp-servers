@@ -1,0 +1,96 @@
+{
+  "event": {
+    "event_id": 50123,
+    "intervention_id": 9001,
+    "event_title": "Data protection amendment introduced",
+    "event_description": "Parliament introduced Bill 2026-17 amending Article 5(1)(a) of the GDPR implementation act. The amendment tightens purpose-limitation requirements for processors handling cross-border transfers.",
+    "event_date": "2026-04-01",
+    "event_type_name": "Bill Introduction",
+    "action_type_name": "Announcement",
+    "gov_branch_name": "Legislature",
+    "gov_body_name": "Bundestag",
+    "status_name": "Step 1 Review (AT)",
+    "status_id": 2,
+    "is_case": false,
+    "is_current": true
+  },
+  "intervention": {
+    "intervention_id": 9001,
+    "intervention_title": "Data Protection Reform 2026",
+    "policy_area_name": "Data protection",
+    "intervention_type_name": "Statute",
+    "implementation_level_name": "National",
+    "current_status_name": "Under development"
+  },
+  "development": {
+    "development_id": 2100,
+    "development_name": "Data Protection Reform Package 2026"
+  },
+  "economic_activities": [
+    {"economic_activity_name": "Telecommunications"},
+    {"economic_activity_name": "Online platforms"}
+  ],
+  "implementing_jurisdictions": [
+    {"jurisdiction_name": "Germany", "iso_code": "DEU"}
+  ],
+  "policy_areas": [
+    {"policy_area_name": "Cross-border data transfer"},
+    {"policy_area_name": "Purpose limitation"}
+  ],
+  "related_interventions": [
+    {
+      "related_intervention_id": 9050,
+      "intervention_title": "Federal data strategy update",
+      "relationship_name": "Supersedes"
+    }
+  ],
+  "issues": [
+    {"issue_name": "GDPR compatibility"}
+  ],
+  "rationales": [
+    {"rationale_name": "Align with EU framework"}
+  ],
+  "agents": [
+    {
+      "agent_type_name": "Regulator",
+      "role_name": "Consulted",
+      "firm_name": "BfDI"
+    }
+  ],
+  "author": {
+    "user_id": 42,
+    "username": "a_smith",
+    "first_name": "Alex",
+    "last_name": "Smith",
+    "email": "a.smith@dpa.example"
+  },
+  "benchmarks": [
+    {
+      "id": 1,
+      "is_dpa_existing": 1,
+      "benchmark_name": "GDPR Article 5",
+      "overlap_name": "Full",
+      "substance_name": "Principles"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": 7001,
+      "source_name": "Bundestag Drucksache 20/8547",
+      "source_url": "https://dip.bundestag.de/vorgang/drucksache/20-8547",
+      "source_type_name": "Official publication",
+      "institution_name": "Deutscher Bundestag",
+      "source_date": "2026-04-01",
+      "display_on_flag": 1,
+      "file_url": "https://s3.example.com/dpa/bundestag/20-8547.pdf",
+      "file_name": "20-8547.pdf"
+    }
+  ],
+  "comments": [
+    {
+      "author_name": "prior_reviewer",
+      "creation_time": "2026-04-05 09:15",
+      "comment_value": "Title and source verified. Moving forward with field-by-field review."
+    }
+  ]
+}

@@ -14,6 +14,9 @@ This separation is a hard constraint. Mixing the two corrupts the audit trail â€
 a reviewer must never appear as the author of the entry they might later review.
 """
 
+import os
+from pathlib import Path
+
 # Buzessa Claudini â€” REVIEWER only (comments, status changes, issue tags)
 BUZESSA_REVIEWER_ID = 9902
 SANCHO_USER_ID = BUZESSA_REVIEWER_ID  # Backwards compat for existing review tools
@@ -33,6 +36,28 @@ DPA_FRAMEWORK_ID = 496
 REVIEWER_NAME = "Buzessa Claudini"
 AUTHOR_NAME = "Buzetta Claudini"
 
-# Review artifact storage path
-# Organised by intervention ID; event files prefixed with evt-{event_id}
-REVIEW_STORAGE_PATH = "/Users/johannesfritz/Documents/GitHub/jf-private/jf-thought/sgept-monitoring/dpa/bc-reviews"
+# Valid DPA event status IDs (lux_event_status_list).
+# Source: evidence from dpa_mnt.api.py queries (status_id=1,2,7 referenced) and
+# server.py SetStatusInput docstring (status_id=3,4,5 documented as review outcomes).
+# Any value outside this set is rejected by the SetStatusInput validator.
+VALID_STATUS_IDS = {1, 2, 3, 4, 5, 7}
+
+# Human-readable names for the valid status set (used in validator error messages).
+STATUS_ID_NAMES = {
+    1: "In Progress",
+    2: "Step 1 Review (AT)",
+    3: "Publishable (PASS)",
+    4: "Concern (CONDITIONAL / ESCALATION)",
+    5: "Under Revision (FAIL)",
+    7: "Published",
+}
+
+# Review artifact storage path. Each intervention gets a folder with per-event
+# source files, comments, and review logs. Override per environment:
+#   export DPA_MNT_REVIEW_STORAGE_PATH=/path/to/bc-reviews
+# Production deployments should point this at the persistent volume mounted by
+# the enclosing deployment unit (historically: /home/deploy/jf-private/...).
+REVIEW_STORAGE_PATH = os.getenv(
+    "DPA_MNT_REVIEW_STORAGE_PATH",
+    str(Path.home() / ".dpa-mnt" / "bc-reviews"),
+)

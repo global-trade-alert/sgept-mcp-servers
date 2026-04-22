@@ -1,0 +1,90 @@
+{
+  "intervention": {
+    "intervention_id": 9001,
+    "intervention_title": "Data Protection Reform 2026",
+    "policy_area_name": "Data protection",
+    "intervention_type_name": "Statute",
+    "implementation_level_name": "National",
+    "current_status_name": "Under development"
+  },
+  "development": {
+    "development_id": 2100,
+    "development_name": "Data Protection Reform Package 2026"
+  },
+  "implementing_jurisdictions": [
+    {"jurisdiction_name": "Germany", "iso_code": "DEU"}
+  ],
+  "economic_activities": [
+    {"economic_activity_name": "Telecommunications"}
+  ],
+  "events": [
+    {
+      "event_id": 50120,
+      "event_date": "2026-02-15",
+      "event_title": "Ministerial consultation opens",
+      "event_type_name": "Consultation",
+      "action_type_name": "Announcement",
+      "status_name": "Published",
+      "status_id": 7,
+      "event_description": "The Federal Ministry of Justice opened a public consultation on the proposed reform package. Responses due by 2026-03-15."
+    },
+    {
+      "event_id": 50121,
+      "event_date": "2026-03-20",
+      "event_title": "Consultation responses published",
+      "event_type_name": "Consultation",
+      "action_type_name": "Publication",
+      "status_name": "Published",
+      "status_id": 7,
+      "event_description": "Ministry published 312 consultation responses; summary indicates broad industry support subject to transition period amendments."
+    },
+    {
+      "event_id": 50123,
+      "event_date": "2026-04-01",
+      "event_title": "Data protection amendment introduced",
+      "event_type_name": "Bill Introduction",
+      "action_type_name": "Announcement",
+      "status_name": "Step 1 Review (AT)",
+      "status_id": 2,
+      "event_description": "Parliament introduced Bill 2026-17 amending Article 5(1)(a) of the GDPR implementation act."
+    }
+  ],
+  "related_interventions": [],
+  "development_siblings": [
+    {
+      "intervention_id": 9002,
+      "intervention_title": "Parallel data-retention update",
+      "policy_area_name": "Law enforcement access",
+      "intervention_type_name": "Statute",
+      "current_status_name": "Under development"
+    }
+  ],
+  "issues": [
+    {"issue_name": "GDPR compatibility"},
+    {"issue_name": "BC review"}
+  ],
+  "rationales": [
+    {"rationale_name": "Align with EU framework"},
+    {"rationale_name": "Strengthen purpose limitation"}
+  ],
+  "agents": [
+    {
+      "agent_type_name": "Regulator",
+      "role_name": "Consulted",
+      "firm_name": "BfDI"
+    },
+    {
+      "agent_type_name": "Industry association",
+      "role_name": "Commenting",
+      "firm_name": "Bitkom e.V."
+    }
+  ],
+  "benchmarks": [
+    {
+      "is_dpa_existing": 1,
+      "benchmark_name": "GDPR Article 5",
+      "overlap_name": "Full",
+      "substance_name": "Principles"
+    }
+  ]
+}

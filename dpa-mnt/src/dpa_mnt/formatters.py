@@ -3,6 +3,23 @@
 from typing import Optional
 
 
+# Hard cap on tool-response size. LLM clients (including the MCP host that
+# drives the Buzessa review agent) start silently dropping or summarising
+# oversized responses beyond ~100K characters. Producing a truncated
+# response with an explicit pagination hint is strictly better than shipping
+# a 400KB intervention context that the agent then misreads.
+CHARACTER_LIMIT = 100_000
+
+
+def _truncate(text: str, hint: str) -> str:
+    """Cap `text` at CHARACTER_LIMIT. Append `hint` when truncation occurs."""
+    if len(text) <= CHARACTER_LIMIT:
+        return text
+    marker = f"\n\n---\n[truncated: response exceeded {CHARACTER_LIMIT:,} characters. {hint}]"
+    keep = CHARACTER_LIMIT - len(marker)
+    return text[:keep] + marker
+
+
 # ============================================================================
 # Comment Formatters (shared with GTA)
 # ============================================================================
@@ -113,7 +130,10 @@ def format_review_queue(data: dict) -> str:
 
         lines.append(f"| {event_id} | {title} | {event_type} | {action_type} | {status_time} |")
 
-    return "\n".join(lines)
+    return _truncate(
+        "\n".join(lines),
+        "Re-request with a smaller limit= or a tighter date_entered_review_gte filter.",
+    )
 
 
 # ============================================================================
@@ -134,9 +154,24 @@ def format_event_detail(event_data: dict) -> str:
     related = event_data.get("related_interventions", [])
     sources = event_data.get("sources", [])
     comments = event_data.get("comments", [])
+    author = event_data.get("author") or {}
+    benchmarks = event_data.get("benchmarks", [])
 
     event_id = event.get("event_id", "N/A")
     title = event.get("event_title") or "Untitled"
+
+    author_line = "*Unknown*"
+    if author:
+        full_name = f"{author.get('first_name', '')} {author.get('last_name', '')}".strip()
+        username = author.get("username") or ""
+        if full_name and username:
+            author_line = f"{full_name} (@{username}, user_id={author.get('user_id')})"
+        elif full_name:
+            author_line = f"{full_name} (user_id={author.get('user_id')})"
+        elif username:
+            author_line = f"@{username} (user_id={author.get('user_id')})"
+        else:
+            author_line = f"user_id={author.get('user_id')}"
 
     lines = [
         f"# Event {event_id}: {title}\n",
@@ -147,6 +182,7 @@ def format_event_detail(event_data: dict) -> str:
         f"**Status:** {event.get('status_name') or 'N/A'} (ID: {event.get('status_id', 'N/A')})",
         f"**Is Case:** {'Yes' if event.get('is_case') else 'No'}",
         f"**Is Current:** {'Yes' if event.get('is_current') else 'No'}",
+        f"**Author:** {author_line}",
         ""
     ]
 
@@ -226,6 +262,19 @@ def format_event_detail(event_data: dict) -> str:
             lines.append(f"- {' '.join(parts)}")
         lines.append("")
 
+    # Benchmarks (per InterventionBenchmarkThroughSerializer)
+    if benchmarks:
+        lines.append(f"## Benchmarks ({len(benchmarks)})\n")
+        for bench in benchmarks:
+            name = bench.get("benchmark_name") or "*Unnamed benchmark*"
+            is_dpa = "DPA" if bench.get("is_dpa_existing") else "external"
+            overlap = bench.get("overlap_name") or "—"
+            substance = bench.get("substance_name") or "—"
+            lines.append(
+                f"- **{name}** ({is_dpa}) | Overlap: {overlap} | Substance: {substance}"
+            )
+        lines.append("")
+
     # Sources
     if sources:
         lines.append(f"## Sources ({len(sources)})\n")
@@ -269,7 +318,11 @@ def format_event_detail(event_data: dict) -> str:
             lines.append(f"### {author} ({created})")
             lines.append(f"{text}{'...' if len(text) >= 300 else ''}\n")
 
-    return "\n".join(lines)
+    return _truncate(
+        "\n".join(lines),
+        "Re-request with include_intervention=False or include_comments=False, "
+        "or call dpa_mnt_get_source separately for source content.",
+    )
 
 
 # ============================================================================
@@ -287,6 +340,10 @@ def format_intervention_context(data: dict) -> str:
     econ_activities = data.get("economic_activities", [])
     events = data.get("events", [])
     related = data.get("related_interventions", [])
+    issues = data.get("issues", [])
+    rationales = data.get("rationales", [])
+    agents = data.get("agents", [])
+    benchmarks = data.get("benchmarks", [])
 
     int_id = intervention.get("intervention_id", "N/A")
     int_title = intervention.get("intervention_title") or "Untitled"
@@ -312,6 +369,14 @@ def format_intervention_context(data: dict) -> str:
 
     if development:
         lines.append(f"**Development:** {development.get('development_name') or 'N/A'}")
+
+    if issues:
+        issue_str = ", ".join(i.get("issue_name", "N/A") for i in issues)
+        lines.append(f"**Thematic Issues:** {issue_str}")
+
+    if rationales:
+        rat_str = ", ".join(r.get("rationale_name", "N/A") for r in rationales)
+        lines.append(f"**Stated Rationales:** {rat_str}")
 
     lines.append("")
 
@@ -402,7 +467,39 @@ def format_intervention_context(data: dict) -> str:
             lines.append(f"- INT-{sid}: {stitle} | {spa} | {sinst} | {sstatus}")
         lines.append("")
 
-    return "\n".join(lines)
+    # Agents/Firms linked to any of this intervention's events
+    if agents:
+        lines.append(f"## Agents/Firms ({len(agents)})\n")
+        for agent in agents:
+            atype = agent.get("agent_type_name") or "Unknown type"
+            role = agent.get("role_name") or ""
+            firm = agent.get("firm_name")
+            parts = [f"**{atype}**"]
+            if firm:
+                parts.append(f"({firm})")
+            if role:
+                parts.append(f"[{role}]")
+            lines.append(f"- {' '.join(parts)}")
+        lines.append("")
+
+    # Benchmarks (per InterventionBenchmarkThroughSerializer)
+    if benchmarks:
+        lines.append(f"## Benchmarks ({len(benchmarks)})\n")
+        for bench in benchmarks:
+            name = bench.get("benchmark_name") or "*Unnamed benchmark*"
+            is_dpa = "DPA" if bench.get("is_dpa_existing") else "external"
+            overlap = bench.get("overlap_name") or "—"
+            substance = bench.get("substance_name") or "—"
+            lines.append(
+                f"- **{name}** ({is_dpa}) | Overlap: {overlap} | Substance: {substance}"
+            )
+        lines.append("")
+
+    return _truncate(
+        "\n".join(lines),
+        "Re-request the specific event via dpa_mnt_get_event instead of the full "
+        "intervention context, or filter down to fewer events.",
+    )
 
 
 # ============================================================================
@@ -420,14 +517,17 @@ def format_source_result(source_result) -> str:
 
     if source_result.content:
         lines.append("## Extracted Content\n")
-        content = source_result.content
-        if len(content) > 50000:
-            content = content[:50000] + "\n\n[... content truncated for brevity ...]"
-        lines.append(content)
+        lines.append(source_result.content)
     else:
         lines.append("*Content not fetched (fetch_content=False)*")
 
-    return "\n".join(lines)
+    # Trust CHARACTER_LIMIT as the single source of truth for caller-visible
+    # response size. A second, tighter local cap would pre-empt _truncate and
+    # hide the specific re-request hint the agent needs.
+    return _truncate(
+        "\n".join(lines),
+        "Re-request with fetch_content=False, or pick a different source_index.",
+    )
 
 
 # ============================================================================
