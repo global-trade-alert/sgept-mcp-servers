@@ -534,8 +534,33 @@ def format_measure_detail(measure: dict) -> str:
                     lines.append(f"- {h.get('date')}: status_id {h.get('investigation_status_id')}")
                 lines.append("")
 
-            # Description section (full text, no truncation)
-            if int_description:
+            # Description section — render per-update structure when the intervention
+            # has multiple InterventionDescription rows in api_intervention_description_log.
+            description_rows = intervention.get("description_rows") or []
+            if len(description_rows) > 1:
+                lines.append(f"#### Description ({len(description_rows)} updates)")
+                lines.append("")
+                for r in description_rows:
+                    order_nr = r.get("order_nr")
+                    r_status = r.get("status") or "?"
+                    created = r.get("datetime_created")
+                    modified = r.get("datetime_modified")
+                    created_str = created.strftime("%Y-%m-%d") if hasattr(created, "strftime") else (str(created)[:10] if created else "?")
+                    modified_str = modified.strftime("%Y-%m-%d") if hasattr(modified, "strftime") else (str(modified)[:10] if modified else "?")
+                    lines.append(
+                        f"**Update {order_nr}** · status: {r_status} · created: {created_str} · modified: {modified_str}"
+                    )
+                    for d in r.get("dates") or []:
+                        d_date = d.get("date")
+                        d_type = d.get("date_type_name") or d.get("date_type_id") or "?"
+                        d_date_str = d_date.strftime("%Y-%m-%d") if hasattr(d_date, "strftime") else (str(d_date) if d_date else "?")
+                        lines.append(f"- {d_date_str}: {d_type}")
+                    body = r.get("description_markdown") or r.get("description") or ""
+                    if body:
+                        lines.append("")
+                        lines.append(body)
+                    lines.append("")
+            elif int_description:
                 lines.append("#### Description")
                 lines.append(int_description)
                 lines.append("")

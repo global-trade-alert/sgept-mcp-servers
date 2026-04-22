@@ -151,6 +151,87 @@ def test_format_measure_detail():
     assert "john_doe" in result
 
 
+def test_format_measure_detail_multi_update_description():
+    """Multi-row description_rows should render one block per update with order_nr, status, and timestamps."""
+    measure = {
+        "id": 777,
+        "title": "Multi-update measure",
+        "interventions": [
+            {
+                "id": 42,
+                "intervention_type": "Tariff",
+                "description": "Update 1 body\nUpdate 2 body\nUpdate 3 body",
+                "description_rows": [
+                    {
+                        "id": 101, "order_nr": 1, "status": "NEW",
+                        "datetime_created": datetime(2025, 9, 14, 10, 0),
+                        "datetime_modified": datetime(2025, 9, 14, 10, 0),
+                        "description": "Update 1 body",
+                        "description_markdown": "Update 1 body",
+                        "dates": [{"date": datetime(2025, 9, 14).date(), "date_type_name": "announcement"}],
+                    },
+                    {
+                        "id": 102, "order_nr": 2, "status": "CHANGED",
+                        "datetime_created": datetime(2025, 11, 2, 9, 30),
+                        "datetime_modified": datetime(2025, 11, 2, 9, 30),
+                        "description": "Update 2 body",
+                        "description_markdown": "Update 2 body",
+                        "dates": [],
+                    },
+                    {
+                        "id": 103, "order_nr": 3, "status": "STATIC",
+                        "datetime_created": datetime(2026, 1, 8, 12, 0),
+                        "datetime_modified": datetime(2026, 2, 3, 12, 0),
+                        "description": "Update 3 body",
+                        "description_markdown": "Update 3 body",
+                        "dates": [],
+                    },
+                ],
+            }
+        ],
+    }
+    result = format_measure_detail(measure)
+
+    assert "#### Description (3 updates)" in result
+    assert "**Update 1**" in result and "status: NEW" in result and "2025-09-14" in result
+    assert "**Update 2**" in result and "status: CHANGED" in result and "2025-11-02" in result
+    assert "**Update 3**" in result and "status: STATIC" in result
+    assert "2026-01-08" in result and "2026-02-03" in result
+    assert "announcement" in result
+    assert "Update 1 body" in result and "Update 2 body" in result and "Update 3 body" in result
+
+
+def test_format_measure_detail_single_update_description_unchanged():
+    """Single-row (or zero-row) description_rows should keep the compact rendering."""
+    measure = {
+        "id": 778,
+        "title": "Single-update measure",
+        "interventions": [
+            {
+                "id": 43,
+                "intervention_type": "Tariff",
+                "description": "Only one update body",
+                "description_rows": [
+                    {
+                        "id": 201, "order_nr": 1, "status": "NEW",
+                        "datetime_created": datetime(2025, 5, 1, 10, 0),
+                        "datetime_modified": datetime(2025, 5, 1, 10, 0),
+                        "description": "Only one update body",
+                        "description_markdown": "Only one update body",
+                        "dates": [],
+                    }
+                ],
+            }
+        ],
+    }
+    result = format_measure_detail(measure)
+
+    assert "#### Description" in result
+    assert "updates)" not in result
+    assert "**Update 1**" not in result
+    assert "Only one update body" in result
+
+
 def test_format_source_result_with_content():
     """Test format_source_result with fetched content."""
     source = SourceResult(

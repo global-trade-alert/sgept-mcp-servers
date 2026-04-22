@@ -390,15 +390,31 @@ class GTADatabaseClient:
             # Aggregate canonical intervention description from api_intervention_description_log.
             # Django's Intervention.description @property reads this; api_intervention_log.description
             # is a legacy shadow column that new submissions do NOT write to.
+            # Each row is one "update" (InterventionDescription), ordered by order_nr.
+            # Per-update dates live in api_intervention_description_date_log.
             for intervention in measure['interventions']:
                 try:
                     cursor.execute('''
-                        SELECT id, description, description_markdown, status, order_nr
+                        SELECT id, description, description_markdown, status, order_nr,
+                               datetime_created, datetime_modified
                         FROM api_intervention_description_log
                         WHERE intervention_id = %s AND status != 'DELETED'
                         ORDER BY order_nr
                     ''', (intervention['id'],))
                     rows = cursor.fetchall()
+                    if rows:
+                        cursor.execute('''
+                            SELECT d.description_id, d.date, d.date_type_id, dt.name AS date_type_name
+                            FROM api_intervention_description_date_log d
+                            LEFT JOIN api_intervention_date_type_list dt ON d.date_type_id = dt.id
+                            WHERE d.intervention_id = %s
+                            ORDER BY d.description_id, d.date
+                        ''', (intervention['id'],))
+                        dates_by_desc: dict = {}
+                        for dr in cursor.fetchall():
+                            dates_by_desc.setdefault(dr['description_id'], []).append(dr)
+                        for r in rows:
+                            r['dates'] = dates_by_desc.get(r['id'], [])
                     intervention['description_rows'] = rows
                     if rows:
                         intervention['description'] = '\n'.join(r['description'] or '' for r in rows)

@@ -8,6 +8,17 @@ Internal use only — no public release surface, so MINOR bumps are used liberal
 
 ---
 
+## [0.2.1] — 2026-04-22
+
+### Added
+- **Per-update rendering in `format_measure_detail`.** When an intervention has >1 row in `api_intervention_description_log` (multiple `InterventionDescription` updates), the `#### Description` section now renders one block per update, each with `order_nr`, `status` (`NEW` / `CHANGED` / `STATIC`), `datetime_created`, `datetime_modified`, and per-update dates from `api_intervention_description_date_log`. Single-update interventions keep the previous compact rendering — no regression for the common case.
+  - **Why:** the reviewer agent could read all update text (they were already `fetchall`'d and newline-joined) but could not see the count, order, status, timestamps, or per-update dates. That's the structure a human reviewer relies on to distinguish a new submission from a later correction, and to match an update to its announcement date. The text was there; the structure was lost.
+- **`datetime_created` / `datetime_modified`** now selected in the description-log query (`api.py`).
+- **Per-update dates query** against `api_intervention_description_date_log` (schema at `gtaapi/core/models/gta.py:2218-2228`), joined on `api_intervention_date_type_list` for human-readable type names. One query per intervention; results attached as `description_rows[i]['dates']`.
+- **Unit tests** for the multi-update rendering path and the single-update no-regression path in `tests/unit/test_formatters.py`.
+
+---
+
 ## [0.2.0] — 2026-04-22
 
 Quality uplift pass, aligning gta-mnt with the internal template (`sgept-gta-mcp`) while preserving the different internal use case (direct MySQL, two-persona write path, on-disk audit trail).
