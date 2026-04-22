@@ -8,23 +8,12 @@
 
 ## Quick Reference
 
-| Server | Version | Purpose |
-|--------|---------|---------|
-| **GTA-MCP** | v0.3.0 | Global Trade Alert - 75,000+ trade policy interventions |
-| **DPA-MCP** | v0.1.0 | Digital Policy Alert - 6,000+ digital policy regulations |
+| Server | Location | Purpose |
+|--------|----------|---------|
+| **sgept-gta-mcp** | Nested repo (github.com/global-trade-alert/sgept-gta-mcp) | Global Trade Alert - 75,000+ trade policy interventions |
+| **sgept-dpa-mcp** | Nested repo (github.com/global-trade-alert/sgept-dpa-mcp) | Digital Policy Alert - 6,000+ digital policy regulations |
 
----
-
-## Current State
-
-**Status: FULL SOURCE CODE PRESENT**
-
-Unlike other personal-dev repos, this repository contains complete Python source files (12 total). No source recovery needed.
-
-| Category | Files | Purpose |
-|----------|-------|---------|
-| GTA-MCP | 6 | server, api, models, formatters, resources_loader, __init__ |
-| DPA-MCP | 6 | server, api, models, formatters, resources_loader, __init__ |
+> **Retirement notes.** The in-tree `gta-mcp/` (retired JCC-418, commit e9abab1) and `dpa-mcp/` (retired JCC-497) subfolders have been superseded by the standalone `sgept-gta-mcp` and `sgept-dpa-mcp` repos cloned here as nested git repos. All GTA and DPA MCP development now happens in those upstream repos, not in this tree.
 
 ---
 
@@ -32,36 +21,18 @@ Unlike other personal-dev repos, this repository contains complete Python source
 
 ```
 sgept-mcp-servers/
-├── gta-mcp/                          # Global Trade Alert MCP Server
-│   ├── README.md                     # Comprehensive documentation
-│   ├── QUICKSTART.md                 # Installation guide
-│   ├── CHANGELOG.md                  # Version history
-│   ├── pyproject.toml                # Dependencies (uv)
-│   ├── uv.lock                       # Locked dependencies
-│   ├── resources/                    # Reference data (markdown)
-│   │   ├── GTA handbook.md
-│   │   ├── gta_jurisdictions.md
-│   │   ├── gta_intervention_type_list.md
-│   │   └── guides/                   # Search and parameter guides
-│   └── src/gta_mcp/
-│       ├── server.py                 # 4 MCP tools
-│       ├── api.py                    # GTA API client
-│       ├── models.py                 # Pydantic input models
-│       └── formatters.py             # Response formatting
+├── sgept-gta-mcp/                    # Global Trade Alert MCP Server (nested repo)
+│   └── (upstream: github.com/global-trade-alert/sgept-gta-mcp)
 │
-├── dpa-mcp/                          # Digital Policy Alert MCP Server
-│   ├── README.md
-│   ├── QUICKSTART.md
-│   ├── pyproject.toml
-│   ├── uv.lock
-│   ├── resources/                    # Reference data
-│   │   ├── dpa_activity_tracking_handbook.md
-│   │   └── dpa_jurisdictions.md
-│   └── src/dpa_mcp/
-│       ├── server.py                 # 2 MCP tools
-│       ├── api.py                    # DPA API client
-│       ├── models.py
-│       └── formatters.py
+├── sgept-dpa-mcp/                    # Digital Policy Alert MCP Server (nested repo)
+│   └── (upstream: github.com/global-trade-alert/sgept-dpa-mcp)
+│
+├── dpa-mnt/                          # DPA monitoring/review tooling (direct MySQL)
+├── gta-mnt/                          # GTA monitoring/review tooling (direct MySQL)
+├── us-tariff-mcp/                    # US Tariff MCP server
+├── metis-mcp/                        # Metis workflow engine MCP
+├── sgept-slack-mcp/                  # Slack MCP (multi-identity)
+├── apollo-mcp/                       # Apollo lead-gen MCP
 │
 ├── api-documentation/
 │   └── sgept-api-documentation.yaml  # OpenAPI spec
@@ -73,21 +44,11 @@ sgept-mcp-servers/
 
 ---
 
-## GTA-MCP Tools
+## MCP Tools (authoritative tool lists in upstream repos)
 
-| Tool | Purpose |
-|------|---------|
-| `search_interventions` | Search trade interventions with filters (jurisdiction, type, date, sector) |
-| `get_intervention` | Get full details of a specific intervention by ID |
-| `list_ticker_updates` | Get recent policy updates (latest changes) |
-| `get_impact_chains` | Analyze implementation chains (e.g., retaliation sequences) |
-
-## DPA-MCP Tools
-
-| Tool | Purpose |
-|------|---------|
-| `search_events` | Search digital policy events with filters |
-| `get_event` | Get full details of a specific event by ID |
+Tool inventories for GTA and DPA live in their respective repo READMEs:
+- GTA: `sgept-gta-mcp/README.md`
+- DPA: `sgept-dpa-mcp/README.md`
 
 ---
 
@@ -101,27 +62,27 @@ sgept-mcp-servers/
 ### Installation
 
 ```bash
-# GTA-MCP
-cd gta-mcp
+# GTA MCP
+cd sgept-gta-mcp
 uv sync
 export SGEPT_GTA_API_KEY="your-api-key"
 
-# DPA-MCP
-cd dpa-mcp
+# DPA MCP
+cd sgept-dpa-mcp
 uv sync
-export SGEPT_DPA_API_KEY="your-api-key"
+export DPA_API_KEY="your-api-key"
 ```
 
 ### Running Locally
 
 ```bash
-# GTA-MCP server
-cd gta-mcp
-uv run python -m gta_mcp.server
+# GTA MCP server
+cd sgept-gta-mcp
+uv run gta-mcp
 
-# DPA-MCP server
-cd dpa-mcp
-uv run python -m dpa_mcp.server
+# DPA MCP server
+cd sgept-dpa-mcp
+uv run dpa-mcp
 ```
 
 ### Claude Desktop Integration
@@ -130,12 +91,15 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "gta-mcp": {
+    "gta": {
       "command": "uv",
-      "args": ["--directory", "/path/to/gta-mcp", "run", "gta-mcp"],
-      "env": {
-        "SGEPT_GTA_API_KEY": "your-key"
-      }
+      "args": ["--directory", "/path/to/sgept-gta-mcp", "run", "gta-mcp"],
+      "env": { "SGEPT_GTA_API_KEY": "your-key" }
+    },
+    "dpa": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/sgept-dpa-mcp", "run", "dpa-mcp"],
+      "env": { "DPA_API_KEY": "your-key" }
     }
   }
 }
@@ -173,11 +137,14 @@ Add to `claude_desktop_config.json`:
 ## Testing
 
 ```bash
-cd gta-mcp
+cd sgept-gta-mcp
+uv run pytest
+
+cd sgept-dpa-mcp
 uv run pytest
 ```
 
-Note: CI/CD pipeline exists (`.github/workflows/ci.yml`) but test coverage is basic.
+Each upstream repo carries its own CI workflow.
 
 ---
 

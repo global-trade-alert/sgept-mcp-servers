@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-05
 **Author:** Claude (commissioned by Johannes Fritz)
-**Status:** Reference document for DPA API development
+**Status:** Historical reference. The DPA MCP uplift described here has landed in the standalone `sgept-dpa-mcp` repo (github.com/global-trade-alert/sgept-dpa-mcp), cloned at `sgept-mcp-servers/sgept-dpa-mcp/`. The in-tree `dpa-mcp/` subfolder referenced throughout this document has been retired (JCC-497). Paths below reflect the pre-retirement layout.
 
 ## Executive Summary
 
