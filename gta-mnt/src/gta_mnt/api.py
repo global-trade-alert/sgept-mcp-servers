@@ -368,7 +368,7 @@ class GTADatabaseClient:
                     i.aj_type as default_aj_type,
                     i.dm_type as default_dm_type,
                     i.intervention_area_id,
-                    ia.name as intervention_area_name,
+                    ia.intervention_area_name,
                     i.chapter_id,
                     mc.chapter_name,
                     i.subchapter_id,
@@ -380,7 +380,7 @@ class GTADatabaseClient:
                 LEFT JOIN api_eligible_firm_list ef ON i.eligible_firm_id = ef.eligible_firm_id
                 LEFT JOIN api_implementation_level_list il ON i.implementation_level_id = il.implementation_level_id
                 LEFT JOIN api_unit_list u ON i.unit_id = u.id
-                LEFT JOIN api_intervention_area_list ia ON i.intervention_area_id = ia.id
+                LEFT JOIN api_intervention_area_list ia ON i.intervention_area_id = ia.intervention_area_id
                 LEFT JOIN api_mast_chapter_list mc ON i.chapter_id = mc.chapter_id
                 LEFT JOIN api_mast_subchapter_list ms ON i.subchapter_id = ms.subchapter_id
                 WHERE i.state_act_id = %s
