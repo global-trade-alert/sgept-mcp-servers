@@ -16,9 +16,10 @@ from dpa_mnt.server import (
 class TestSetStatusInput:
     def test_valid_status_id_accepted(self):
         # Valid DPA event status IDs from lux_event_status_list:
-        # 1=In Progress, 2=Step 1 review, 3=Publishable, 4=Concern,
-        # 5=Under revision, 7=Published.
-        for sid in (1, 2, 3, 4, 5, 7):
+        # 1=In Progress, 2=Step 1 review (AT), 3=Publishable (legacy),
+        # 4=AT concern, 5=AT under revision, 6=AT revised, 7=Published,
+        # 14=Archived. The review workflow uses 4/5/6/14 as verdict outcomes.
+        for sid in (1, 2, 3, 4, 5, 6, 7, 14):
             model = SetStatusInput(event_id=42, new_status_id=sid)
             assert model.new_status_id == sid
 
@@ -28,14 +29,14 @@ class TestSetStatusInput:
         msg = str(exc.value)
         # The validator message enumerates every valid id=name pair so the
         # calling agent can recover without a round-trip to docs.
-        assert "1, 2, 3, 4, 5, 7" in msg
-        assert "Publishable" in msg
+        assert "1, 2, 3, 4, 5, 6, 7, 14" in msg
+        assert "Archived" in msg
 
-    def test_status_id_6_rejected(self):
-        # 6 is GTA's 'Under revision' but NOT a valid DPA status.
+    def test_status_id_19_rejected(self):
+        # 19 is GTA's 'Step 2' status but NOT a valid DPA status.
         # This catches accidental cross-wiring between the sibling servers.
         with pytest.raises(ValidationError):
-            SetStatusInput(event_id=42, new_status_id=6)
+            SetStatusInput(event_id=42, new_status_id=19)
 
     def test_extra_field_rejected(self):
         """Silent-drop of stale field names was the main LLM-drift failure mode."""

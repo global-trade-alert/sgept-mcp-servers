@@ -106,16 +106,21 @@ class AddCommentInput(_StrictInput):
 class SetStatusInput(_StrictInput):
     """Input for setting status.
 
-    Review outcomes: 3=Publishable (PASS), 4=Concern (CONDITIONAL/ESCALATION),
-    5=Under revision (FAIL). Other valid statuses exist but are set by the
-    dashboard, not by review tools.
+    BC-review verdict outcomes (set by dpa_mnt review tools):
+      6  = AT: revised        → PASS
+      5  = AT: under revision → CONDITIONAL
+      4  = AT: concern        → FAIL (critical)
+      14 = archived           → FAIL (out of scope)
+
+    Full valid set is {1, 2, 3, 4, 5, 6, 7, 14}; see STATUS_ID_NAMES in constants.
     """
     event_id: int = Field(..., description="Event ID")
     new_status_id: int = Field(
         ...,
         description=(
-            "Status ID — review outcomes: 3=Publishable, 4=Concern, 5=Under revision. "
-            "Full valid set {1,2,3,4,5,7}; see STATUS_ID_NAMES in constants."
+            "Status ID — review verdicts: 6=Revised (PASS), 5=Under revision (CONDITIONAL), "
+            "4=Concern (FAIL critical), 14=Archived (FAIL out-of-scope). "
+            "Full valid set {1,2,3,4,5,6,7,14}."
         ),
     )
     comment: Optional[str] = Field(default=None, description="Optional reason for status change")
@@ -293,12 +298,17 @@ async def add_comment(params: AddCommentInput) -> str:
 
 @mcp.tool(name="dpa_mnt_set_status")
 async def set_status(params: SetStatusInput) -> str:
-    """Update DPA event status (e.g., to 'Under revision' after issues found).
+    """Update DPA event status after a review verdict.
 
     Creates entry in lux_event_status_log.
 
-    Review outcomes: 3=Publishable (PASS), 4=Concern (CONDITIONAL/ESCALATION),
-    5=Under revision (FAIL). Validator rejects any other integer with an
+    BC-review verdict mapping:
+      PASS                → new_status_id=6  (AT: revised)
+      CONDITIONAL         → new_status_id=5  (AT: under revision)
+      FAIL (critical)     → new_status_id=4  (AT: concern)
+      FAIL (out of scope) → new_status_id=14 (archived)
+
+    Validator rejects any integer outside {1,2,3,4,5,6,7,14} with an
     enumerated error message.
     """
     db_client = get_db_client()

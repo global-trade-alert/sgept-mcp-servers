@@ -19,7 +19,7 @@ Unlike `sgept-gta-mcp` (public-facing, read-only, REST relay), this server:
 
 Unlike the sibling `gta-mnt`, this server:
 - Targets DPA's event-centric `lux_*` schema (not GTA's state-act / intervention schema).
-- Uses a different valid-status set: `{1, 2, 3, 4, 5, 7}` instead of GTA's `{1, 2, 3, 6, 19}`. The validator rejects cross-wired IDs.
+- Uses a different valid-status set: `{1, 2, 3, 4, 5, 6, 7, 14}` (with different semantics for `6`) instead of GTA's `{1, 2, 3, 6, 19}`.
 - Uses an issue tag (`BC_REVIEW_ISSUE_ID = 83`) to mark reviewed interventions rather than a framework tag.
 - Does not implement S3 via boto3 — all DPA sources are HTTP URLs (whether `source_url` on the public web or `file_url` on an HTTP-accessible S3 archive).
 - Does not yet ship entry-creation tools; v0.2.0 is review-only. Author-side tools are tracked for v0.3.
@@ -104,12 +104,16 @@ The canonical review flow:
 |----|------|-------|
 | 1 | In Progress | Draft; author still working |
 | 2 | Step 1 Review (AT) | Handed off; in the review queue |
-| 3 | Publishable (PASS) | Reviewer verdict |
-| 4 | Concern (CONDITIONAL / ESCALATION) | Reviewer verdict |
-| 5 | Under Revision (FAIL) | Reviewer verdict |
+| 3 | Publishable (legacy) | Pre-verdict legacy status; modern reviews don't write this |
+| 4 | AT: Concern | Reviewer verdict — **FAIL (critical)** |
+| 5 | AT: Under Revision | Reviewer verdict — **CONDITIONAL** |
+| 6 | AT: Revised | Reviewer verdict — **PASS** |
 | 7 | Published | Editorial step; not written by MNT |
+| 14 | Archived | Reviewer verdict — **FAIL (out of scope)** |
 
-`SetStatusInput.new_status_id` is validated against this exact set. Any other integer (including GTA's `6` or `19`) raises a `ValidationError` with a message listing every valid id=name pair.
+`SetStatusInput.new_status_id` is validated against this exact set `{1,2,3,4,5,6,7,14}`. Any other integer (including GTA's `19`) raises a `ValidationError` with a message listing every valid id=name pair.
+
+**DPA vs GTA `6`:** on DPA, `6` = AT: Revised (PASS). On GTA, `6` = Under revision (FAIL). These are opposite outcomes — the validator does not guard against this because both are in their respective valid sets; the agent must not cross-wire.
 
 ## Issue IDs
 

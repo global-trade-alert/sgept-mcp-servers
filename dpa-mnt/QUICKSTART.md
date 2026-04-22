@@ -117,7 +117,7 @@ The review agent should pull these at the start of any session — they replace 
 
 **`ERROR: Missing required environment variables: GTA_DB_HOST, GTA_DB_PASSWORD_WRITE`** — you haven't exported the DB credentials. See "Configure environment" above.
 
-**`dpa_mnt_set_status` fails with `new_status_id must be one of {1, 2, 3, 4, 5, 7}`** — you passed an invalid status ID. The most common case is passing `6` (which is a valid GTA status but not a valid DPA status). Use `5` for "Under revision" on DPA.
+**`dpa_mnt_set_status` fails with `new_status_id must be one of {1, 2, 3, 4, 5, 6, 7, 14}`** — you passed an invalid status ID. Common mistakes: `19` (a GTA status, not DPA), or inventing an ID not in `lux_event_status_list`. The four verdict IDs are `4` (FAIL critical), `5` (CONDITIONAL), `6` (PASS), `14` (FAIL out-of-scope).
 
 **`ToolError: Event <N> not found`** — the event_id doesn't exist in `lux_event_log`. Confirm with the dashboard or `dpa_mnt_list_review_queue`.
 

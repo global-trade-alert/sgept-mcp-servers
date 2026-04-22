@@ -37,19 +37,24 @@ REVIEWER_NAME = "Buzessa Claudini"
 AUTHOR_NAME = "Buzetta Claudini"
 
 # Valid DPA event status IDs (lux_event_status_list).
-# Source: evidence from dpa_mnt.api.py queries (status_id=1,2,7 referenced) and
-# server.py SetStatusInput docstring (status_id=3,4,5 documented as review outcomes).
+# Source: dpa_mnt.api.py queries (status_id=1,2,7) + the operational review
+# workflow in jf-thought/sgept-monitoring/dpa/.claude/protocols/dpa-quality-
+# review-compact.md which writes verdicts as status_id=4/5/6/14.
 # Any value outside this set is rejected by the SetStatusInput validator.
-VALID_STATUS_IDS = {1, 2, 3, 4, 5, 7}
+# Note: DPA's `6` (AT: revised / PASS) has a DIFFERENT meaning from GTA's
+# `6` (Under revision / FAIL) — do not cross-wire.
+VALID_STATUS_IDS = {1, 2, 3, 4, 5, 6, 7, 14}
 
 # Human-readable names for the valid status set (used in validator error messages).
 STATUS_ID_NAMES = {
     1: "In Progress",
     2: "Step 1 Review (AT)",
-    3: "Publishable (PASS)",
-    4: "Concern (CONDITIONAL / ESCALATION)",
-    5: "Under Revision (FAIL)",
+    3: "Publishable (legacy)",
+    4: "AT: Concern (CONDITIONAL / ESCALATION, FAIL-critical verdict)",
+    5: "AT: Under Revision (CONDITIONAL verdict)",
+    6: "AT: Revised (PASS verdict)",
     7: "Published",
+    14: "Archived (FAIL out-of-scope verdict)",
 }
 
 # Review artifact storage path. Each intervention gets a folder with per-event

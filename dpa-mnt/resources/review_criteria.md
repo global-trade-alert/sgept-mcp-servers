@@ -36,17 +36,18 @@ Applied per issue found, when writing an issue comment:
 
 Once the field-by-field scan is complete:
 
-| Findings | Action (review tool calls in order) |
-|---|---|
-| No Critical, no Important issues | `add_review_tag(event_id)` → `set_status(3, "Publishable")` |
-| Issues but none blocking | `add_comment(...)` per issue → `add_review_tag(event_id)` → `set_status(4, "Concern")` |
-| Any Critical or Important | `add_comment(...)` per issue → `add_review_tag(event_id)` → `set_status(5, "Under revision")` |
+| Findings | Verdict | Action (review tool calls in order) |
+|---|---|---|
+| No Critical, no Important issues | PASS | `add_review_tag(event_id)` → `set_status(6, "Revised")` |
+| Issues but none blocking | CONDITIONAL | `add_comment(...)` per issue → `add_review_tag(event_id)` → `set_status(5, "Under revision")` |
+| Any Critical or Important | FAIL (critical) | `add_comment(...)` per issue → `add_review_tag(event_id)` → `set_status(4, "Concern")` |
+| Event not appropriate for DPA | FAIL (out of scope) | `add_comment(...)` explaining → `add_review_tag(event_id)` → `set_status(14, "Archived")` |
 
 Always finish with `dpa_mnt_log_review(decision, fields_validated, issues_found, actions_taken)` to write the audit trail.
 
 ## Hard rules
 
-1. **Never publish something you cannot verify.** If the source is unreachable / unreadable, the verdict is `Under revision (5)` with a comment stating the source issue — never `Publishable (3)`.
+1. **Never pass something you cannot verify.** If the source is unreachable / unreadable, the verdict is `Under revision (5)` with a comment stating the source issue — never `Revised (6)`.
 2. **Never assert data exists when a field renders blank.** Empty means the DB returned nothing for that join; treat that as ground truth for the query, not as an omission to fill in.
 3. **Quote the source verbatim in any Critical / Important comment.** Paraphrasing makes the comment un-auditable.
 4. **One issue per comment.** Do not stack multiple fields into a single comment block.

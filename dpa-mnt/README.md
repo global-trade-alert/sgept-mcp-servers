@@ -23,7 +23,7 @@ MNT's read paths return exactly the fields the dashboard's `InterventionSerializ
 | `dpa_mnt_get_intervention_context` | **Gate 0** — all sibling events on the intervention, published context + in-review |
 | `dpa_mnt_get_source` | Fetch official source, extract PDF/HTML text, persist to disk |
 | `dpa_mnt_add_comment` | Write a structured review comment to `api_comment_log` |
-| `dpa_mnt_set_status` | Transition the event to Publishable / Concern / Under revision (3 / 4 / 5) |
+| `dpa_mnt_set_status` | Write review verdict — AT: Revised / Under Revision / Concern / Archived (6 / 5 / 4 / 14) |
 | `dpa_mnt_add_review_tag` | Idempotently apply BC-review issue tag (83) to the intervention |
 | `dpa_mnt_list_templates` | List available comment templates from `api_comment_template_list` |
 | `dpa_mnt_log_review` | Write a structured review-log artifact to disk |
@@ -83,21 +83,23 @@ uv run dpa-mnt
 5. Field-by-field scan against `resources/review_criteria.md`.
 6. Per issue found: **`dpa_mnt_add_comment`** with `format_issue_comment` output.
 7. **`dpa_mnt_add_review_tag(event_id)`** — applies issue 83 to the intervention (idempotent).
-8. **`dpa_mnt_set_status(event_id, new_status_id=3|4|5)`** — Publishable / Concern / Under revision.
+8. **`dpa_mnt_set_status(event_id, new_status_id=6|5|4|14)`** — PASS / CONDITIONAL / FAIL-critical / FAIL-out-of-scope (AT: Revised / Under Revision / Concern / Archived).
 9. **`dpa_mnt_log_review(...)`** — writes `evt-<event_id>-review-log.md` to the storage path.
 
 ## Status IDs
 
-| ID | Name | Who sets it |
-|----|------|-------------|
-| 1 | In Progress | Author |
-| 2 | Step 1 Review (AT) | Author (handoff) |
-| 3 | Publishable | Reviewer |
-| 4 | Concern | Reviewer |
-| 5 | Under Revision | Reviewer |
-| 7 | Published | Editorial (not MNT) |
+| ID | Name | Who sets it | Verdict |
+|----|------|-------------|---------|
+| 1 | In Progress | Author | — |
+| 2 | Step 1 Review (AT) | Author (handoff) | — |
+| 3 | Publishable (legacy) | Not written by modern reviews | — |
+| 4 | AT: Concern | Reviewer | FAIL (critical) |
+| 5 | AT: Under Revision | Reviewer | CONDITIONAL |
+| 6 | AT: Revised | Reviewer | PASS |
+| 7 | Published | Editorial (not MNT) | — |
+| 14 | Archived | Reviewer | FAIL (out of scope) |
 
-`SetStatusInput.new_status_id` rejects any other integer. Notably, `6` is a valid GTA status but not a valid DPA status — cross-wiring between the sibling servers fails loudly.
+`SetStatusInput.new_status_id` is `{1,2,3,4,5,6,7,14}`; anything else is rejected. Note `6` has opposite meaning on GTA (Under revision / FAIL) — the agent must not cross-wire.
 
 ## Testing
 

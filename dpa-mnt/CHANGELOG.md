@@ -8,6 +8,30 @@ Internal use only — no public release surface, so MINOR bumps are used liberal
 
 ---
 
+## [0.2.1] — 2026-04-22
+
+Hotfix bumping the valid DPA status-ID set to match the operational review workflow. Caught when smoke-testing `/dpa-review-queue` from `jf-thought/sgept-monitoring/dpa/` against the v0.2.0 refurbishment.
+
+### Fixed
+- **`SetStatusInput.new_status_id`** now accepts `{1, 2, 3, 4, 5, 6, 7, 14}`. The v0.2.0 audit derived `{1, 2, 3, 4, 5, 7}` from code evidence in `api.py` + comments in `server.py` — missing `6` (AT: Revised / PASS verdict) and `14` (Archived / FAIL-out-of-scope verdict), both of which the operational `/dpa-review-queue` command writes on every verdict. Under v0.2.0, PASS and FAIL-out-of-scope verdicts would have been rejected by the validator.
+  - **Why the audit missed them:** the `dpa-mnt` repo's own code never wrote `6` or `14` (review tools returned success-shaped error strings before v0.2.0 and the workflow was less formalised). The authoritative source is the review protocol at `jf-thought/sgept-monitoring/dpa/.claude/protocols/dpa-quality-review-compact.md`, not `dpa-mnt/src/`.
+
+### Changed
+- **`STATUS_ID_NAMES`** rewritten to match operational semantics:
+  - `3` → "Publishable (legacy)" (not "Publishable (PASS)" — `6` is the modern PASS status)
+  - `4` → "AT: Concern (CONDITIONAL / ESCALATION, FAIL-critical verdict)"
+  - `5` → "AT: Under Revision (CONDITIONAL verdict)"
+  - `6` → "AT: Revised (PASS verdict)" (NEW)
+  - `14` → "Archived (FAIL out-of-scope verdict)" (NEW)
+- **DPA vs GTA `6` warning.** DPA's `6` (AT: Revised / PASS) has the opposite meaning from GTA's `6` (Under revision / FAIL). Both are in their respective valid sets, so the validator cannot guard cross-wiring — the warning now appears in `CLAUDE.md`, `README.md`, and `resources/status_id_decision_tree.md`.
+- **Docs corrected:** `CLAUDE.md` status table, `README.md` status table + review-flow step, `QUICKSTART.md` troubleshooting, `resources/status_id_decision_tree.md` decision tree, `resources/review_criteria.md` verdict mapping.
+- **Tests corrected:** `test_status_id_6_rejected` → `test_status_id_19_rejected` (`6` is now valid; `19` is the GTA-only value still rejected on DPA). `test_invalid_status_id_rejected` now asserts `Archived` appears in the enumerated error.
+
+### Out of scope (still deferred)
+Follow-ups from v0.2.0 remain in place: full asyncmy migration, integration tests against dockerised MySQL, write-path tools for v0.3.
+
+---
+
 ## [0.2.0] — 2026-04-22
 
 Quality uplift pass, aligning `dpa-mnt` with the sibling `gta-mnt` v0.2.0 bar while adding schema-alignment work specific to the DPA Activity Tracker dashboard's manual-input surface. The authoritative schema lives in the `gtaapi/lux/` app (`InterventionSerializer`, `EventSerializer`); MNT's read paths now match what the dashboard exposes, so a reviewer using MNT does not have to tab back to the dashboard for a missing attribute.
