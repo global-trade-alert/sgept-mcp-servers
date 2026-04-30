@@ -12,12 +12,26 @@ CHARACTER_LIMIT = 100_000
 
 
 def _truncate(text: str, hint: str) -> str:
-    """Cap `text` at CHARACTER_LIMIT. Append `hint` when truncation occurs."""
+    """Cap `text` at CHARACTER_LIMIT. Prepend a top banner + append a hint when
+    truncation occurs. The top banner ensures the agent sees the truncation
+    notice even if it stops reading before the bottom of the response.
+    """
     if len(text) <= CHARACTER_LIMIT:
         return text
-    marker = f"\n\n---\n[truncated: response exceeded {CHARACTER_LIMIT:,} characters. {hint}]"
-    keep = CHARACTER_LIMIT - len(marker)
-    return text[:keep] + marker
+    full_len = len(text)
+    banner = (
+        f"⚠️ TRUNCATION WARNING: this response was capped at {CHARACTER_LIMIT:,} "
+        f"characters (full size: {full_len:,}). Some intervention or section data "
+        f"below this point may be missing or cut mid-string. Do NOT issue a verdict "
+        f"on truncated data — re-fetch with narrower scope (e.g. include_interventions=False, "
+        f"or fetch single intervention by ID) before reviewing. Hint: {hint}\n\n---\n\n"
+    )
+    marker = (
+        f"\n\n---\n[truncated: response exceeded {CHARACTER_LIMIT:,} characters "
+        f"(full size: {full_len:,}). {hint}]"
+    )
+    keep = CHARACTER_LIMIT - len(banner) - len(marker)
+    return banner + text[:keep] + marker
 
 
 def format_issue_comment(
@@ -365,6 +379,21 @@ def format_measure_detail(measure: dict) -> str:
             affected_jurs = intervention.get("affected_jurisdictions", [])
             lines.append("#### Affected Jurisdictions")
             if affected_jurs:
+                # Per-row type summary: shows per-row classifications. The total row
+                # count is NOT the targeted count when carve-outs are present.
+                # Critical for trade-defence (CVD, AD) where Targeted+Freeze interventions
+                # commonly have one targeted row and many Inferred carve-outs.
+                type_counts: dict[str, int] = {}
+                for aj in affected_jurs:
+                    tn = aj.get("type_name") or "Unknown"
+                    type_counts[tn] = type_counts.get(tn, 0) + 1
+                summary = ", ".join(f"{n} {t}" for t, n in sorted(type_counts.items()))
+                lines.append(f"*{len(affected_jurs)} rows: {summary}*")
+                lines.append(
+                    "*Note: per-row [type] is the actual classification of that "
+                    "specific country. The intervention-level Default AJ Type and "
+                    "the per-row [type] may differ when carve-outs are present.*"
+                )
                 for aj in affected_jurs:
                     name = aj.get("jurisdiction_name") or aj.get("iso_code") or "Unknown"
                     iso = aj.get("iso_code") or ""
@@ -381,6 +410,19 @@ def format_measure_detail(measure: dict) -> str:
             distorted_markets = intervention.get("distorted_markets", [])
             lines.append("#### Distorted Markets")
             if distorted_markets:
+                # Per-row type summary (same logic as AJ).
+                type_counts: dict[str, int] = {}
+                for dm in distorted_markets:
+                    tn = dm.get("type_name") or "Unknown"
+                    type_counts[tn] = type_counts.get(tn, 0) + 1
+                summary = ", ".join(f"{n} {t}" for t, n in sorted(type_counts.items()))
+                lines.append(f"*{len(distorted_markets)} rows: {summary}*")
+                lines.append(
+                    "*Note: per-row [type] is the actual classification. When "
+                    "intervention-level Default DM Type=Excluded with Freeze=Yes, "
+                    "the listed jurisdictions are EXEMPT from the distorted market, "
+                    "not the targeted destinations.*"
+                )
                 for dm in distorted_markets:
                     name = dm.get("jurisdiction_name") or dm.get("iso_code") or "Unknown"
                     iso = dm.get("iso_code") or ""
