@@ -744,11 +744,30 @@ def format_source_result(source_result) -> str:
     Returns:
         Markdown-formatted source content
     """
+    # Surface content_type prominently so the reviewer agent can branch
+    # behaviour: html sources should not trigger PDF-extraction OCR fallback;
+    # pdf sources may need OCR if extraction was lossy.
+    ct = (source_result.content_type or "unknown").lower()
+    extraction_hint = ""
+    if ct == "html":
+        extraction_hint = (
+            "\n*Source is HTML — extraction returns rendered text. "
+            "PDF-extraction-failure flags (OCR fallback) are NOT applicable here. "
+            "If the prose is readable and contains the description's claims, "
+            "do NOT flag the source as inadequate.*"
+        )
+    elif ct == "pdf":
+        extraction_hint = (
+            "\n*Source is PDF — if extraction returned <3 readable sentences AND "
+            "no description claim is locatable in context, invoke OCR fallback. "
+            "Otherwise treat the extraction as adequate.*"
+        )
+
     lines = [
         f"# Official Source\n",
         f"**Type:** {source_result.source_type}",
         f"**URL:** {source_result.source_url}",
-        f"**Content Type:** {source_result.content_type}\n"
+        f"**Content Type:** {ct}{extraction_hint}\n"
     ]
 
     if source_result.content:
