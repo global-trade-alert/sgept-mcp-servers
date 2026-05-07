@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 
-from .api import GTADatabaseClient, BastiatAPIClient
+from .api import GTADatabaseClient, BastiatAPIClient, semantic_search_via_rag
 from .source_fetcher import SourceFetcher
 from .constants import (
     SANCHO_USER_ID,
@@ -305,6 +305,28 @@ class AddLevelInput(_StrictInput):
     level_type_id: Optional[int] = Field(default=None, description="FK to api_level_type_list")
     tariff_peak: Optional[int] = Field(default=None, description="Tariff peak indicator")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class FindDuplicatesInput(_StrictInput):
+    """Input for find_duplicates duplicate detection.
+
+    Either pass `state_act_id` (canonical fields are read from the DB) or pass
+    the identity fields directly (useful before insertion).
+    """
+    state_act_id: Optional[int] = Field(default=None, description="If set, identity fields are read from the DB")
+    jurisdiction_ids: Optional[List[int]] = Field(default=None, description="Implementing jurisdiction FK list")
+    date_announced: Optional[str] = Field(default=None, description="YYYY-MM-DD")
+    intervention_type_ids: Optional[List[int]] = Field(default=None, description="api_intervention_type_list IDs")
+    hs_codes: Optional[List[str]] = Field(default=None, description="HS6 codes (strings or numerics)")
+    source_urls: Optional[List[str]] = Field(default=None, description="Official source URLs to match against api_state_act_source")
+    title: Optional[str] = Field(default=None, description="Draft title (used for decree-number regex)")
+    description: Optional[str] = Field(default=None, description="Draft description (used for semantic search query)")
+    exclude_state_act_ids: Optional[List[int]] = Field(default=None, description="State act IDs to omit from results")
+    date_window_days: int = Field(default=60, ge=0, le=365, description="Date window for vectors D and E (±days)")
+    include_statuses: Optional[List[int]] = Field(default=None, description="Status IDs to consider; default [1,2,3,4,6,19]")
+    limit: int = Field(default=20, ge=1, le=200, description="Max candidates to return")
+    semantic_search: bool = Field(default=True, description="Run Vector G via the RAG (skipped if RAG_BASE_URL/RAG_API_KEY not set)")
+    semantic_threshold_review: float = Field(default=0.70, ge=0.0, le=1.0, description="Minimum cosine score to include in results")
 
 
 @mcp.tool(name="gta_mnt_list_step1_queue")
@@ -887,6 +909,189 @@ async def guess_hs_codes(params: GuessHSCodesInput) -> str:
             "Bastiat API timed out after 90s. "
             "Try a shorter product_description."
         ) from e
+
+
+@mcp.tool(name="gta_mnt_find_duplicates")
+async def find_duplicates(params: FindDuplicatesInput) -> str:
+    """Find candidate duplicate state acts via deterministic SQL vectors plus optional semantic ranking.
+
+    Vectors run (each skipped if its inputs are missing):
+
+    - **A — URL**: state acts that share a normalised host+path with any input source URL.
+    - **B — DECREE**: regex-extracted decree/regulation/notification numbers from the
+      title (e.g. "MP 1340", "VR 2036/2026", "BGBl I Nr. 96/2018"), LIKE-matched within
+      the same implementing jurisdiction.
+    - **C — TYPE+DATE**: same jurisdiction, same `date_announced`, same `intervention_type_id`.
+    - **D — HS+DATE**: same jurisdiction, `date_announced` within ±`date_window_days`,
+      ≥1 shared HS code.
+    - **E — POOL**: wide net (jurisdiction + date window) — collected as a candidate pool.
+    - **G — SEMANTIC**: cosine similarity over title+description via the GTA RAG, scoped
+      to the Vector E pool. Skipped if `RAG_BASE_URL`/`RAG_API_KEY` not set, or if
+      `semantic_search=False`. Currently indexes published only — drafts are pending BT-263.
+
+    Decision rule for the caller:
+
+    - Vectors A or B firing → **DUPLICATE** (deterministic).
+    - Vector C firing → **DUPLICATE** (near-deterministic).
+    - Vector D firing or G score ≥ 0.85 → **DUPLICATE**.
+    - G score 0.70–0.85 → **CONDITIONAL** (Slack-escalate per JCC-819 plan).
+
+    Inputs may either provide `state_act_id` (canonical fields read from the DB) or
+    pass identity fields directly (jurisdiction_ids, date_announced, etc.) — useful
+    when checking a draft before insertion.
+    """
+    db_client = get_db_client()
+    sql_result = await asyncio.to_thread(
+        db_client.find_duplicates,
+        state_act_id=params.state_act_id,
+        jurisdiction_ids=params.jurisdiction_ids,
+        date_announced=params.date_announced,
+        intervention_type_ids=params.intervention_type_ids,
+        hs_codes=params.hs_codes,
+        source_urls=params.source_urls,
+        title=params.title,
+        description=params.description,
+        exclude_state_act_ids=params.exclude_state_act_ids,
+        date_window_days=params.date_window_days,
+        include_statuses=params.include_statuses,
+        limit=params.limit,
+    )
+
+    candidates = sql_result['candidates']
+    pool_ids = sql_result['pool_intervention_ids']
+    semantic_skipped_reason = None
+    semantic_hits: list[dict] = []
+
+    if params.semantic_search and (sql_result['self_title'] or sql_result['self_description']):
+        query_text = ' '.join(filter(None, [sql_result['self_title'], (sql_result['self_description'] or '')[:1500]])).strip()
+        if query_text:
+            rag = await semantic_search_via_rag(
+                query=query_text,
+                intervention_ids=pool_ids if pool_ids else None,
+                limit=20,
+            )
+            if rag.get('skipped'):
+                semantic_skipped_reason = rag.get('reason')
+            else:
+                # Merge RAG hits into candidate set, mapping intervention_id → state_act_id
+                rag_results = rag.get('results', []) or []
+                # Build interv→state_act mapping for hits we don't already have
+                hit_iids = [r['intervention_id'] for r in rag_results if r.get('score', 0) >= params.semantic_threshold_review]
+                if hit_iids:
+                    iid_to_sa = {}
+                    conn = db_client._get_connection()
+                    cur = conn.cursor()
+                    placeholders = ','.join(['%s'] * len(hit_iids))
+                    cur.execute(
+                        f'''SELECT i.intervention_id, sa.state_act_id, sa.title, sa.status_id, sa.date_announced
+                            FROM api_intervention_log i
+                            JOIN api_state_act_log sa ON sa.state_act_id = i.state_act_id
+                            WHERE i.intervention_id IN ({placeholders})''',
+                        hit_iids,
+                    )
+                    for row in cur.fetchall():
+                        iid_to_sa[row['intervention_id']] = row
+                    excluded = set(sql_result['inputs_resolved'].get('exclude_state_act_ids') or [])
+                    for r in rag_results:
+                        if r.get('score', 0) < params.semantic_threshold_review:
+                            continue
+                        sa_row = iid_to_sa.get(r['intervention_id'])
+                        if not sa_row:
+                            continue
+                        if sa_row['state_act_id'] in excluded:
+                            continue
+                        semantic_hits.append({
+                            'state_act_id': sa_row['state_act_id'],
+                            'title': sa_row.get('title'),
+                            'status_id': sa_row.get('status_id'),
+                            'date_announced': (
+                                sa_row['date_announced'].strftime('%Y-%m-%d')
+                                if sa_row.get('date_announced') and hasattr(sa_row['date_announced'], 'strftime')
+                                else sa_row.get('date_announced')
+                            ),
+                            'cosine_score': round(float(r['score']), 4),
+                            'rag_intervention_id': r['intervention_id'],
+                            'rag_title': r.get('title'),
+                            'rag_blurb': (r.get('blurb') or '')[:200],
+                        })
+                    # Annotate matching SQL candidates with their best RAG score, and
+                    # add new SEMANTIC-only hits.
+                    cand_by_id = {c['state_act_id']: c for c in candidates}
+                    for hit in semantic_hits:
+                        sa_id = hit['state_act_id']
+                        if sa_id in cand_by_id:
+                            cand = cand_by_id[sa_id]
+                            existing_score = cand.get('cosine_score') or 0
+                            if hit['cosine_score'] > existing_score:
+                                cand['cosine_score'] = hit['cosine_score']
+                            if 'SEMANTIC' not in cand['match_vectors']:
+                                cand['match_vectors'].append('SEMANTIC')
+                        else:
+                            candidates.append({
+                                'state_act_id': sa_id,
+                                'title': hit['title'],
+                                'status_id': hit['status_id'],
+                                'date_announced': hit['date_announced'],
+                                'match_vectors': ['SEMANTIC'],
+                                'shared_urls': [],
+                                'shared_decree_tokens': [],
+                                'shared_intervention_types': [],
+                                'shared_hs_codes': [],
+                                'cosine_score': hit['cosine_score'],
+                            })
+
+    # Re-rank: any deterministic vector first, then by vector count, then cosine
+    DETERMINISTIC = {'URL', 'DECREE', 'TYPE+DATE'}
+    def _rank_key(c):
+        is_det = bool(set(c['match_vectors']) & DETERMINISTIC)
+        return (
+            -1 if is_det else 0,
+            -len(c['match_vectors']),
+            -(c.get('cosine_score') or 0),
+        )
+    candidates = sorted(candidates, key=_rank_key)[:params.limit]
+
+    # Format output
+    vectors_run = list(sql_result['vectors_run'])
+    if params.semantic_search:
+        vectors_run.append('SEMANTIC' if not semantic_skipped_reason else f'SEMANTIC (skipped: {semantic_skipped_reason})')
+
+    lines = ['# Duplicate detection results\n']
+    lines.append(f"**Vectors run:** {', '.join(vectors_run) or '(none — no inputs given)'}")
+    lines.append(f"**Candidate pool size (Vector E):** {len(pool_ids)} interventions")
+    if semantic_skipped_reason:
+        lines.append(f"**Note:** {semantic_skipped_reason}")
+    lines.append(f"**Candidates found:** {len(candidates)}\n")
+
+    if not candidates:
+        lines.append('No duplicate candidates surfaced. Proceeding is safe per these vectors.')
+    else:
+        # Verdict suggestion
+        det_hit = any(set(c['match_vectors']) & DETERMINISTIC for c in candidates)
+        strong_semantic = any((c.get('cosine_score') or 0) >= 0.85 for c in candidates)
+        if det_hit:
+            lines.append('## Suggested verdict: **DUPLICATE** (deterministic vector hit)\n')
+        elif strong_semantic:
+            lines.append('## Suggested verdict: **DUPLICATE** (semantic similarity ≥ 0.85)\n')
+        else:
+            lines.append('## Suggested verdict: **CONDITIONAL** — review candidates below; consider Slack escalation\n')
+
+        for i, c in enumerate(candidates, 1):
+            lines.append(f"### {i}. SA {c['state_act_id']} — {c.get('title', '?')}")
+            score_str = f", cosine={c['cosine_score']:.3f}" if c.get('cosine_score') else ''
+            lines.append(f"- **Vectors:** {', '.join(c['match_vectors'])}{score_str}")
+            lines.append(f"- **Status:** {c.get('status_id')} | **Announced:** {c.get('date_announced')}")
+            if c.get('shared_urls'):
+                lines.append(f"- **Shared URLs:** {len(c['shared_urls'])} — {c['shared_urls'][0]}{'…' if len(c['shared_urls']) > 1 else ''}")
+            if c.get('shared_decree_tokens'):
+                lines.append(f"- **Decree token match:** {', '.join(c['shared_decree_tokens'])}")
+            if c.get('shared_intervention_types'):
+                lines.append(f"- **Shared intervention types:** {c['shared_intervention_types']}")
+            if c.get('shared_hs_codes'):
+                lines.append(f"- **Shared HS codes:** {', '.join(c['shared_hs_codes'][:5])}{'…' if len(c['shared_hs_codes']) > 5 else ''}")
+            lines.append(f"- Admin URL: https://ric.globaltradealert.org/gta-admin-dashboard/measures/{c['state_act_id']}/edit\n")
+
+    return '\n'.join(lines)
 
 
 # ========================================================================

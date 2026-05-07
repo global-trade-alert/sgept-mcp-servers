@@ -20,6 +20,105 @@ def _slugify(text: str, max_length: int = 490) -> str:
     slug = re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
     return slug[:max_length]
 
+
+# High-precision patterns first (named legal-instrument formats), then a generic
+# fallback. Each match's full text is used as a LIKE token against existing titles.
+_DECREE_PATTERNS = [
+    re.compile(r'\b(?:MP|EM|Decreto|Decree|Ley|Law|Decreto-Lei)\s+(?:n\.?º?\s*)?\d+(?:[/-]\d{2,4})?\b', re.IGNORECASE),
+    re.compile(r'\bVR\s+\d+/\d{2,4}\b', re.IGNORECASE),
+    re.compile(r'\bBGBl\.?\s*[IVX]+\s*Nr\.?\s*\d+/\d{2,4}\b', re.IGNORECASE),
+    re.compile(r'\bNotification(?:\s+No\.?)?\s+\d+(?:/\d{2,4})?\b', re.IGNORECASE),
+    re.compile(r'\b(?:Reg(?:ulation)?|EU)\s+\d+/\d{4}\b', re.IGNORECASE),
+    re.compile(r'\bResoluci[oó]n\s+\d+(?:/\d{2,4})?\b', re.IGNORECASE),
+    re.compile(r'\bGazette\s+No\.?\s*\d+\b', re.IGNORECASE),
+    re.compile(r'\bSRO\s+\d+\(I\)/\d{2,4}\b', re.IGNORECASE),
+    re.compile(r'\bGO\.?Ms\.?\s*No\.?\s*\d+\b', re.IGNORECASE),
+]
+
+
+def extract_decree_numbers(title: str) -> list[str]:
+    """Extract decree, regulation, and notification number tokens from a title.
+
+    Used by find_duplicates Vector B: same legal instrument number across two
+    state acts in the same jurisdiction is a near-deterministic duplicate signal.
+    """
+    if not title:
+        return []
+    found = []
+    seen_lower = set()
+    for pattern in _DECREE_PATTERNS:
+        for match in pattern.finditer(title):
+            token = match.group(0).strip()
+            key = token.lower()
+            if key not in seen_lower:
+                seen_lower.add(key)
+                found.append(token)
+    return found
+
+
+def normalize_url(url: str) -> str:
+    """Normalise a URL for verbatim host+path matching.
+
+    Strips scheme, leading 'www.', trailing slash, fragment, and query string.
+    Lowercases host. Path is preserved (case-sensitive on most servers).
+    """
+    if not url:
+        return ''
+    s = url.strip()
+    s = re.sub(r'^[a-zA-Z][a-zA-Z0-9+\-.]*://', '', s)
+    s = s.split('#', 1)[0].split('?', 1)[0]
+    if '/' in s:
+        host, path = s.split('/', 1)
+        path = '/' + path
+    else:
+        host, path = s, ''
+    host = host.lower()
+    if host.startswith('www.'):
+        host = host[4:]
+    if len(path) > 1 and path.endswith('/'):
+        path = path[:-1]
+    return host + path
+
+
+async def semantic_search_via_rag(
+    query: str,
+    intervention_ids: Optional[list[int]] = None,
+    limit: int = 10,
+) -> dict:
+    """Call the GTA RAG semantic search endpoint.
+
+    Mirrors sgept-gta-mcp's semantic_search_interventions but lives here so
+    gta-mnt can reach the same vector index without depending on the public MCP.
+
+    Returns {"results": [], "skipped": True, "reason": "..."} when not
+    configured rather than raising — find_duplicates degrades gracefully.
+    """
+    base_url = os.environ.get('RAG_BASE_URL')
+    api_key = os.environ.get('RAG_API_KEY')
+    if not base_url or not api_key:
+        return {
+            'results': [],
+            'skipped': True,
+            'reason': 'RAG_BASE_URL or RAG_API_KEY not set; Vector G skipped',
+        }
+    endpoint = f"{base_url.rstrip('/')}/chat/gta/semantic-search"
+    headers = {'X-API-Key': api_key, 'Content-Type': 'application/json'}
+    body: dict = {'query': query, 'limit': limit}
+    if intervention_ids:
+        body['intervention_ids'] = intervention_ids
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(endpoint, json=body, headers=headers)
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        return {
+            'results': [],
+            'skipped': True,
+            'reason': f'RAG call failed: {type(e).__name__}: {str(e)[:200]}',
+        }
+
+
 from .constants import SANCHO_USER_ID, SANCHO_AUTHOR_ID, SANCHO_FRAMEWORK_ID, FRAMEWORK_IDS, LOOKUP_TABLES
 from .storage import ReviewStorage
 
@@ -2063,6 +2162,321 @@ class GTADatabaseClient:
         results = cursor.fetchall()
 
         return {'results': results}
+
+
+    # ========================================================================
+    # Duplicate Detection
+    # ========================================================================
+
+    def find_duplicates(
+        self,
+        state_act_id: Optional[int] = None,
+        jurisdiction_ids: Optional[list[int]] = None,
+        date_announced: Optional[str] = None,
+        intervention_type_ids: Optional[list[int]] = None,
+        hs_codes: Optional[list[str]] = None,
+        source_urls: Optional[list[str]] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        exclude_state_act_ids: Optional[list[int]] = None,
+        date_window_days: int = 60,
+        include_statuses: Optional[list[int]] = None,
+        limit: int = 50,
+    ) -> dict:
+        """Find candidate duplicate state acts across vectors A, B, C, D.
+
+        Vectors run (skipped if their inputs are missing):
+          - A: Source URL host+path verbatim match
+          - B: Decree/regulation/notification number in title (LIKE within IJ)
+          - C: (jurisdiction + date_announced ±0d + intervention_type) triple
+          - D: (jurisdiction + date_announced ±window + ≥1 HS code overlap)
+          - E: (jurisdiction + date_announced ±window) — wide net pool returned
+               for downstream semantic ranking (Vector G runs in the MCP layer)
+
+        If state_act_id is given but other identity fields are not, those fields
+        are read from the DB. Caller can also pass identity fields explicitly
+        (useful before a draft has been inserted).
+
+        Returns:
+            {
+                'candidates': [{
+                    'state_act_id': int,
+                    'title': str,
+                    'status_id': int,
+                    'date_announced': str,
+                    'match_vectors': list[str],     # subset of ['URL','DECREE','TYPE+DATE','HS+DATE','POOL']
+                    'shared_urls': list[str],
+                    'shared_decree_tokens': list[str],
+                    'shared_intervention_types': list[int],
+                    'shared_hs_codes': list[str],
+                }],
+                'pool_intervention_ids': list[int],   # Vector E pool — for caller's semantic search
+                'self_title': str | None,             # echoed for caller's RAG query
+                'self_description': str | None,
+                'vectors_run': list[str],
+                'inputs_resolved': dict,
+            }
+        """
+        if include_statuses is None:
+            include_statuses = [1, 2, 3, 4, 6, 19]
+        exclude_ids = list(exclude_state_act_ids or [])
+        if state_act_id is not None:
+            exclude_ids.append(state_act_id)
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # Resolve canonical fields from DB if a state_act_id is given
+        self_title = title
+        self_description = description
+        if state_act_id is not None:
+            try:
+                cursor.execute(
+                    'SELECT title, description, date_announced FROM api_state_act_log WHERE state_act_id = %s',
+                    (state_act_id,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    if not self_title:
+                        self_title = row.get('title')
+                    if not self_description:
+                        self_description = row.get('description')
+                    if not date_announced and row.get('date_announced'):
+                        date_announced = row['date_announced'].strftime('%Y-%m-%d') if hasattr(row['date_announced'], 'strftime') else str(row['date_announced'])
+                # Pull source URLs if not provided
+                if not source_urls:
+                    cursor.execute(
+                        '''SELECT sl.source_url FROM api_state_act_source sas
+                           JOIN api_source_list sl ON sas.source_id = sl.source_id
+                           WHERE sas.state_act_id = %s''',
+                        (state_act_id,),
+                    )
+                    source_urls = [r['source_url'] for r in cursor.fetchall() if r.get('source_url')]
+                # Pull jurisdictions, intervention types, HS codes if not provided
+                if not jurisdiction_ids:
+                    cursor.execute(
+                        '''SELECT DISTINCT iij.jurisdiction_id
+                           FROM api_intervention_log i
+                           JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
+                           WHERE i.state_act_id = %s''',
+                        (state_act_id,),
+                    )
+                    jurisdiction_ids = [r['jurisdiction_id'] for r in cursor.fetchall()]
+                if not intervention_type_ids:
+                    cursor.execute(
+                        'SELECT DISTINCT intervention_type_id FROM api_intervention_log WHERE state_act_id = %s AND intervention_type_id IS NOT NULL',
+                        (state_act_id,),
+                    )
+                    intervention_type_ids = [r['intervention_type_id'] for r in cursor.fetchall()]
+                if not hs_codes:
+                    cursor.execute(
+                        '''SELECT DISTINCT ip.product_id
+                           FROM api_intervention_log i
+                           JOIN api_intervention_product ip ON ip.intervention_id = i.intervention_id
+                           WHERE i.state_act_id = %s''',
+                        (state_act_id,),
+                    )
+                    hs_codes = [str(r['product_id']) for r in cursor.fetchall()]
+            except Exception as e:
+                print(f"[gta-mnt] WARNING: find_duplicates field resolution failed: {e}", file=sys.stderr)
+
+        # Aggregator: state_act_id -> candidate dict
+        candidates: dict[int, dict] = {}
+        vectors_run: list[str] = []
+
+        def _add_hit(sa: dict, vector: str, **extras):
+            sa_id = sa['state_act_id']
+            if sa_id in exclude_ids:
+                return
+            if sa_id not in candidates:
+                candidates[sa_id] = {
+                    'state_act_id': sa_id,
+                    'title': sa.get('title'),
+                    'status_id': sa.get('status_id'),
+                    'date_announced': (
+                        sa['date_announced'].strftime('%Y-%m-%d')
+                        if sa.get('date_announced') and hasattr(sa['date_announced'], 'strftime')
+                        else sa.get('date_announced')
+                    ),
+                    'match_vectors': [],
+                    'shared_urls': [],
+                    'shared_decree_tokens': [],
+                    'shared_intervention_types': [],
+                    'shared_hs_codes': [],
+                }
+            cand = candidates[sa_id]
+            if vector not in cand['match_vectors']:
+                cand['match_vectors'].append(vector)
+            for key in ('shared_urls', 'shared_decree_tokens', 'shared_intervention_types', 'shared_hs_codes'):
+                if key in extras and extras[key] is not None:
+                    val = extras[key]
+                    if val not in cand[key]:
+                        cand[key].append(val)
+
+        # Build status filter clause once
+        status_in = ','.join(['%s'] * len(include_statuses))
+
+        # ---- Vector A: URL match ----
+        if source_urls:
+            normalised_inputs = list({normalize_url(u) for u in source_urls if u})
+            if normalised_inputs:
+                vectors_run.append('URL')
+                # Pull all rows that share even a partial host with the inputs.
+                # We over-fetch by host substring to keep the SQL simple, then
+                # filter in Python on full normalised host+path.
+                hosts = list({u.split('/', 1)[0] for u in normalised_inputs if u})
+                if hosts:
+                    host_clauses = ' OR '.join(['sl.source_url LIKE %s'] * len(hosts))
+                    host_params = [f'%{h}%' for h in hosts]
+                    sql = f'''
+                        SELECT DISTINCT sa.state_act_id, sa.title, sa.status_id, sa.date_announced,
+                               sl.source_url
+                        FROM api_state_act_source sas
+                        JOIN api_source_list sl ON sas.source_id = sl.source_id
+                        JOIN api_state_act_log sa ON sa.state_act_id = sas.state_act_id
+                        WHERE ({host_clauses})
+                          AND sa.status_id IN ({status_in})
+                    '''
+                    cursor.execute(sql, host_params + include_statuses)
+                    for row in cursor.fetchall():
+                        if normalize_url(row['source_url']) in normalised_inputs:
+                            _add_hit(row, 'URL', shared_urls=row['source_url'])
+
+        # ---- Vector B: Decree number regex (within jurisdiction) ----
+        if self_title and jurisdiction_ids:
+            tokens = extract_decree_numbers(self_title)
+            if tokens:
+                vectors_run.append('DECREE')
+                jur_in = ','.join(['%s'] * len(jurisdiction_ids))
+                for token in tokens:
+                    sql = f'''
+                        SELECT DISTINCT sa.state_act_id, sa.title, sa.status_id, sa.date_announced
+                        FROM api_state_act_log sa
+                        JOIN api_intervention_log i ON i.state_act_id = sa.state_act_id
+                        JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
+                        WHERE iij.jurisdiction_id IN ({jur_in})
+                          AND sa.status_id IN ({status_in})
+                          AND sa.title LIKE %s
+                    '''
+                    cursor.execute(sql, list(jurisdiction_ids) + list(include_statuses) + [f'%{token}%'])
+                    for row in cursor.fetchall():
+                        _add_hit(row, 'DECREE', shared_decree_tokens=token)
+
+        # ---- Vector C: (IJ + date_announced ±0d + intervention_type) triple ----
+        if jurisdiction_ids and date_announced and intervention_type_ids:
+            vectors_run.append('TYPE+DATE')
+            jur_in = ','.join(['%s'] * len(jurisdiction_ids))
+            type_in = ','.join(['%s'] * len(intervention_type_ids))
+            sql = f'''
+                SELECT DISTINCT sa.state_act_id, sa.title, sa.status_id, sa.date_announced,
+                       i.intervention_type_id
+                FROM api_state_act_log sa
+                JOIN api_intervention_log i ON i.state_act_id = sa.state_act_id
+                JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
+                WHERE iij.jurisdiction_id IN ({jur_in})
+                  AND sa.status_id IN ({status_in})
+                  AND sa.date_announced = %s
+                  AND i.intervention_type_id IN ({type_in})
+            '''
+            cursor.execute(
+                sql,
+                list(jurisdiction_ids) + list(include_statuses) + [date_announced] + list(intervention_type_ids),
+            )
+            for row in cursor.fetchall():
+                _add_hit(row, 'TYPE+DATE', shared_intervention_types=row['intervention_type_id'])
+
+        # ---- Vector D: (IJ + date_announced ±window + ≥1 HS code overlap) ----
+        if jurisdiction_ids and date_announced and hs_codes:
+            vectors_run.append('HS+DATE')
+            jur_in = ','.join(['%s'] * len(jurisdiction_ids))
+            hs_int = []
+            for c in hs_codes:
+                try:
+                    hs_int.append(int(c))
+                except (TypeError, ValueError):
+                    pass
+            if hs_int:
+                hs_in = ','.join(['%s'] * len(hs_int))
+                sql = f'''
+                    SELECT DISTINCT sa.state_act_id, sa.title, sa.status_id, sa.date_announced,
+                           ip.product_id
+                    FROM api_state_act_log sa
+                    JOIN api_intervention_log i ON i.state_act_id = sa.state_act_id
+                    JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
+                    JOIN api_intervention_product ip ON ip.intervention_id = i.intervention_id
+                    WHERE iij.jurisdiction_id IN ({jur_in})
+                      AND sa.status_id IN ({status_in})
+                      AND sa.date_announced BETWEEN
+                          DATE_SUB(%s, INTERVAL %s DAY) AND DATE_ADD(%s, INTERVAL %s DAY)
+                      AND ip.product_id IN ({hs_in})
+                '''
+                cursor.execute(
+                    sql,
+                    list(jurisdiction_ids) + list(include_statuses) + [
+                        date_announced, date_window_days, date_announced, date_window_days
+                    ] + hs_int,
+                )
+                for row in cursor.fetchall():
+                    _add_hit(row, 'HS+DATE', shared_hs_codes=str(row['product_id']))
+
+        # ---- Vector E: pool collection (wide net by IJ + date window) ----
+        # Collected for the caller to feed into semantic search (Vector G).
+        # Returns intervention_ids of all candidates in the window — including
+        # status=4 (published) so the existing RAG can rank them.
+        pool_intervention_ids: list[int] = []
+        if jurisdiction_ids and date_announced:
+            vectors_run.append('POOL')
+            jur_in = ','.join(['%s'] * len(jurisdiction_ids))
+            sql = f'''
+                SELECT DISTINCT i.intervention_id
+                FROM api_intervention_log i
+                JOIN api_state_act_log sa ON sa.state_act_id = i.state_act_id
+                JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
+                WHERE iij.jurisdiction_id IN ({jur_in})
+                  AND sa.status_id IN ({status_in})
+                  AND sa.date_announced BETWEEN
+                      DATE_SUB(%s, INTERVAL %s DAY) AND DATE_ADD(%s, INTERVAL %s DAY)
+                LIMIT 1000
+            '''
+            cursor.execute(
+                sql,
+                list(jurisdiction_ids) + list(include_statuses) + [
+                    date_announced, date_window_days, date_announced, date_window_days,
+                ],
+            )
+            pool_intervention_ids = [r['intervention_id'] for r in cursor.fetchall()]
+
+        # Sort candidates: more vectors first, then by recency
+        ranked = sorted(
+            candidates.values(),
+            key=lambda c: (-len(c['match_vectors']), str(c.get('date_announced') or '')),
+            reverse=False,
+        )
+        # The above sorts ascending on date; flip so newest first within tie
+        ranked = sorted(
+            candidates.values(),
+            key=lambda c: (len(c['match_vectors']), str(c.get('date_announced') or '')),
+            reverse=True,
+        )
+
+        return {
+            'candidates': ranked[:limit],
+            'pool_intervention_ids': pool_intervention_ids,
+            'self_title': self_title,
+            'self_description': self_description,
+            'vectors_run': vectors_run,
+            'inputs_resolved': {
+                'state_act_id': state_act_id,
+                'jurisdiction_ids': jurisdiction_ids,
+                'date_announced': date_announced,
+                'intervention_type_ids': intervention_type_ids,
+                'hs_codes': hs_codes,
+                'source_urls': source_urls,
+                'date_window_days': date_window_days,
+                'include_statuses': include_statuses,
+                'exclude_state_act_ids': exclude_ids,
+            },
+        }
 
 
 # Backwards compatibility alias
