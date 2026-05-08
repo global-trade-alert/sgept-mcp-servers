@@ -35,5 +35,11 @@
     "description": "Bucerca Claudini — DPA leads search",
     "token_env": "SLACK_BOT_TOKEN_BUCERCA",
     "send_enabled": true
+  },
+  {
+    "name": "claudito",
+    "description": "Sancho Claudito bot",
+    "token_env": "SLACK_BOT_TOKEN_CLAUDITO",
+    "send_enabled": true
   }
 ]

@@ -20,6 +20,7 @@ from .models import (
     GetReactionsInput,
     GetUserPresenceInput,
     SendBlockKitInput,
+    UploadFileInput,
     CreateChannelInput,
     ScheduleMessageInput,
     DeleteScheduledMessageInput,
@@ -562,6 +563,13 @@ async def slack_send_block_kit(params: SendBlockKitInput) -> str:
         text: Fallback text for notifications and accessibility
         thread_ts: Reply in thread if provided
         force: Bypass anti-noise rate limit for unsolicited DMs
+        file_path: Optional local file path. If given, the Block Kit message is
+            posted first, then the file is uploaded as a reply in the same thread
+            (Slack does not support blocks + files in a single API call). Token
+            must have OAuth scope `files:write`.
+        attachments: Optional legacy attachments JSON string (color sidebars etc.)
+        unfurl_links / unfurl_media: Allow Slack to unfurl links/media (default false)
+        reply_broadcast: When threading, also broadcast to channel (default false)
 
     Example:
         channel="C1234567890", blocks='[{"type":"section","text":{"type":"mrkdwn","text":"Hello!"}}]', text="Hello!"
@@ -587,17 +595,140 @@ async def slack_send_block_kit(params: SendBlockKitInput) -> str:
         except json.JSONDecodeError as e:
             return f"Error: Invalid blocks JSON: {e}"
 
+        # Parse optional attachments JSON
+        attachments = None
+        if params.attachments:
+            try:
+                attachments = json.loads(params.attachments)
+            except json.JSONDecodeError as e:
+                return f"Error: Invalid attachments JSON: {e}"
+
+        # Pre-flight check: if file_path was given, validate before sending the message
+        if params.file_path:
+            from pathlib import Path
+            fp = Path(params.file_path).expanduser()
+            if not fp.exists() or not fp.is_file():
+                return f"Error: file_path not found: {fp}"
+
         response = await client.send_block_kit(
             channel=params.channel,
             blocks=blocks,
             text=params.text,
             thread_ts=params.thread_ts,
+            attachments=attachments,
+            unfurl_links=params.unfurl_links,
+            unfurl_media=params.unfurl_media,
+            reply_broadcast=params.reply_broadcast,
         )
 
         if response.ok:
             _record_unsolicited_send(params.channel, identity)
 
+            # Optional file attachment: upload as a thread reply to the message we just sent.
+            if params.file_path:
+                upload_thread_ts = params.thread_ts or response.ts
+                upload_result = await client.upload_file(
+                    channel_id=params.channel,
+                    file_path=params.file_path,
+                    thread_ts=upload_thread_ts,
+                )
+                if not upload_result.get("ok"):
+                    # Message went out but file upload failed — surface clearly.
+                    base = format_send_response_markdown(response)
+                    return f"{base}\n\nWarning: file upload failed: {upload_result.get('error')}"
+                base = format_send_response_markdown(response)
+                return (
+                    f"{base}\n\nFile attached to thread "
+                    f"(file_id={upload_result.get('file_id')}, "
+                    f"permalink={upload_result.get('permalink')})."
+                )
+
         return format_send_response_markdown(response)
+
+    except (SlackClientError, ValueError) as e:
+        return f"Error: {e}"
+
+
+@mcp.tool(
+    name="slack_upload_file",
+    annotations={
+        "title": "Upload File to Slack",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def slack_upload_file(params: UploadFileInput) -> str:
+    """Upload a local file and share it to a Slack channel or DM.
+
+    WARNING: This tool is DISABLED by default for safety. Enable with
+    send_enabled=true on the identity.
+
+    Token must have OAuth scope `files:write`. Wraps `files_upload_v2`
+    (the modern 3-step API: getUploadURLExternal → PUT → completeUploadExternal).
+
+    Args:
+        channel_id: Channel or DM ID to share the file in
+        file_path: Absolute local path to the file
+        title: Display title (defaults to filename)
+        initial_comment: Optional message that accompanies the file
+        thread_ts: Upload as a reply in this thread (parent timestamp)
+        force: Bypass anti-noise rate limit for unsolicited DMs (default: false)
+
+    Example:
+        channel_id="D084GQ42BJQ",
+        file_path="/path/to/report.xlsx",
+        initial_comment="Latest preview — let me know if anything's off"
+    """
+    try:
+        client, identity = get_client(params.identity)
+
+        if not identity.send_enabled:
+            return (
+                f"Error: File upload is DISABLED for identity '{identity.name}'.\n\n"
+                "This identity does not have send_enabled=true in identities.json.\n"
+                "This is a security feature to prevent accidental sends."
+            )
+
+        # Anti-noise rate limit check (uploads are noisier than text — same gate applies)
+        rate_limit_error = _check_unsolicited_rate_limit(params.channel_id, identity, params.force)
+        if rate_limit_error:
+            return rate_limit_error
+
+        # Pre-flight file checks (size cap, existence) — fail fast before hitting the API
+        from pathlib import Path
+        path = Path(params.file_path).expanduser()
+        if not path.exists() or not path.is_file():
+            return f"Error: file not found: {path}"
+        size = path.stat().st_size
+        if size == 0:
+            return f"Error: file is empty: {path}"
+        # Soft 100MB cap; Slack free hard limit is 1GB but uploads slow down past 100MB
+        if size > 100 * 1024 * 1024:
+            return f"Error: {path.name} is {size:,} bytes (>100MB cap). Refuse to upload."
+
+        result = await client.upload_file(
+            channel_id=params.channel_id,
+            file_path=str(path),
+            title=params.title,
+            initial_comment=params.initial_comment,
+            thread_ts=params.thread_ts,
+        )
+
+        if not result.get("ok"):
+            return f"Error: {result.get('error')}"
+
+        _record_unsolicited_send(params.channel_id, identity)
+
+        return (
+            f"## File Uploaded Successfully\n\n"
+            f"- File: `{path.name}` ({size:,} bytes)\n"
+            f"- Channel: `{params.channel_id}`\n"
+            f"- File ID: `{result.get('file_id')}`\n"
+            f"- Permalink: {result.get('permalink')}"
+            + (f"\n- Thread: `{params.thread_ts}`" if params.thread_ts else "")
+        )
 
     except (SlackClientError, ValueError) as e:
         return f"Error: {e}"

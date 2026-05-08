@@ -662,6 +662,10 @@ class SlackAPIClient:
         blocks: list,
         text: str,
         thread_ts: Optional[str] = None,
+        attachments: Optional[list] = None,
+        unfurl_links: bool = False,
+        unfurl_media: bool = False,
+        reply_broadcast: bool = False,
     ) -> SendMessageResponse:
         """
         Send a Block Kit message to a channel or DM.
@@ -671,6 +675,10 @@ class SlackAPIClient:
             blocks: Block Kit blocks (list of block dicts)
             text: Fallback text for notifications
             thread_ts: Reply in thread if provided
+            attachments: Optional legacy attachments array (list of attachment dicts)
+            unfurl_links: Allow link unfurling (default False — secure default)
+            unfurl_media: Allow media unfurling (default False — secure default)
+            reply_broadcast: When threading, broadcast the reply to the channel
 
         Returns:
             Send result with message ts
@@ -679,11 +687,15 @@ class SlackAPIClient:
             "channel": channel,
             "blocks": blocks,
             "text": text,
-            "unfurl_links": False,
-            "unfurl_media": False,
+            "unfurl_links": unfurl_links,
+            "unfurl_media": unfurl_media,
         }
         if thread_ts:
             kwargs["thread_ts"] = thread_ts
+            if reply_broadcast:
+                kwargs["reply_broadcast"] = True
+        if attachments:
+            kwargs["attachments"] = attachments
 
         try:
             result = await self._call_with_retry("chat_postMessage", **kwargs)
@@ -694,6 +706,62 @@ class SlackAPIClient:
             )
         except SlackClientError as e:
             return SendMessageResponse(ok=False, error=str(e))
+
+    async def upload_file(
+        self,
+        channel_id: str,
+        file_path: str,
+        title: Optional[str] = None,
+        initial_comment: Optional[str] = None,
+        thread_ts: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """
+        Upload a local file and share it to a channel/DM.
+
+        Wraps slack_sdk's files_upload_v2 (which orchestrates the modern 3-step
+        getUploadURLExternal → PUT → completeUploadExternal flow). Requires the
+        token to have OAuth scope `files:write`.
+
+        Args:
+            channel_id: Channel or DM ID to share the file in
+            file_path: Local path to the file
+            title: Display title (defaults to filename)
+            initial_comment: Optional message text accompanying the file
+            thread_ts: Optional thread parent to reply into
+
+        Returns:
+            Dict with keys: ok, file_id, permalink, channel_id, error (if !ok)
+        """
+        from pathlib import Path
+
+        path = Path(file_path).expanduser()
+        if not path.exists() or not path.is_file():
+            return {"ok": False, "error": f"file not found: {path}"}
+
+        kwargs: dict[str, Any] = {
+            "channel": channel_id,
+            "file": str(path),
+            "title": title or path.name,
+        }
+        if initial_comment:
+            kwargs["initial_comment"] = initial_comment
+        if thread_ts:
+            kwargs["thread_ts"] = thread_ts
+
+        try:
+            result = await self._call_with_retry("files_upload_v2", **kwargs)
+            files = result.get("files") or [result.get("file")] if result.get("file") else result.get("files", [])
+            file_obj = (files or [{}])[0] if files else {}
+            return {
+                "ok": True,
+                "file_id": file_obj.get("id"),
+                "permalink": file_obj.get("permalink"),
+                "title": file_obj.get("title"),
+                "channel_id": channel_id,
+                "size": file_obj.get("size"),
+            }
+        except SlackClientError as e:
+            return {"ok": False, "error": str(e)}
 
     async def create_channel(
         self,

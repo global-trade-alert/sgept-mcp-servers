@@ -307,6 +307,76 @@ class SendBlockKitInput(BaseModel):
         default=False,
         description="Bypass anti-noise rate limit for unsolicited DMs (default: false)"
     )
+    file_path: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional path to a local file to attach. The Block Kit message is posted first; "
+            "the file is then uploaded as a reply in the same thread (Slack does not support "
+            "blocks + files in a single API call)."
+        )
+    )
+    attachments: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional legacy 'attachments' array as JSON string. Use for status sidebars / "
+            "color-coded notifications that Block Kit cannot express. Most callers should "
+            "use blocks instead."
+        )
+    )
+    unfurl_links: bool = Field(
+        default=False,
+        description="Allow Slack to unfurl HTTP links in the message (default: false for security)."
+    )
+    unfurl_media: bool = Field(
+        default=False,
+        description="Allow Slack to unfurl media URLs in the message (default: false for security)."
+    )
+    reply_broadcast: bool = Field(
+        default=False,
+        description=(
+            "When threading, also broadcast the reply to the channel. Ignored when thread_ts is "
+            "not set."
+        )
+    )
+
+
+class UploadFileInput(BaseModel):
+    """Input for slack_upload_file tool."""
+    model_config = ConfigDict(extra='forbid')
+
+    identity: Optional[str] = Field(
+        default=None,
+        description="Slack identity to use (e.g., 'claudino', 'claudante', 'johannes'). Uses default if omitted."
+    )
+    channel_id: str = Field(
+        ...,
+        description="Channel or DM ID to share the file in",
+        pattern=r"^[CDGW][A-Z0-9]{8,}$"
+    )
+    file_path: str = Field(
+        ...,
+        min_length=1,
+        description="Absolute path to a local file to upload"
+    )
+    title: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Display title for the file (defaults to the filename)"
+    )
+    initial_comment: Optional[str] = Field(
+        default=None,
+        max_length=40000,
+        description="Optional message text that accompanies the file in the channel/DM"
+    )
+    thread_ts: Optional[str] = Field(
+        default=None,
+        description="Upload as a reply in this thread (parent message timestamp)",
+        pattern=r"^\d+\.\d+$"
+    )
+    force: bool = Field(
+        default=False,
+        description="Bypass anti-noise rate limit for unsolicited DMs (default: false)"
+    )
 
 
 class CreateChannelInput(BaseModel):
