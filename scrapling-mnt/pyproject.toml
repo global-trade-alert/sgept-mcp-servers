@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
-    "scrapling>=0.2.9",
+    "scrapling>=0.4.7",
+    "curl-cffi>=0.7.0",
+    "camoufox[geoip]>=0.4.0",
     "pydantic>=2.0.0",
     "pypdf>=4.0.0",
     "httpx>=0.26.0",
@@ -17,9 +19,6 @@ dependencies = [
 
 [project.scripts]
 scrapling-mnt = "scrapling_mnt.server:main"
-
-[project.optional-dependencies]
-camoufox = ["camoufox[geoip]>=0.4.0"]
 
 [build-system]
 requires = ["hatchling"]
