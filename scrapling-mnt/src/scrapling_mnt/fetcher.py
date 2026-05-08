@@ -331,10 +331,12 @@ async def scrape_url(
                         status=result.status, content_type=result.content_type)
         return result
 
-    if not _looks_blocked(body or "", status):
-        text = _html_to_markdown(body or "")
-        if text:
-            cache.write(url, text, strategy="static", status=status, content_type=ct)
+    text = _html_to_markdown(body or "")
+    # Escalate to stealth on either (a) hostile raw response (status codes,
+    # JS placeholder) or (b) extracted text is too thin — catches SPAs whose
+    # raw HTML is large but renders almost nothing without JS.
+    if not _looks_blocked(body or "", status) and len(text.strip()) >= 200:
+        cache.write(url, text, strategy="static", status=status, content_type=ct)
         return FetchResult(url=url, content=text, status=status,
                            strategy_used="static", content_type=ct,
                            fetched_at=time.time())
