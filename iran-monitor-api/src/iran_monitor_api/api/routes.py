@@ -69,6 +69,7 @@ async def create_query(
         horizon=body.horizon.value,
         tier=body.tier,
         perspectives_invoked=perspectives,
+        deliver_to=body.deliver_to,
     )
 
     return CreateQueryResponse(

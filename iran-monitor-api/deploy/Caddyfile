@@ -1,0 +1,71 @@
+# Iran Monitor Inference API — Caddy reverse-proxy config for Metis.
+#
+# Two virtual hosts:
+#   api.iran-monitor.sgept.org    → reverse proxy to the local FastAPI service
+#   iran-monitor.sgept.org        → static landing page
+#
+# Caddy handles ACME / Let's Encrypt automatically.
+#
+# Install on Metis:
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile.d/iran-monitor.caddy
+#   sudo systemctl reload caddy
+#
+# DNS prereq (do these in your registrar / Cloudflare):
+#   A     iran-monitor.sgept.org           → 204.168.141.21
+#   A     api.iran-monitor.sgept.org       → 204.168.141.21
+
+api.iran-monitor.sgept.org {
+    encode zstd gzip
+
+    # Standard hardening headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options    "nosniff"
+        X-Frame-Options           "DENY"
+        Referrer-Policy           "no-referrer"
+        # No CORS — institutional buyers call from servers, not browsers.
+        # Add CORS explicitly if a buyer requests browser-side use.
+    }
+
+    # The API service binds to 127.0.0.1:8080 (see Settings.host/.port).
+    reverse_proxy 127.0.0.1:8080 {
+        # Long timeouts — Premium queries can take 60 min before the worker
+        # writes a result, but each GET poll is short. Reverse-proxy timeouts
+        # apply per-request, not to the worker's background work.
+        transport http {
+            response_header_timeout 60s
+            read_timeout 60s
+        }
+    }
+
+    log {
+        output file /var/log/caddy/iran-monitor-api.log {
+            roll_size 50mb
+            roll_keep 7
+        }
+        format json
+    }
+}
+
+iran-monitor.sgept.org {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options    "nosniff"
+        Referrer-Policy           "no-referrer-when-downgrade"
+        # Allow the page to be embedded in a sales deck iframe if needed
+        X-Frame-Options           "SAMEORIGIN"
+    }
+
+    root * /home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api/landing
+    file_server
+
+    log {
+        output file /var/log/caddy/iran-monitor-landing.log {
+            roll_size 10mb
+            roll_keep 7
+        }
+        format json
+    }
+}

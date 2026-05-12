@@ -15,6 +15,7 @@ from uuid import UUID
 
 from . import db
 from .config import get_settings
+from .email_delivery import EmailDeliveryError, send_completion_email
 from .errors import ErrorCode
 from .gather import run_premium_gather, GatherError
 from .intel_base import read_sealed_hash
@@ -101,6 +102,31 @@ async def _process_one(row: dict) -> None:
             error_code=ErrorCode.QUORUM_FAILED.value if status == Status.FAILED else None,
         )
         logger.info("completed %s status=%s runtime=%ds", qid, status.value, runtime)
+
+        # Optional email delivery. Best-effort: a delivery failure does NOT
+        # fail the query — the buyer can still poll. We just record the
+        # delivery status so ops can spot patterns.
+        deliver_to = row.get("deliver_to")
+        if deliver_to and status != Status.FAILED:
+            try:
+                send_completion_email(
+                    deliver_to=deliver_to,
+                    scenario=scenario,
+                    query_id=qid,
+                    intelligence_base_hash=intel_hash,
+                    briefing_markdown=(result.get("briefing_markdown") or "" if isinstance(result, dict) else ""),
+                    full_result_json={
+                        "query_id": str(qid),
+                        "status": status.value,
+                        "result": result,
+                        "audit_record": audit_dict,
+                        "audit_signature": sig,
+                    },
+                )
+                db.update_delivery_status(qid, "delivered")
+            except EmailDeliveryError as e:
+                logger.warning("email delivery to %s failed for %s: %s", deliver_to, qid, e)
+                db.update_delivery_status(qid, f"failed: {str(e)[:120]}")
     except Exception as e:
         logger.exception("worker crash on query %s: %s", qid, e)
         runtime = int((utc_now() - started).total_seconds())

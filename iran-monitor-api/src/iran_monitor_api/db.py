@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS queries (
     started_at_utc   TEXT,
     completed_at_utc TEXT,
     error_code TEXT,
-    runtime_seconds INTEGER
+    runtime_seconds INTEGER,
+    deliver_to TEXT,
+    delivery_status TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_queries_status ON queries(status);
@@ -95,13 +97,14 @@ def enqueue_query(
     horizon: str,
     tier: Tier,
     perspectives_invoked: list[str],
+    deliver_to: str | None = None,
 ) -> None:
     with get_conn() as conn, _lock:
         conn.execute(
             """INSERT INTO queries (
                    query_id, org_id, api_key, scenario, horizon, tier,
-                   perspectives_invoked, status, submitted_at_utc
-               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   perspectives_invoked, status, submitted_at_utc, deliver_to
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 str(query_id),
                 org_id,
@@ -112,7 +115,16 @@ def enqueue_query(
                 json.dumps(perspectives_invoked),
                 Status.QUEUED.value,
                 utc_now().isoformat(),
+                deliver_to,
             ),
+        )
+
+
+def update_delivery_status(query_id: UUID, status: str) -> None:
+    with get_conn() as conn, _lock:
+        conn.execute(
+            "UPDATE queries SET delivery_status = ? WHERE query_id = ?",
+            (status, str(query_id)),
         )
 
 

@@ -71,6 +71,25 @@ class CreateQueryRequest(BaseModel):
     horizon: Horizon
     tier: Tier
     perspectives: list[str] | None = None
+    deliver_to: str | None = Field(
+        default=None,
+        description=(
+            "Optional email address for delivery of the completed briefing. "
+            "If set, we send an HTML email with JSON + signed audit attached "
+            "when the query completes. Polling still works in parallel."
+        ),
+    )
+
+    @field_validator("deliver_to")
+    @classmethod
+    def validate_deliver_to(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        # Cheap email-shape check; SMTP layer will reject malformed addresses anyway.
+        if "@" not in v or len(v) < 5 or len(v) > 254:
+            raise ValueError("deliver_to must look like an email address")
+        return v
 
     @field_validator("scenario")
     @classmethod
@@ -123,12 +142,42 @@ class PerspectiveOutput(BaseModel):
     divergence_from_consensus_pp: float | None = None
 
 
+class MajorDisagreement(BaseModel):
+    """A cluster of perspectives that diverge from another cluster on a specific
+    sub-question. Surfaced for the buyer because the *substance* of disagreement
+    is often more actionable than the consensus number."""
+
+    topic: str  # e.g. "Likelihood of German government public attribution"
+    spread_pp: float  # max - min across the involved perspectives
+    high_side: list[str]  # perspective names taking the higher-P position
+    low_side: list[str]  # perspective names taking the lower-P position
+    narrative: str  # 1–3 sentences naming the substantive split
+
+
+class HighElasticityEvent(BaseModel):
+    """An event that, if it materialised, would shift the assessed probability
+    materially (>5pp). The buyer monitors for these signals to know when to
+    re-query. Parallels the iran-monitor cron's "event elasticity tiers"
+    methodology."""
+
+    event: str  # the named event (concrete, observable)
+    shift_direction: Literal["up", "down"]
+    magnitude_pp: str  # e.g. "+8 to +12" — LLM-generated range, string to preserve
+    monitor: str  # what the buyer should watch to detect this event
+
+
 class QueryResult(BaseModel):
     p_point: float = Field(ge=0.0, le=1.0)
     p_interval: tuple[float, float]
     divergence_flag: bool
     consensus_summary: str
     perspectives: list[PerspectiveOutput]
+    # Phase 1.5 additions — populated by the briefing-writer subagent after
+    # aggregation. Empty lists / empty string are valid (Standard tier may
+    # not run the briefing writer to save compute).
+    major_disagreements: list[MajorDisagreement] = []
+    high_elasticity_events: list[HighElasticityEvent] = []
+    briefing_markdown: str = ""
 
 
 class AuditRecord(BaseModel):

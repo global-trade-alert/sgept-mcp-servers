@@ -24,6 +24,7 @@ from typing import Any
 from uuid import UUID
 
 from . import db, signing
+from .briefing_writer import parse_briefing_output, write_briefing
 from .config import get_settings
 from .errors import ErrorCode
 from .gather import build_intel_base_summary
@@ -127,6 +128,46 @@ async def run_assess(
     # Aggregate
     result = _aggregate(completed)
     status = Status.PARTIAL if failed else Status.COMPLETED
+
+    # Briefing-writer pass: synthesise the per-perspective outputs into a
+    # buyer-facing briefing. Value-add, not load-bearing — if it fails, the
+    # query still returns with the raw aggregation. Run for Premium tier
+    # always; for Standard tier the buyer chose the cheap path so we skip
+    # this compute step.
+    if tier == Tier.PREMIUM:
+        try:
+            briefing_dir = settings.query_outputs_dir / str(query_id)
+            briefing_raw = await write_briefing(
+                query_id=query_id,
+                scenario=scenario,
+                horizon_days=horizon_days,
+                p_point=result.p_point,
+                p_interval=result.p_interval,
+                divergence_flag=result.divergence_flag,
+                consensus_summary=result.consensus_summary,
+                perspectives=[
+                    {
+                        "name": p.name,
+                        "p_point": p.p_point,
+                        "p_interval": list(p.p_interval) if p.p_interval else None,
+                        "key_reasoning": p.key_reasoning,
+                        "evidence_urls": p.evidence_urls,
+                        "divergence_from_consensus_pp": p.divergence_from_consensus_pp,
+                    }
+                    for p in result.perspectives
+                ],
+                intel_base_hash=intel_base_hash,
+                output_dir=briefing_dir,
+            )
+            disagreements, elasticity, briefing_md = parse_briefing_output(briefing_raw)
+            result = result.model_copy(update={
+                "major_disagreements": disagreements,
+                "high_elasticity_events": elasticity,
+                "briefing_markdown": briefing_md,
+            })
+        except SubagentError as e:
+            logger.warning("briefing writer failed for %s: %s — returning raw aggregation", query_id, e)
+            # result keeps its default empty briefing fields
 
     audit = _build_audit_record(
         query_id=query_id,

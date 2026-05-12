@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     audit_retention_months: int = 24
     query_delta_retention_days: int = 90
 
+    # Email delivery (optional — set to enable deliver_to on queries)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_use_ssl: bool = False        # SMTPS (port 465)
+    smtp_use_starttls: bool = True    # STARTTLS on port 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""               # e.g. "iran-monitor@sgept.org"
+
     @property
     def db_path(self) -> Path:
         return self.base_dir / "queries.sqlite"
