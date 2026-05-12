@@ -3,7 +3,12 @@
 Single-URL strategy auto-cascade:
   1. static  — Scrapling.Fetcher (httpx-based, fast, follows redirects)
   2. stealth — Scrapling.StealthyFetcher (Camoufox/Firefox, anti-bot, JS)
-  3. js      — Scrapling.PlayWrightFetcher (Chromium fallback if camoufox unavailable)
+  3. js      — Scrapling.DynamicFetcher (Chromium/Playwright; full JS execution).
+                When the URL hints at PDF, registers a network-response listener
+                and returns the intercepted PDF binary instead of the rendered
+                HTML — handles SPA wrappers like the EAEU document portal where
+                /filestorage/foo.pdf serves an Angular shell that fetches the
+                real PDF from a separate /platformsvc/filestorage/get endpoint.
   4. pdf     — pypdf for native, OCR fallback for scanned
 
 Outputs: markdown (via BeautifulSoup text extraction) for HTML, raw text for PDF.
@@ -36,7 +41,7 @@ from .allowlist import URLRejected, check_url
 _BROWSER_SEMAPHORE: Optional[asyncio.Semaphore] = None
 _STATIC_FETCHER = None  # lazy
 _STEALTH_FETCHER = None  # lazy
-_PLAYWRIGHT_FETCHER = None  # lazy
+_DYNAMIC_FETCHER = None  # lazy
 _LAST_FETCH_AT: float = 0.0
 _FETCH_COUNT: int = 0
 
@@ -162,15 +167,25 @@ async def _fetch_stealth(url: str, timeout: int) -> tuple[Optional[str], int, st
     return body, status, "text/html; charset=utf-8"
 
 
-async def _fetch_playwright(url: str, timeout: int) -> tuple[Optional[str], int, str]:
-    """Chromium fallback via Scrapling.PlayWrightFetcher."""
-    global _PLAYWRIGHT_FETCHER
-    if _PLAYWRIGHT_FETCHER is None:
-        from scrapling.fetchers import PlayWrightFetcher
-        _PLAYWRIGHT_FETCHER = PlayWrightFetcher
+def _dynamic_fetcher():
+    """Lazy import of scrapling.fetchers.DynamicFetcher (Chromium/Playwright)."""
+    global _DYNAMIC_FETCHER
+    if _DYNAMIC_FETCHER is None:
+        from scrapling.fetchers import DynamicFetcher
+        _DYNAMIC_FETCHER = DynamicFetcher
+    return _DYNAMIC_FETCHER
+
+
+async def _fetch_js(url: str, timeout: int) -> tuple[Optional[str], int, str]:
+    """JS-rendered fetch via Scrapling.DynamicFetcher (Chromium/Playwright).
+
+    Use when stealth (Camoufox) can't bootstrap the page or when the page is
+    a single-page app whose initial HTML is empty until JS runs.
+    """
+    fetcher = _dynamic_fetcher()
 
     def _go():
-        return _PLAYWRIGHT_FETCHER.fetch(
+        return fetcher.fetch(
             url,
             headless=True,
             network_idle=True,
@@ -186,16 +201,94 @@ async def _fetch_playwright(url: str, timeout: int) -> tuple[Optional[str], int,
     return body, status, "text/html; charset=utf-8"
 
 
-async def _fetch_pdf(url: str, timeout: int, ocr_fallback: bool) -> FetchResult:
-    """PDF branch: download, extract via pypdf, OCR fallback if empty."""
-    import httpx
+def _looks_like_pdf(b: bytes) -> bool:
+    return isinstance(b, (bytes, bytearray)) and b[:4] == b"%PDF"
+
+
+async def _fetch_js_intercept_pdf(
+    url: str, timeout: int
+) -> tuple[Optional[bytes], int, str, Optional[str]]:
+    """Render `url` with DynamicFetcher and intercept any PDF binary the page
+    fetches via XHR. Returns (pdf_bytes, status, content_type, intercepted_url).
+
+    Designed for SPA wrappers: a URL like /dimd/filestorage/foo.pdf returns the
+    Angular shell, which then fetches the real PDF from /platformsvc/.../get.
+    We register a `response` listener via `page_setup` so it's installed BEFORE
+    navigation, then read `resp.body()` (sync API) for any PDF/octet-stream
+    response with PDF magic bytes.
+
+    Falls back to (None, status, "text/html", None) if no PDF was intercepted —
+    caller can then treat it as a regular JS-rendered page.
+    """
+    fetcher = _dynamic_fetcher()
+    captured: list[tuple[str, str, bytes]] = []  # (url, content_type, body)
+
+    def setup(page):
+        def on_response(resp):
+            try:
+                ct = (resp.headers or {}).get("content-type", "") or ""
+                low = ct.lower()
+                if "pdf" not in low and "octet-stream" not in low:
+                    return
+                body = resp.body()  # sync Playwright API → bytes
+                if not body or not _looks_like_pdf(body):
+                    return
+                captured.append((resp.url, ct, body))
+            except Exception:
+                # Response may be torn down or non-buffered; ignore and keep going.
+                return
+        page.on("response", on_response)
+
+    def _go():
+        return fetcher.fetch(
+            url,
+            headless=True,
+            network_idle=True,
+            timeout=timeout * 1000,
+            page_setup=setup,
+        )
+
+    async with browser_semaphore():
+        page = await asyncio.to_thread(_go)
+    status = getattr(page, "status", 0) or 0
+
+    if captured:
+        # Prefer the first PDF response that isn't trivially small.
+        captured.sort(key=lambda c: -len(c[2]))
+        pdf_url, ct, body = captured[0]
+        return body, status, (ct or "application/pdf"), pdf_url
+
+    return None, status, "text/html; charset=utf-8", None
+
+
+async def _fetch_pdf(
+    url: str,
+    timeout: int,
+    ocr_fallback: bool,
+    *,
+    prefetched: Optional[bytes] = None,
+    prefetched_status: int = 200,
+    prefetched_content_type: str = "application/pdf",
+    strategy_label: str = "pdf",
+) -> FetchResult:
+    """PDF branch: extract via pypdf, OCR fallback if empty.
+
+    If `prefetched` is provided, skip the HTTP download — used by the
+    JS-intercept path which already captured the PDF binary via Playwright.
+    """
     from pypdf import PdfReader
 
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-        resp = await client.get(url, headers={"User-Agent": "scrapling-mnt/0.1"})
-    status = resp.status_code
-    content_type = resp.headers.get("content-type", "application/pdf")
-    pdf_bytes = resp.content
+    if prefetched is not None:
+        pdf_bytes = prefetched
+        status = prefetched_status
+        content_type = prefetched_content_type
+    else:
+        import httpx
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            resp = await client.get(url, headers={"User-Agent": "scrapling-mnt/0.1"})
+        status = resp.status_code
+        content_type = resp.headers.get("content-type", "application/pdf")
+        pdf_bytes = resp.content
 
     cache.write_bytes(
         url, pdf_bytes,
@@ -212,7 +305,7 @@ async def _fetch_pdf(url: str, timeout: int, ocr_fallback: bool) -> FetchResult:
     except Exception as exc:
         return FetchResult(
             url=url, content="", status=status,
-            strategy_used="pdf", content_type=content_type,
+            strategy_used=strategy_label, content_type=content_type,
             fetched_at=time.time(),
             error=f"pypdf failed: {exc}",
         )
@@ -222,7 +315,7 @@ async def _fetch_pdf(url: str, timeout: int, ocr_fallback: bool) -> FetchResult:
     if text.strip() or not ocr_fallback:
         return FetchResult(
             url=url, content=text, status=status,
-            strategy_used="pdf", content_type=content_type,
+            strategy_used=strategy_label, content_type=content_type,
             fetched_at=time.time(),
         )
 
@@ -238,7 +331,7 @@ async def _fetch_pdf(url: str, timeout: int, ocr_fallback: bool) -> FetchResult:
     except Exception as exc:
         return FetchResult(
             url=url, content=text, status=status,
-            strategy_used="pdf", content_type=content_type,
+            strategy_used=strategy_label, content_type=content_type,
             fetched_at=time.time(),
             error=f"OCR fallback failed: {exc}",
         )
@@ -259,11 +352,15 @@ async def scrape_url(
     """Fetch a single URL with cascade.
 
     Strategy:
-      - "auto"    — static → stealth → (pdf branch if content-type pdf)
+      - "auto"    — static → stealth → (pdf branch if content-type pdf);
+                    additionally: if URL hints PDF but static returned HTML,
+                    escalate to JS+intercept which renders the page in
+                    Chromium and captures the real PDF binary off the wire
+                    (handles SPA-wrapped PDF viewers like the EAEU portal).
       - "static"  — Scrapling.Fetcher only
       - "stealth" — StealthyFetcher (Camoufox) only
-      - "js"      — PlayWrightFetcher (Chromium) only
-      - "pdf"     — direct PDF branch
+      - "js"      — DynamicFetcher (Chromium) only
+      - "pdf"     — direct PDF branch (httpx download)
     """
     global _LAST_FETCH_AT, _FETCH_COUNT
 
@@ -301,7 +398,23 @@ async def scrape_url(
         return result
 
     if strategy == "js":
-        body, status, ct = await _fetch_playwright(url, timeout)
+        # If URL hints PDF, try JS+intercept first; otherwise plain JS render.
+        if url.lower().endswith(".pdf"):
+            pdf_bytes, status, ct, intercepted = await _fetch_js_intercept_pdf(url, timeout)
+            if pdf_bytes is not None:
+                result = await _fetch_pdf(
+                    url, timeout, ocr_fallback,
+                    prefetched=pdf_bytes,
+                    prefetched_status=status,
+                    prefetched_content_type=ct,
+                    strategy_label="js-pdf",
+                )
+                if result.content:
+                    cache.write(url, result.content, strategy=result.strategy_used,
+                                status=result.status, content_type=result.content_type)
+                return result
+            # No PDF intercepted; fall through to plain JS render.
+        body, status, ct = await _fetch_js(url, timeout)
         text = _html_to_markdown(body or "")
         result = FetchResult(url=url, content=text, status=status,
                              strategy_used="js", content_type=ct,
@@ -324,12 +437,38 @@ async def scrape_url(
 
     # auto cascade
     body, status, ct = await _fetch_static(url, timeout)
-    if _is_pdf(ct, url):
+    ct_lower = (ct or "").lower()
+    is_html_response = "html" in ct_lower
+    is_pdf_response = "application/pdf" in ct_lower
+
+    if is_pdf_response:
+        # Real PDF — re-download via httpx in _fetch_pdf to keep bytes intact.
+        # We could try to reuse the static fetcher's body, but Scrapling.Fetcher
+        # decodes responses to str, which corrupts binary PDF data on round-trip.
         result = await _fetch_pdf(url, timeout, ocr_fallback)
         if result.content:
             cache.write(url, result.content, strategy=result.strategy_used,
                         status=result.status, content_type=result.content_type)
         return result
+
+    # SPA-wrapped PDF detector: URL ends in .pdf but server returned HTML.
+    # Static and stealth will both get the SPA shell; only Chromium can render
+    # the page and trigger the XHR that fetches the real PDF binary.
+    if url.lower().endswith(".pdf") and is_html_response:
+        pdf_bytes, status_js, ct_js, intercepted = await _fetch_js_intercept_pdf(url, timeout)
+        if pdf_bytes is not None:
+            result = await _fetch_pdf(
+                url, timeout, ocr_fallback,
+                prefetched=pdf_bytes,
+                prefetched_status=status_js,
+                prefetched_content_type=ct_js,
+                strategy_label="js-pdf",
+            )
+            if result.content:
+                cache.write(url, result.content, strategy=result.strategy_used,
+                            status=result.status, content_type=result.content_type)
+            return result
+        # JS+intercept didn't find a PDF — fall through to normal HTML cascade.
 
     text = _html_to_markdown(body or "")
     # Escalate to stealth on either (a) hostile raw response (status codes,
