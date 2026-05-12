@@ -1,0 +1,26 @@
+[Unit]
+Description=Iran Monitor Inference API (Worker)
+After=network.target iran-monitor-api.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api
+EnvironmentFile=/home/deploy/.config/iran-monitor-api.env
+ExecStart=/home/deploy/.local/bin/uv run iran-monitor-worker
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/deploy/iran-monitor-worker.log
+StandardError=append:/home/deploy/iran-monitor-worker.log
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api/data \
+               /home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api/keys \
+               /home/deploy/iran-monitor-worker.log
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
