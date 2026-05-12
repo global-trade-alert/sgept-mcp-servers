@@ -189,7 +189,7 @@ class LogReviewInput(_StrictInput):
 
 class LookupInput(_StrictInput):
     """Input for looking up reference table values."""
-    table: str = Field(..., description="Table short name: jurisdiction, product, sector, rationale, unit, firm, intervention_type, mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm, implementation_level, intervention_area, firm_role, level_type")
+    table: str = Field(..., description="Table short name: jurisdiction, product, sector, rationale, unit, firm, intervention_type, mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm, implementation_level, intervention_area, firm_role, level_type, action")
     query: str = Field(..., description="Search string (matched with LIKE %%query%%)")
     limit: int = Field(default=20, ge=1, le=100, description="Max results to return")
 
@@ -239,7 +239,8 @@ class AddIJInput(_StrictInput):
 
 
 class AddProductInput(_StrictInput):
-    """Input for adding affected product to an intervention."""
+    """Input for adding affected product (HS6) to an intervention. For sources
+    that publish at HS8/10/12/14, use gta_mnt_add_product_level instead."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     product_id: int = Field(..., description="FK to api_product_list (look up HS code via gta_mnt_lookup)")
     prior_level: Optional[str] = Field(default=None, description="Prior tariff/level value for this product (e.g. '5.0')")
@@ -247,6 +248,7 @@ class AddProductInput(_StrictInput):
     unit_id: Optional[int] = Field(default=None, description="FK to api_unit_list (look up via gta_mnt_lookup table='unit')")
     date_implemented: Optional[str] = Field(default=None, description="Per-product implementation date (YYYY-MM-DD)")
     date_removed: Optional[str] = Field(default=None, description="Per-product removal date (YYYY-MM-DD)")
+    is_investigated_only: bool = Field(default=False, description="True for trade-defence cases (anti-dumping/anti-subsidy/safeguard) where this product is under investigation only; False for ordinary affected products")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
@@ -254,7 +256,45 @@ class AddSectorInput(_StrictInput):
     """Input for adding affected sector to an intervention."""
     intervention_id: int = Field(..., description="FK to api_intervention_log")
     sector_id: int = Field(..., description="FK to api_sector_list")
-    sector_type: str = Field(default='N', description="'N'=normal, 'A'=additional, 'P'=primary")
+    sector_type: str = Field(default='N', description="'N'=normal, 'A'=additional, 'D'=deleted")
+    is_investigated_only: bool = Field(default=False, description="True for trade-defence cases where this sector is under investigation only; False for normal affected-sector tags")
+    dry_run: bool = Field(default=False, description="If True, return SQL without executing")
+
+
+class AddProductLevelInput(_StrictInput):
+    """Input for adding a tariff-line row at HS8/10/12/14 to an intervention.
+
+    Analysts insert at the ORIGINAL SOURCE's HS granularity — if the source
+    publishes 10-digit codes, pass level=10; if it publishes 8-digit codes,
+    pass level=8. The gta-api back-end aggregates upward to HS6 and produces
+    the A/A_MIN/A_MAX type markers on coarser tables; this tool always writes
+    type='N'.
+
+    HS code formatting: pass the source's HS code as a string in any of:
+      '0102.10.20', '0102-10-20', '0102 10 20', '01021020'
+    The handler strips non-digits and validates the length matches `level`.
+    Leading zeros (chapters 01–09) survive validation; the master table stores
+    HS codes as integers and drops them, but the lookup remains consistent
+    because both sides drop the same way.
+    """
+    intervention_id: int = Field(..., description="FK to api_intervention_log")
+    level: int = Field(..., description="HS granularity: 8, 10, 12, or 14")
+    hs_code: str = Field(..., description="HS code as stated in the source (any common formatting; will be cleaned)")
+    jurisdiction_id: int = Field(..., description="FK to api_jurisdiction_list — jurisdiction whose tariff schedule this line belongs to")
+    prior_value: Optional[str] = Field(default=None, description="Prior tariff/level value (e.g. '5.0')")
+    new_value: Optional[str] = Field(default=None, description="New tariff/level value (e.g. '25.0')")
+    unit_id: Optional[int] = Field(default=None, description="FK to api_unit_list (lookup table='unit')")
+    date_implemented: Optional[str] = Field(default=None, description="Implementation date (YYYY-MM-DD)")
+    date_removed: Optional[str] = Field(default=None, description="Removal date (YYYY-MM-DD)")
+    is_investigated_only: bool = Field(default=False, description="True for trade-defence cases under investigation only")
+    is_in_original: bool = Field(default=True, description="True if this code appears in the original source")
+    is_positively_affected: bool = Field(default=False, description="True if the measure is favourable to the product")
+    is_tariff_line_official: bool = Field(default=True, description="True if this comes from an official tariff schedule")
+    is_tariff_peak: Optional[int] = Field(default=None, description="Optional tariff-peak flag (0/1)")
+    action_id: Optional[int] = Field(default=None, description="FK to api_action_log. REQUIRED for level 8/10 (lookup table='action'); ignored for level 12/14")
+    applicability_reason_id: int = Field(default=1, description="1='explicit in scope' (default), 2='explicit out of scope', 3='implicit in scope'. Level 8/10 only")
+    verification_status_id: int = Field(default=1, description="1='HS code is in official source (HS 2022)' (default), 2='HS 2017 or earlier', 3='Not official'. Level 8/10 only")
+    is_completely_captured: bool = Field(default=False, description="Aggregation hint; default False. Level 8/10 only")
     dry_run: bool = Field(default=False, description="If True, return SQL without executing")
 
 
@@ -550,7 +590,7 @@ async def lookup(params: LookupInput) -> str:
 
     Supports: jurisdiction, product, sector, rationale, unit, firm, intervention_type,
     mast_chapter, mast_subchapter, evaluation, affected_flow, eligible_firm,
-    implementation_level, intervention_area, firm_role, level_type.
+    implementation_level, intervention_area, firm_role, level_type, action.
     """
     db_client = get_db_client()
     result = await asyncio.to_thread(db_client.lookup, 
@@ -662,12 +702,17 @@ async def add_ij(params: AddIJInput) -> str:
 
 @mcp.tool(name="gta_mnt_add_product")
 async def add_product(params: AddProductInput) -> str:
-    """Add affected product to an intervention.
+    """Add affected product (HS6) to an intervention.
 
-    Use gta_mnt_lookup with table='product' to find the product_id from HS code description.
+    Use gta_mnt_lookup with table='product' to find the product_id from the HS6
+    code description. If the source publishes a longer HS code (HS8/10/12/14),
+    use gta_mnt_add_product_level instead — the back-end aggregates upward.
+
+    Pass is_investigated_only=True only for trade-defence cases (anti-dumping,
+    anti-subsidy, safeguard) where the product is under investigation only.
     """
     db_client = get_db_client()
-    result = await asyncio.to_thread(db_client.add_product, 
+    result = await asyncio.to_thread(db_client.add_product,
         intervention_id=params.intervention_id,
         product_id=params.product_id,
         prior_level=params.prior_level,
@@ -675,7 +720,8 @@ async def add_product(params: AddProductInput) -> str:
         unit_id=params.unit_id,
         date_implemented=params.date_implemented,
         date_removed=params.date_removed,
-        dry_run=params.dry_run
+        is_investigated_only=params.is_investigated_only,
+        dry_run=params.dry_run,
     )
 
     if result.get('dry_run'):
@@ -687,18 +733,80 @@ async def add_product(params: AddProductInput) -> str:
         return f"❌ {result.get('error', 'Unknown error')}"
 
 
+@mcp.tool(name="gta_mnt_add_product_level")
+async def add_product_level(params: AddProductLevelInput) -> str:
+    """Add a tariff-line row at HS8/10/12/14 to an intervention.
+
+    Use this when the source publishes HS codes longer than 6 digits. The back-
+    end aggregates finer rows up to HS6, so analysts only insert at the source
+    level — never insert the same intervention at multiple HS granularities.
+
+    HS code formatting: pass the source's HS code as a string in any common
+    format ('0102.10.20', '0102-10-20', '0102 10 20', or '01021020'). The tool
+    strips non-digits and validates the length matches `level`.
+
+    Leading zeros (HS chapters 01–09): the cleaned 8/10/12/14-char string is
+    validated on length, then converted to an integer for the master-table
+    lookup. The master tables store HS codes as integers, so leading zeros
+    are dropped consistently on both sides — the lookup still works.
+
+    For level 8 and 10 the schema is richer and `action_id` is REQUIRED
+    (look up with gta_mnt_lookup table='action'; common values: 1 = U.S. HTS
+    Tariff Schedule). For level 12 and 14 (log tables) the schema is leaner.
+
+    Always writes type='N'; A/A_MIN/A_MAX are aggregation artifacts produced
+    by the back-end, never set by analyst inserts.
+    """
+    db_client = get_db_client()
+    result = await asyncio.to_thread(db_client.add_product_level,
+        intervention_id=params.intervention_id,
+        level=params.level,
+        hs_code=params.hs_code,
+        jurisdiction_id=params.jurisdiction_id,
+        prior_value=params.prior_value,
+        new_value=params.new_value,
+        unit_id=params.unit_id,
+        date_implemented=params.date_implemented,
+        date_removed=params.date_removed,
+        is_investigated_only=params.is_investigated_only,
+        is_in_original=params.is_in_original,
+        is_positively_affected=params.is_positively_affected,
+        is_tariff_line_official=params.is_tariff_line_official,
+        is_tariff_peak=params.is_tariff_peak,
+        action_id=params.action_id,
+        applicability_reason_id=params.applicability_reason_id,
+        verification_status_id=params.verification_status_id,
+        is_completely_captured=params.is_completely_captured,
+        dry_run=params.dry_run,
+    )
+
+    if result.get('dry_run'):
+        return (f"🔍 DRY RUN — Add Product Level{params.level}\n\n"
+                f"Cleaned HS code: `{result['cleaned_hs_code']}`\n"
+                f"Master composite (product_level{params.level}_id): `{result['master_id']}`\n"
+                f"SQL: `{result['sql']}`\nParams: {result['params']}")
+
+    if result['success']:
+        return f"✅ {result['message']}"
+    else:
+        return f"❌ {result.get('error', 'Unknown error')}"
+
+
 @mcp.tool(name="gta_mnt_add_sector")
 async def add_sector(params: AddSectorInput) -> str:
     """Add affected sector to an intervention.
 
-    Use gta_mnt_lookup with table='sector' to find the sector_id.
+    Use gta_mnt_lookup with table='sector' to find the sector_id. Pass
+    is_investigated_only=True only for trade-defence cases where the sector
+    is under investigation only.
     """
     db_client = get_db_client()
-    result = await asyncio.to_thread(db_client.add_sector, 
+    result = await asyncio.to_thread(db_client.add_sector,
         intervention_id=params.intervention_id,
         sector_id=params.sector_id,
         sector_type=params.sector_type,
-        dry_run=params.dry_run
+        is_investigated_only=params.is_investigated_only,
+        dry_run=params.dry_run,
     )
 
     if result.get('dry_run'):

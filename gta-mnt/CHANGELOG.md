@@ -8,6 +8,29 @@ Internal use only — no public release surface, so MINOR bumps are used liberal
 
 ---
 
+## [0.3.0] — 2026-05-12
+
+### Fixed
+- **`add_sector` / `add_product` write path: include `is_investigated_only` in the INSERT** (JCC-862). The column was added to `api_intervention_sector` and `api_intervention_product` as `NOT NULL` with no DEFAULT, but only the READ path was updated — every WRITE through the MCP was failing with MySQL error 1364 ("Field 'is_investigated_only' doesn't have a default value"). Sub-agents had been working around this by issuing direct `pymysql` INSERTs, bypassing the FK-validation wrappers and hard-coding `0`, which is wrong for trade-defence cases.
+  - New optional `is_investigated_only: bool = False` kwarg on both handlers and their MCP input models. Default `False` preserves every existing call site (~99.8% of rows on both tables); trade-defence cases (anti-dumping / anti-subsidy / safeguard) opt in by passing `True`.
+- **`add_product` write path: also include `type` in the INSERT, hardcoded to `'N'`.** The schema requires `type enum('N','A','A_MIN','A_MAX') NOT NULL` with no DEFAULT (the Django ORM `default='N'` does not propagate to raw SQL INSERTs). The original bug report only caught `is_investigated_only` because the INSERT failed on it first.
+  - `A`/`A_MIN`/`A_MAX` are aggregation artifacts produced by the gta-api back-end when rolling HS8/10/12/14 rows up to HS6 and the children disagree on the rate. Analyst inserts always use `'N'`. The MCP input model does not expose `type` — hardcoded in the handler with a code comment pinning the rationale so it isn't re-added later.
+
+### Added
+- **`gta_mnt_add_product_level`** tool — write tariff-line rows at HS8/10/12/14. Target tables `api_intervention_product_level{8,10}` (rich 22-col schema) or `api_intervention_product_level{12,14}_log` (leaner 14-col schema), keyed by the `level` parameter. Analysts insert at the original source's HS granularity; the gta-api back-end aggregates upward to HS6.
+  - **HS code cleaning:** accepts source-stated codes in any common format (`'0102.10.20'`, `'0102-10-20'`, `'0102 10 20'`, `'01021020'`). Non-digits are stripped; cleaned-string length is validated against `level`.
+  - **Composite-ID construction:** matches the upstream serializer at `gtaapi/gta/api/serializers.py:3588-3635` — `int(str(hs_code_as_int) + str(jurisdiction_id).zfill(3))`. Master-table lookup against `api_product_level{N}_list` verifies the (HS, jurisdiction) pair exists before INSERT.
+  - **Leading-zero HS codes (chapters 01–09):** the cleaned 8/10/12/14-char string is preserved for length validation, then converted to int for the master lookup. The master tables also store HS codes as integers and drop leading zeros consistently, so the lookup roundtrips cleanly (verified live for HS chapter 01 entries in `api_product_level8_list`).
+  - Always writes `type='N'`. Same aggregation-contract rationale as `add_product`.
+- **`api_action_log` added to `gta_mnt_lookup`** as table short-name `action` — needed by `gta_mnt_add_product_level` callers to find the right `action_id` for HS8/10 inserts (HS12/14 don't require it).
+- **`tests/unit/test_api_writes.py`** — 29 regression tests covering: (1) `add_sector` defaults + `is_investigated_only` threading; (2) `add_product` hardcoded `type='N'` + Pydantic rejection of caller-supplied `type`; (3) `_clean_hs_code` parameterized across punctuation variants; (4) `add_product_level` level-validation, length-validation, master-ID construction (including leading-zero HS), per-level target table, per-level required-field rules, optional-column appending. All run with `dry_run=True`, no DB connection needed.
+
+### Verified
+- Live smoke test: the original failing call `INSERT INTO api_intervention_sector (intervention_id, sector_id, type, is_investigated_only) VALUES (155137, 722, 'N', 0)` now succeeds against the production schema (transaction rolled back; no data mutated).
+- `add_level` was investigated and explicitly ruled out — `api_intervention_level` has 7 columns and no `is_investigated_only`, confirmed by both the canonical migration `gtaapi/core/migrations/0046_gta_intervention_level.py` and live DESCRIBE.
+
+---
+
 ## [0.2.1] — 2026-04-22
 
 ### Added

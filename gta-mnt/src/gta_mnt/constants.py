@@ -67,4 +67,5 @@ LOOKUP_TABLES = {
     'intervention_area': ('api_intervention_area_list', 'intervention_area_id', 'intervention_area_name'),
     'firm_role': ('mtz_firm_role', 'id', 'name'),
     'level_type': ('api_level_type_list', 'id', 'name'),
+    'action': ('api_action_log', 'action_id', 'action_title'),
 }

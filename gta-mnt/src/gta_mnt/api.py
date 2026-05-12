@@ -1627,9 +1627,14 @@ class GTADatabaseClient:
         unit_id: Optional[int] = None,
         date_implemented: Optional[str] = None,
         date_removed: Optional[str] = None,
+        is_investigated_only: bool = False,
         dry_run: bool = False
     ) -> dict:
-        """Add affected product to an intervention.
+        """Add affected product (HS6) to an intervention.
+
+        For higher-granularity tariff lines (HS8/10/12/14) the source actually
+        publishes, use add_product_level instead — the gta-api back-end then
+        aggregates the finer rows up to HS6.
 
         Args:
             intervention_id: FK to api_intervention_log
@@ -1639,14 +1644,22 @@ class GTADatabaseClient:
             unit_id: Optional FK to api_unit_list (e.g. percentage, specific rate)
             date_implemented: Optional per-product implementation date (YYYY-MM-DD)
             date_removed: Optional per-product removal date (YYYY-MM-DD)
+            is_investigated_only: True for trade-defence cases where this product
+                is under investigation only; False for ordinary affected products
             dry_run: If True, return SQL without executing
 
         Returns:
             Dict with success status
         """
-        # Build column list dynamically based on provided optional fields
-        columns = ['intervention_id', 'product_id', 'is_completely_captured', 'is_in_original']
-        values = [intervention_id, product_id, 0, 1]
+        # Base column list. is_investigated_only and type are NOT NULL with no
+        # DB-level DEFAULT (Django ORM defaults don't apply to raw SQL), so they
+        # must appear in every INSERT. type is hardcoded 'N': 'A'/'A_MIN'/'A_MAX'
+        # are aggregation artifacts produced by gta-api when rolling HS8/10/12/14
+        # rates up to HS6, never set by analyst inserts.
+        columns = ['intervention_id', 'product_id', 'is_completely_captured',
+                   'is_in_original', 'is_investigated_only', 'type']
+        values = [intervention_id, product_id, 0, 1,
+                  1 if is_investigated_only else 0, 'N']
 
         if prior_level is not None:
             columns.append('prior_level')
@@ -1695,6 +1708,237 @@ class GTADatabaseClient:
             return {'success': False, 'error': str(e)}
 
     # ========================================================================
+    # Entry Creation: Add Product Level (HS8 / HS10 / HS12 / HS14)
+    # ========================================================================
+
+    @staticmethod
+    def _clean_hs_code(raw: str) -> str:
+        """Strip everything except digits. '0102.10.20' / '0102-10-20' / '0102 10 20'
+        all normalize to '01021020'. Leading zeros are preserved as string digits
+        but will be lost when converted to int for storage (see add_product_level
+        docstring for the implication)."""
+        return ''.join(ch for ch in str(raw) if ch.isdigit())
+
+    def add_product_level(
+        self,
+        intervention_id: int,
+        level: int,                       # 8, 10, 12, or 14
+        hs_code: str,                     # may include punctuation; cleaned internally
+        jurisdiction_id: int,             # tariff line jurisdiction (FK api_jurisdiction_list)
+        prior_value: Optional[str] = None,
+        new_value: Optional[str] = None,
+        unit_id: Optional[int] = None,
+        date_implemented: Optional[str] = None,
+        date_removed: Optional[str] = None,
+        is_investigated_only: bool = False,
+        is_in_original: bool = True,
+        is_positively_affected: bool = False,
+        is_tariff_line_official: bool = True,
+        is_tariff_peak: Optional[int] = None,
+        # Level 8/10 only (the richer schema):
+        action_id: Optional[int] = None,           # REQUIRED for level 8/10 — FK api_action_log
+        applicability_reason_id: int = 1,          # default: 1 = "explicit in scope"
+        verification_status_id: int = 1,           # default: 1 = "HS code is in official source (HS 2022)"
+        is_completely_captured: bool = False,
+        dry_run: bool = False,
+    ) -> dict:
+        """Add a tariff-line row at HS8/10/12/14 to an intervention.
+
+        Analysts insert at the ORIGINAL SOURCE's HS granularity — if the source
+        publishes 10-digit codes, call with level=10; if the source publishes
+        8-digit codes, call with level=8. The gta-api back-end then aggregates
+        the finer rows upward (HS14 ⊂ HS12 ⊂ HS10 ⊂ HS8 ⊂ HS6) and produces
+        the 'A'/'A_MIN'/'A_MAX' type markers on the coarser tables when
+        children disagree on the rate. Always inserts with type='N'; the other
+        enum values are algorithm-only.
+
+        Target tables:
+            level=8  → api_intervention_product_level8       (22 cols)
+            level=10 → api_intervention_product_level10      (22 cols)
+            level=12 → api_intervention_product_level12_log  (14 cols)
+            level=14 → api_intervention_product_level14_log  (14 cols)
+
+        HS code cleaning: caller can pass any of '0102.10.20', '0102-10-20',
+        '0102 10 20', or '01021020' — all are normalized to digits-only. The
+        cleaned string must have exactly `level` digits or the call errors.
+
+        Leading-zero HS codes (e.g. '0102.10.20' — Live Bovine, chapter 01):
+        the cleaned 8-char string '01021020' is preserved during validation,
+        but the master `api_product_level{N}_list` table stores HS codes as
+        INTEGERS — leading zeros are dropped at the DB level by the existing
+        upstream system. The lookup still works because both sides drop the
+        leading zero consistently. If a caller cares about preserving the
+        leading zero in the surfaced detail, that has to be reconstructed
+        from the HS6 parent's product_id via api_product_list.
+
+        Args:
+            intervention_id: FK to api_intervention_log
+            level: 8, 10, 12, or 14
+            hs_code: source-stated HS code (any common formatting); will be cleaned
+            jurisdiction_id: FK to api_jurisdiction_list — the tariff schedule's jurisdiction
+            prior_value, new_value: tariff value strings (e.g. '5.0', '25.0')
+            unit_id: FK to api_unit_list (look up via gta_mnt_lookup table='unit')
+            date_implemented, date_removed: YYYY-MM-DD
+            is_investigated_only: True for trade-defence cases under investigation only
+            is_in_original: True if this code appeared in the source as written (default True)
+            is_positively_affected: True if measure is favourable to the product (default False)
+            is_tariff_line_official: True if from an official tariff schedule (default True)
+            is_tariff_peak: optional tariff-peak flag (0/1)
+            action_id: FK to api_action_log (REQUIRED for level 8/10; ignored for 12/14)
+            applicability_reason_id: 1='explicit in scope' (default), 2='explicit out of scope',
+                3='implicit in scope'. Level 8/10 only; ignored for 12/14.
+            verification_status_id: 1='HS code is in official source (HS 2022)' (default),
+                2='HS 2017 or earlier', 3='Not official'. Level 8/10 only; ignored for 12/14.
+            is_completely_captured: aggregation hint (default False). Level 8/10 only.
+            dry_run: If True, return SQL without executing
+
+        Returns:
+            Dict with success status; on success includes the resolved product_level{N}_id
+            composite value (`master_id`) for traceability.
+        """
+        if level not in (8, 10, 12, 14):
+            return {'success': False, 'error': f"level must be 8, 10, 12, or 14; got {level}"}
+
+        # Clean the HS code: strip punctuation/whitespace, validate length matches level
+        cleaned = self._clean_hs_code(hs_code)
+        if len(cleaned) != level:
+            return {
+                'success': False,
+                'error': f"hs_code '{hs_code}' cleaned to '{cleaned}' ({len(cleaned)} digits); "
+                         f"expected exactly {level} digits for HS{level}",
+            }
+
+        # Master-table FK construction. The upstream serializer at
+        # gtaapi/gta/api/serializers.py:3588-3635 uses the same formula:
+        #   master_id = int(str(hs_code_as_int) + str(jurisdiction_id).zfill(3))
+        # Note: int(cleaned) drops any leading zero — that is upstream-consistent.
+        hs_int = int(cleaned)
+        master_id = int(f"{hs_int}{jurisdiction_id:03d}")
+
+        if level == 8:
+            target_table = 'api_intervention_product_level8'
+            master_table = 'api_product_level8_list'
+            master_pl_col = 'product_level8_id'
+            fk_col = 'product_level8_id'
+        elif level == 10:
+            target_table = 'api_intervention_product_level10'
+            master_table = 'api_product_level10_list'
+            master_pl_col = 'product_level10_id'
+            fk_col = 'product_level10_id'
+        elif level == 12:
+            target_table = 'api_intervention_product_level12_log'
+            master_table = 'api_product_level12_list'
+            master_pl_col = 'product_level12_id'
+            fk_col = 'product_level12_id'
+        else:  # 14
+            target_table = 'api_intervention_product_level14_log'
+            master_table = 'api_product_level14_list'
+            master_pl_col = 'product_level14_id'
+            fk_col = 'product_level14_id'
+
+        # Build the column / value lists for the INSERT
+        if level in (8, 10):
+            if action_id is None:
+                return {
+                    'success': False,
+                    'error': f"action_id is required for level {level} (FK to api_action_log). "
+                             f"Use gta_mnt_lookup table='action' if you have one; common values "
+                             f"include 1 (U.S. HTS Tariff Schedule)",
+                }
+            # 22-column schema
+            columns = [
+                'intervention_id', fk_col,
+                'action_id', 'applicability_reason_id', 'verification_status_id',
+                'is_completely_captured', 'is_in_original', 'is_positively_affected',
+                'is_tariff_line_official', 'is_investigated_only', 'type',
+            ]
+            values = [
+                intervention_id, master_id,
+                action_id, applicability_reason_id, verification_status_id,
+                1 if is_completely_captured else 0,
+                1 if is_in_original else 0,
+                1 if is_positively_affected else 0,
+                1 if is_tariff_line_official else 0,
+                1 if is_investigated_only else 0,
+                'N',
+            ]
+        else:  # 12 / 14 — leaner schema, no action / applicability / verification / completeness
+            columns = [
+                'intervention_id', fk_col,
+                'is_in_original', 'is_positively_affected', 'is_tariff_line_official',
+                'is_investigated_only', 'type',
+            ]
+            values = [
+                intervention_id, master_id,
+                1 if is_in_original else 0,
+                1 if is_positively_affected else 0,
+                1 if is_tariff_line_official else 0,
+                1 if is_investigated_only else 0,
+                'N',
+            ]
+
+        # Append common optional columns
+        if prior_value is not None:
+            columns.append('prior_value'); values.append(prior_value)
+        if new_value is not None:
+            columns.append('new_value'); values.append(new_value)
+        if unit_id is not None:
+            columns.append('unit_id'); values.append(unit_id)
+        if date_implemented is not None:
+            columns.append('date_implemented'); values.append(date_implemented)
+        if date_removed is not None:
+            columns.append('date_removed'); values.append(date_removed)
+        if is_tariff_peak is not None:
+            columns.append('is_tariff_peak'); values.append(is_tariff_peak)
+
+        placeholders = ', '.join(['%s'] * len(values))
+        insert_sql = f'''
+            INSERT INTO {target_table}
+                ({', '.join(columns)})
+            VALUES ({placeholders})
+        '''
+        params = tuple(values)
+
+        if dry_run:
+            return {
+                'dry_run': True,
+                'sql': insert_sql.strip(),
+                'params': [str(p) for p in params],
+                'master_id': master_id,
+                'cleaned_hs_code': cleaned,
+            }
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            # Verify the (HS, jurisdiction) tuple exists in the master list.
+            cursor.execute(
+                f'SELECT id FROM {master_table} WHERE {master_pl_col} = %s AND jurisdiction_id = %s LIMIT 1',
+                (hs_int, jurisdiction_id),
+            )
+            if not cursor.fetchone():
+                return {
+                    'success': False,
+                    'error': f"HS{level} code {cleaned} not found in {master_table} for jurisdiction "
+                             f"{jurisdiction_id}. Either the code does not exist in this jurisdiction's "
+                             f"tariff schedule, or the leading-zero/normalization needs a manual check.",
+                }
+
+            cursor.execute(insert_sql, params)
+            conn.commit()
+            return {
+                'success': True,
+                'id': cursor.lastrowid,
+                'master_id': master_id,
+                'cleaned_hs_code': cleaned,
+                'message': f"HS{level} {cleaned} added to intervention {intervention_id} "
+                           f"(jurisdiction {jurisdiction_id}, master_id {master_id})",
+            }
+        except Exception as e:
+            conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    # ========================================================================
     # Entry Creation: Add Sector
     # ========================================================================
 
@@ -1703,6 +1947,7 @@ class GTADatabaseClient:
         intervention_id: int,
         sector_id: int,
         sector_type: str = 'N',
+        is_investigated_only: bool = False,
         dry_run: bool = False
     ) -> dict:
         """Add affected sector to an intervention.
@@ -1710,7 +1955,10 @@ class GTADatabaseClient:
         Args:
             intervention_id: FK to api_intervention_log
             sector_id: FK to api_sector_list
-            sector_type: 'N' (normal), 'A' (additional), 'P' (primary)
+            sector_type: 'N' (normal), 'A' (additional), 'D' (deleted)
+            is_investigated_only: True for trade-defence cases (anti-dumping,
+                anti-subsidy, safeguard) where the sector is under investigation
+                only; False for normal affected-sector tags
             dry_run: If True, return SQL without executing
 
         Returns:
@@ -1718,10 +1966,10 @@ class GTADatabaseClient:
         """
         insert_sql = '''
             INSERT INTO api_intervention_sector
-                (intervention_id, sector_id, type)
-            VALUES (%s, %s, %s)
+                (intervention_id, sector_id, type, is_investigated_only)
+            VALUES (%s, %s, %s, %s)
         '''
-        params = (intervention_id, sector_id, sector_type)
+        params = (intervention_id, sector_id, sector_type, 1 if is_investigated_only else 0)
 
         if dry_run:
             return {'dry_run': True, 'sql': insert_sql.strip(), 'params': [str(p) for p in params]}
