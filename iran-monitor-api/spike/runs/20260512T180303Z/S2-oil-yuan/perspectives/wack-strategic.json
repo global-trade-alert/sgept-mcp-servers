@@ -1,0 +1,25 @@
+{
+  "p_point": 0.018,
+  "p_interval": [
+    0.004,
+    0.04
+  ],
+  "key_reasoning": "Three predetermined elements, not three uncertainties, block this scenario. First, China's deniability doctrine is structural: the Day 65 (May 3) domestic order instructing Chinese firms to ignore US Iran sanctions already achieves Beijing's operational objective \u2014 protecting yuan-settled Iran trade \u2014 without the geopolitical cost of a public bilateral agreement. The domestic order is a functional substitute that *reduces* demand for formalisation, not a step toward it. Second, the Trump-Xi summit (May 14-15) imposes a hard constraint: China's declared posture is mediator demanding 'comprehensive ceasefire', and signing a formal oil-for-yuan pact in the same window would be an act of bad faith incompatible with that posture. Third, the May 8-10 US Treasury sanctions on Chinese satellite firms for enabling IRGC targeting demonstrate the US is actively escalating costs for Iran-adjacent Chinese actions \u2014 formalisation would invite sector-wide retaliation. The Tetlock cold-start prior (3%) is well-reasoned; I update modestly downward because the Day 65 domestic directive has already satisfied China's near-term operational demand for Iran energy settlement protection without triggering the sanctions exposure that public formalisation would create. The 4% upper bound captures the non-negligible tail probability of a confrontational summit outcome driving a deliberate Chinese countermeasure \u2014 but even then, a formal oil-for-yuan agreement is an implausibly high-profile instrument when grey-zone mechanisms are available.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "predetermined_elements": [
+      "China deniability doctrine: decades of deliberate opacity in Iran oil trade; institutional architecture built on intermediaries and off-book settlement",
+      "Day 65 domestic sanctions-defiance order (May 3): China has already solved its firms' legal exposure problem without public bilateral formalisation \u2014 the substitute mechanism is in place",
+      "Trump-Xi summit (May 14-15): immovable diplomatic constraint; China's declared posture is active mediator calling for comprehensive ceasefire, incompatible with simultaneous economic integration signalling",
+      "US Treasury sanctions trajectory: May 8-10 sanctions on Chang Guang Satellite Technology and associated entities for IRGC targeting support; US enforcement posture actively escalating in the same 30-day window",
+      "Iran's political bandwidth: fully consumed by war-termination sequencing negotiations via Pakistan; formalising economic backstop with China would weaken Iran's negotiating leverage by signalling external support floor"
+    ],
+    "reclassified_uncertainties": [
+      "Day 65 domestic sanctions order initially appeared to signal increased Chinese willingness to formalise \u2014 reclassified as substitute mechanism (predetermined element), not as stepping stone to formalisation"
+    ],
+    "scenario_quality_gate_result": "FAIL \u2014 the scenario requires simultaneous reversal of three predetermined elements (deniability doctrine, summit diplomatic posture, US sanctions cost trajectory) within 30 days. Internally inconsistent with observable structural constraints. Probability should floor near 1-2%, not sit at comfortable 3% through anchoring.",
+    "structural_surprise_flags": [
+      "If Trump-Xi summit collapses publicly and Beijing issues retaliatory economic signalling within the 30-day window, structural cost-benefit calculation shifts \u2014 but instrument choice would still favour grey-zone over public formalisation"
+    ]
+  }
+}

@@ -89,10 +89,14 @@ async def run_assess(
             completed.append(res)
             db.mark_perspective_completed(query_id, name)
             if name == tetlock_name:
+                # Independence: pass ONLY the numerical prior to subsequent
+                # perspectives. Including Tetlock's reasoning text caused
+                # verbatim-phrase leakage in the spike (codex+gemini caught
+                # it). Bayesian updating needs the prior probability, not
+                # the predecessor's narrative.
                 cold_start_prior = {
                     "p_point": res.p_point,
                     "p_interval": list(res.p_interval) if res.p_interval else None,
-                    "reasoning": res.key_reasoning,
                 }
         except SubagentError as e:
             logger.warning("perspective %s failed: %s", name, e)

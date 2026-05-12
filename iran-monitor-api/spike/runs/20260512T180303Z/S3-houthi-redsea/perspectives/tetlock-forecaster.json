@@ -1,0 +1,38 @@
+{
+  "p_point": 0.03,
+  "p_interval": [
+    0.01,
+    0.06
+  ],
+  "key_reasoning": "Fermi decomposition yields two components: P(Houthi multi-vessel attack \u22653 vessel casualties, Red Sea, 30 days) \u2248 25%, and P(Article 5-equivalent Western naval response | that attack) \u2248 8-10%. The first component is driven upward by confirmed Houthi activation since Day 28, at least 4 vessels already struck in this conflict, and B4 at 35% reflecting active regional widening \u2014 Houthis are operational. The second component is the binding constraint. Base rate for Article 5-equivalent declarations in response to maritime proxy attacks is zero: the US conducted 18 months of Houthi counter-operations without invoking collective defense, and in the current 72-day conflict Western navies have absorbed escalating attacks (Hezbollah 105-wave record, vessel strike 23nm from Doha) without formal collective-defense declarations. Availability bias check: the dramatic attack numbers inflate Component 1 intuitions, but coordinated multi-vessel attacks causing \u22653 casualties in a single operation remain qualitatively rarer than individual vessel targeting. NATO cohesion signal (France, UK refusing full Iran war participation, Saudi Arabia blocking Prince Sultan access) strongly compresses Component 2. Bayesian chain: base rate ~2%, updated upward by B4 dominance and confirmed Houthi posture (LR ~1.5), updated downward by 70+ days of negative evidence on Article 5-equivalent declarations (LR ~0.8). Posterior: 2.4%, rounded to 3%.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "fermi_components": {
+      "houthi_multi_vessel_attack_30d": 0.25,
+      "article5_equivalent_given_attack": 0.09,
+      "correlation_adjustment": 1.3
+    },
+    "base_rates": {
+      "article5_invocations_history": 1,
+      "article5_equivalent_maritime_responses": 0,
+      "houthi_major_coordinated_attacks_single_operation": 0
+    },
+    "bayesian_chain": {
+      "prior": 0.02,
+      "lr_b4_dominance_houthi_active": 1.5,
+      "lr_70_days_no_article5_equivalent": 0.8,
+      "posterior": 0.024
+    },
+    "bias_flags": [
+      "availability_bias: 105-wave Hezbollah barrage and vessel strikes are highly salient but should not inflate Article 5 threshold assessment",
+      "scope_insensitivity: each individual vessel strike must not be treated as if it were a multi-vessel coordinated attack causing 3+ casualties",
+      "anchoring: B4 at 35% describes regional widening scenario generically \u2014 not Article 5-equivalent responses specifically"
+    ],
+    "dissent_note": "A plausible minority case pushes toward 5-6%: if Houthis specifically target a NATO-flagged vessel with crew casualties, the political pressure for collective defense declaration increases substantially. But even in 2024 when the Rubymar (UK-operated) was sunk, NATO did not invoke collective defense equivalents.",
+    "watch_observables": [
+      "Whether any Western navy issues formal collective defense language explicitly linking commercial shipping attacks to alliance obligations",
+      "Whether Houthi attacks shift from single-vessel to coordinated multi-vessel operations",
+      "Whether a NATO-flagged vessel or NATO crew members become casualties triggering political pressure"
+    ]
+  }
+}

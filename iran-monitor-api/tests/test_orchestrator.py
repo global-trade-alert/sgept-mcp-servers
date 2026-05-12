@@ -69,6 +69,13 @@ async def test_orchestrator_happy_path(isolated_env, monkeypatch):
     for name, prior in calls[1:]:
         assert prior is not None
         assert prior["p_point"] == 0.15
+        # Independence: prior is NUMBERS ONLY. We must not propagate
+        # Tetlock's reasoning text to other perspectives — that caused
+        # the chain-leakage failure in spike run 20260512T180303Z.
+        assert "reasoning" not in prior, (
+            "cold_start_prior must not include Tetlock's reasoning text; "
+            "downstream perspectives copy-paste it. Pass p_point + p_interval only."
+        )
 
     assert result_dict["p_point"] == pytest.approx(0.15)
     assert result_dict["divergence_flag"] is False

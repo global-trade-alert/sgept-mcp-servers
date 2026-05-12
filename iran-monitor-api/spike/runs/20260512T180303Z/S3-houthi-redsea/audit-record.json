@@ -1,0 +1,37 @@
+{
+  "audit_record": {
+    "query_id": "f49c2d6d-afd2-481c-8eab-467e04bae356",
+    "scenario_id": "S3-houthi-redsea",
+    "scenario_text": "Houthi forces conduct a multi-vessel attack on commercial shipping in the Red Sea within the next 30 days that causes \u22653 vessel casualties (sunk, severely damaged, or crew casualties), prompting at least one Western navy to declare an Article 5-equivalent response posture.",
+    "horizon_days": 30,
+    "tier": "standard",
+    "intelligence_base_hash": "sha256:688028d990580189611326674316b847aa5a7a4953add4395a53b38d8c5263fc",
+    "query_delta_hash": null,
+    "perspectives_invoked": [
+      "tetlock-forecaster",
+      "schelling-bargaining",
+      "wack-strategic"
+    ],
+    "perspectives_completed": [
+      "tetlock-forecaster",
+      "schelling-bargaining",
+      "wack-strategic"
+    ],
+    "perspectives_failed": [],
+    "aggregation_method": "weighted_uniform_average_v1",
+    "result_summary": {
+      "p_point": 0.024999999999999998,
+      "p_range": [
+        0.02,
+        0.03
+      ],
+      "divergence_pp": 0.9999999999999999,
+      "divergence_flag": false
+    },
+    "evidence_urls": [],
+    "started_at_utc": "2026-05-12T18:29:16.491542+00:00",
+    "runtime_seconds": 393,
+    "version": "1.0-spike"
+  },
+  "audit_signature": "EwxK8mvT1RqkP93ljOzJmcnBerAABAB11cqLzjBOUneuA6Zk/X92xP1GuXpd4KNnIeK1Kt62HbGB4tRXbA8ZCg=="
+}

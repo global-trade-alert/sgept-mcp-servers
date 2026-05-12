@@ -1,0 +1,28 @@
+{
+  "p_point": 0.025,
+  "p_interval": [
+    0.01,
+    0.05
+  ],
+  "key_reasoning": "Wack's predetermined-element taxonomy identifies the Article 5-equivalent trigger as structurally predetermined NOT to occur: NATO doctrine covers attacks on member states, not proxy attacks on commercial shipping, and Western navies have absorbed 70+ days of escalating attacks (plus 18+ months pre-conflict) without invoking collective defence \u2014 this is negative evidence with a strong Bayesian weight. The Houthi attack component is genuinely uncertain (~15-20% at current operational tempo given confirmed B4-era activation), but the joint probability collapses because the response mechanism is near-structurally impossible under current alliance conditions. Two new predetermined elements further compress: (1) Western coalition fracture \u2014 France and UK refusing full Iran war participation, Saudi Arabia denying Prince Sultan access \u2014 moves the alliance posture away from collective-defence escalation; (2) GPS jamming attribution ambiguity (PWL-019, 1,100+ ships) creates conditions where even a severe incident risks initial ambiguity, delaying rather than triggering a formal collective-defence declaration. Revising Tetlock's prior modestly downward from 3% to 2.5%, with the binding constraint entirely in the response mechanism, not the attack probability.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "predetermined_elements": [
+      "Houthis will continue Red Sea attacks for next 30 days \u2014 structurally predetermined by Iran patronage and B4 at 35%",
+      "Western navies will NOT invoke Article 5-equivalent posture over commercial shipping proxy attacks \u2014 NATO doctrine covers attacks on member states, not commercial vessels; 70+ days of negative evidence establishes this as predetermined",
+      "Western coalition fracture is now a structural constraint: France and UK refusing full Iran war participation, Saudi denying Prince Sultan air access \u2014 collective-defence escalation is predetermined to NOT occur under current alliance geometry",
+      "GPS jamming attribution ambiguity (PWL-019) is an active predetermined element that delays collective-defence triggers even if casualty thresholds are crossed"
+    ],
+    "genuine_uncertainties": [
+      "Whether Houthis can execute a coordinated multi-vessel operation causing \u22653 simultaneous casualties \u2014 qualitatively distinct from single-vessel targeting patterns observed to date",
+      "Whether a Western naval vessel (not commercial) is also struck in the same operation, which would change the Article 5 calculus by creating a direct member-state attack",
+      "Trump-Xi summit (14-15 May) outcome and whether it generates a temporary de-escalation instruction that suppresses Houthi permissions during the horizon window"
+    ],
+    "scenario_quality_gate": {
+      "internal_consistency": "Questionable \u2014 the scenario requires both a high-casualty Houthi attack AND a Western collective-defence declaration that has not occurred despite 70+ days of escalating proxy attacks. These two elements are structurally disconnected under current alliance conditions.",
+      "mechanism_gap": "The causal path from \u22653 commercial vessel casualties to Article 5-equivalent posture requires an unspecified intermediate mechanism \u2014 either a NATO naval vessel also struck, or a political threshold crossed that has no precedent. The scenario is not internally impossible but the pathway is structurally underspecified.",
+      "wack_classification": "The scenario conflates a genuinely uncertain event (large Houthi multi-vessel attack) with a structurally predetermined non-event (Western collective-defence declaration for commercial shipping proxy attacks). The probability question is almost entirely determined by the second component, which is close to a structural impossibility rather than a genuine uncertainty."
+    },
+    "prior_update": "Modest downward revision from Tetlock's 3% to 2.5%. The Houthi attack component is credible given B4 dominance; the coalition fracture and Article 5 inapplicability to commercial shipping are new predetermined elements that compress the response mechanism probability below Tetlock's 8-10% estimate for that component."
+  }
+}

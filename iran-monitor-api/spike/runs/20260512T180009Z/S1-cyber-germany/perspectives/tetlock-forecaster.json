@@ -1,0 +1,33 @@
+{
+  "p_point": 0.04,
+  "p_interval": [
+    0.015,
+    0.09
+  ],
+  "key_reasoning": "Outside view first: in the historical record, there has never been a publicly-attributed, meaningfully disruptive Iranian cyber attack on German critical infrastructure. The closest analogue is Albania 2022 (government IT, not CI; Albania directly hosted MEK opposition). The annual base rate for any given Western European country across the past decade approaches zero. Inside-view adjustment upward for active conflict: Iran is under unprecedented conventional pressure (70% launcher attrition), IRGC cyber command is actively developing new tooling during the war (PWL-026: MuddyWater's 'Dindoor' backdoor deployed in US networks, elevated wiper risk per Unit 42 as of late March 2026), and Iran's asymmetric options are expanding as conventional capacity degrades. But the scenario requires a compound of four independent conditions: (1) Iran decides Germany is a priority target despite it being a non-combatant with no direct role in the conflict, (2) pre-positioned OT/ICS access exists or can be acquired within 30 days, (3) the attack achieves the 'meaningful disruption' threshold against defended German CI, and (4) Germany publicly attributes. Germany is not a direct adversary, has strong defences (BSI), and Iran has strategic incentives to avoid drawing a major NATO/EU economy into direct opposition. The compound probability across all four conditions holds the estimate near 4%, with the attribution requirement (German government naming Iran publicly vs. quietly expelling diplomats) being an additional multiplicative discount.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "reference_class": "Publicly-attributed destructive/disruptive Iranian cyber operations against Western European critical infrastructure: ~0 confirmed incidents in 10-year historical record. Albanian government IT 2022 is the nearest analogue but differs on target class (government IT vs. CI) and strategic context (Albania hosted MEK).",
+    "fermi_decomposition": {
+      "p_iran_targets_german_ci": 0.07,
+      "p_access_and_capability_given_decision": 0.18,
+      "p_meaningful_disruption_achieved": 0.28,
+      "p_german_public_attribution_given_attack": 0.4,
+      "combined_raw": 0.0014,
+      "conflict_elevation_multiplier": "~3x applied for active-conflict asymmetric pressure, yielding ~0.04"
+    },
+    "bayesian_chain": "Prior (peacetime base rate for 30-day window): ~0.1%. Evidence set: (a) PWL-026 confirms active IRGC cyber command development and elevated wiper risk as of March 2026 \u2014 LR ~2x upward; (b) MuddyWater operations focused on US networks, not German CI \u2014 LR ~0.5x downward; (c) Iran transmitting 14-point diplomatic response via Pakistan on Day 72, suggesting active diplomatic track \u2014 LR ~0.8x downward; (d) Germany non-combatant, no direct role in conflict \u2014 LR ~0.5x downward; (e) Iranian CI attacks historically confined to Middle East region \u2014 LR ~0.6x downward. Net posterior: ~0.04.",
+    "compound_requirements_penalty": "Attribution requirement is an independent additional constraint: Germany has attributed state cyber attacks publicly (Russia/Bundestag 2015) but in a politically costly manner. In an active conflict, public Iran attribution would be a major diplomatic step. Estimated at 40% conditional on a disruptive attack \u2014 this alone suppresses the compound probability significantly.",
+    "key_uncertainties": [
+      "Whether IRGC cyber command has pre-positioned OT/ICS access in German energy/rail networks (unknown; if yes, probability jumps significantly)",
+      "Whether German government would attribute publicly vs. privately expelling Iranian diplomats",
+      "Whether Iran views a German CI attack as advancing or undermining its diplomatic position"
+    ],
+    "anti_patterns_checked": [
+      "Inside-view dominance: controlled by anchoring on historical base rate first",
+      "Scope insensitivity: the Albanian 2022 precedent is genuinely different from German CI \u2014 not the same reference class",
+      "Round-number bias: 4% chosen over 5% after decomposition yielded ~3-4% range"
+    ],
+    "what_would_change_assessment": "Upward revision to 10-15% if: (a) Germany openly provides ISR or basing support to US forces; (b) confirmed evidence of IRGC OT/ICS pre-positioning in German utilities appears in intelligence; (c) Iran conducts a disruptive CI attack on another NATO country (establishing precedent). Downward revision to <1% if: Iran and US reach the MoU framework currently being negotiated."
+  }
+}

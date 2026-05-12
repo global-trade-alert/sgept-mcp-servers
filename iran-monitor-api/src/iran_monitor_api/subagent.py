@@ -73,11 +73,26 @@ def _build_prompt(
     """
     prior_block = ""
     if cold_start_prior is not None and agent_name != "tetlock-forecaster":
+        # Bayesian prior only — numbers, never the predecessor's reasoning text.
+        # If we shared the predecessor's narrative, subsequent agents copy-paste
+        # phrasing and we get the chain-leakage failure the spike (run
+        # 20260512T180303Z) exposed. The prior is a NUMBER you Bayesian-update
+        # against using YOUR framework — derive your own reasoning from the
+        # intelligence base.
         prior_block = (
-            "\n## Cold-Start Prior (from Tetlock-forecaster)\n\n"
-            f"```json\n{json.dumps(cold_start_prior, indent=2)}\n```\n"
-            "\nYou may update from this prior using your framework's reasoning,"
-            " but state explicitly whether you're updating it and why.\n"
+            "\n## Bayesian Prior (numerical only)\n\n"
+            f"P(scenario | available evidence as of prior derivation) = {cold_start_prior['p_point']:.4f}"
+            + (
+                f", interval {cold_start_prior['p_interval']}"
+                if cold_start_prior.get("p_interval")
+                else ""
+            )
+            + "\n\nThis is a base-rate-grounded prior. You receive it as a NUMBER ONLY."
+            + " Do NOT speculate about how it was derived. Apply YOUR framework's"
+            + " independent reasoning over the intelligence base to derive likelihood"
+            + " ratios, then update from this prior. State your posterior explicitly."
+            + " If your framework would land far from this prior, do not anchor on it"
+            + " — explain why your framework yields a different posterior.\n"
         )
 
     return f"""You are running as the **{agent_name}** perspective agent for a novel-scenario

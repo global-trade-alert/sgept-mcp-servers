@@ -1,0 +1,27 @@
+{
+  "p_point": 0.02,
+  "p_interval": [
+    0.01,
+    0.04
+  ],
+  "key_reasoning": "The Schelling-central insight is that both China and Iran currently have BATNAs that are strictly superior to a formal public deal. China's Day 65 directive ordering domestic firms to ignore US Iran sanctions achieves the economic substance of oil-for-yuan protection without the audience costs of formalization \u2014 this is the textbook Schelling tacit bargain, and it makes a public treaty unnecessary. The Trump-Xi summit on 14-15 May (2-3 days from now at cycle close) creates prohibitive audience costs for China: formalising Iran economic ties immediately before a summit where China is positioning as mediator would destroy its bargaining leverage across every agenda item. China's mediator posture \u2014 calling for ceasefire, hosting Wang Yi-Araghchi meeting \u2014 is structurally incompatible with being seen as Iran's declared economic patron. The informal arrangement is itself the Schelling focal point: both sides have converged on opacity precisely because it avoids the commitment problem (formal announcement invites US secondary sanctions escalation that both sides want to avoid). No external event within the 30-day window creates a focal point for formalisation; the only scenario that could (a catastrophic summit breakdown post-May 15) leaves fewer than 2 weeks for negotiation, drafting, and dual public announcement \u2014 an impossibly tight timeline for a formal bilateral agreement with volume commitments.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "batna_analysis": {
+      "china": "Continue informal oil purchases protected by Day 65 domestic sanctions non-compliance directive. This BATNA provides economic integration with full plausible deniability \u2014 no formalization needed.",
+      "iran": "Continue selling oil informally via intermediaries to China, preserving the relationship without requiring China to bear audience costs. Iran gets hard currency; China gets discounted crude. Both BATNAs are superior to a formal deal."
+    },
+    "audience_costs": {
+      "china": "PROHIBITIVE. Trump-Xi summit on May 14-15 is 2-3 days away. Formalising Iran economic ties destroys China's mediator positioning, undercuts every summit agenda item (tariffs, trade war), and signals strategic alignment with Iran at the exact moment Beijing is claiming to be a neutral peace broker.",
+      "iran": "Moderate. Iran would benefit from the signal that it has durable economic alternatives to US pressure, but the IRGC controls economic policy and has shown no appetite for formal multilateral commitments."
+    },
+    "focal_points": {
+      "exists": false,
+      "assessment": "No natural focal point exists making 'now' the moment for formalisation. The informal arrangement IS the Schelling focal point \u2014 both sides have tacitly converged on opacity as the coordination solution. The Day 65 directive strengthened this focal point by protecting informal mechanisms without crossing the formal-commitment threshold."
+    },
+    "commitment_problem": "A formal public announcement is specifically what both sides have been avoiding. US secondary sanctions enforcement capacity means any formalisation invites immediate escalation \u2014 this is the commitment problem that has kept the relationship informal for 20+ years. China's domestic directive resolves Iran's payment-security problem WITHOUT triggering this commitment problem.",
+    "tacit_bargain_assessment": "China's Day 65 domestic sanctions non-compliance directive is precisely the Schelling tacit bargain that substitutes for the formal deal: both sides get what they need (protected oil flow, hard currency) without the audience costs of public commitment. The scenario asks whether this tacit arrangement will be replaced by a formal one within 30 days \u2014 the answer is no, because the tacit arrangement is strategically superior for both parties.",
+    "brinkmanship_analysis": "A formal announcement would be a controllable deliberate action, not brinkmanship. China choosing to formalize Iran ties is not 'leaving something to chance' \u2014 it is a direct, controllable provocation of US sanctions enforcement. This is not a Schelling-rational move for China given the summit timing.",
+    "update_from_prior": "I update marginally below the Tetlock prior of 3% to 2%. The intelligence base reveals one factor Tetlock may not have fully weighted: the Day 65 domestic sanctions directive is a substitute instrument that reduces the demand for a formal deal from Iran's side. China has solved Iran's payment-security problem informally, which lowers the marginal value of formalisation for both parties and makes the 30-day scenario even less likely than the base rate suggests."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "p_point": 0.03,
+  "p_interval": [
+    0.01,
+    0.06
+  ],
+  "key_reasoning": "Schelling's coercive bargaining requires that a threat create leverage over the decision-maker who controls the adversary's concession. Germany controls none of the variables that matter to Iran's bargaining position: it cannot open Hormuz, end the US campaign, or provide nuclear guarantees. Attacking German critical infrastructure establishes no focal point in the current conflict's coercive geography, which is defined entirely by the maritime domain, Gulf state infrastructure, and the US carrier presence. The compound probability is further reduced by the attribution requirement: even if the IRGC deployed a disruptive cyber payload against German infrastructure, German government public attribution within the same 30-day window is historically rare \u2014 Berlin has been cautious about state attribution even when technical evidence is strong, calculating that formal attribution triggers alliance management obligations it prefers to avoid. The strongest counter-argument is that a degraded conventional arsenal makes cyber an increasingly attractive asymmetric instrument, and PWL-026 confirms that IRGC cyber command is actively developing new destructive tools (MuddyWater 'Dindoor' backdoor, Unit 42 wiper-attack warnings); however, current targeting is US networks, not European critical infrastructure, and Iran has strong institutional incentives to preserve Germany as a diplomatic channel during the active Pakistan-mediated MoU negotiation.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "batna_analysis": "Iran's BATNA is continued maritime and Gulf-state coercion where escalation costs are contained and the coercive chain is short. Expanding to European NATO infrastructure lengthens the coercive chain to near-zero effectiveness while triggering Article 5 consultation risk that would expand the coalition against Iran at precisely the moment it is negotiating an exit.",
+    "focal_point_assessment": "Absent. The conflict's Schelling points are Hormuz passage, Gulf energy infrastructure, and the US carrier presence. Germany sits entirely outside this geography. No natural stopping-point or precedent establishes German critical infrastructure as a coercive target.",
+    "brinkmanship_risk": "Low. Iran's brinkmanship has been concentrated in the maritime domain where shared risk is genuine and visible. Cyber attacks on European infrastructure do not create the kind of autonomous escalation risk that constitutes genuine brinkmanship \u2014 they are deliberate acts whose attribution ambiguity undermines their coercive signalling value.",
+    "commitment_problem": "Germany has made no commitments relevant to the Iran-US conflict. There is nothing for Iran to coerce Germany into reversing or maintaining. The absence of a commitment problem on Germany's side means there is no Fearon-type blocking mechanism that Iranian pressure could credibly overcome.",
+    "audience_costs": "High for Iran if attributed. A publicly attributed disruptive attack on a NATO member's critical infrastructure would justify European involvement in anti-Iran operations, unify European public opinion against the IRGC, and destroy the E3 diplomatic channel that has been Iran's primary pathway to European legitimacy since 2003.",
+    "key_uncertainties": [
+      "Whether IRGC cyber command has pre-positioned destructive tools in European infrastructure for use as a deterrent signal rather than a coercive bargain (espionage \u2260 attribution-worthy disruption)",
+      "Whether deterioration of the MoU negotiations in the next 30 days removes Iran's incentive to preserve European diplomatic channels",
+      "Whether a German-attributed attack is in fact a false-flag operation by a third party seeking to expand the conflict's geographic scope"
+    ]
+  }
+}

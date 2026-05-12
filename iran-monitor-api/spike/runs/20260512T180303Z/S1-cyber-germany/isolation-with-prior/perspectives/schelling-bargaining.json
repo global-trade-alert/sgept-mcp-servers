@@ -1,0 +1,60 @@
+{
+  "p_point": 0.04,
+  "p_interval": [
+    0.02,
+    0.08
+  ],
+  "key_reasoning": "The scenario requires four conditions to hold simultaneously: IRGC attempts a cyber attack on German critical infrastructure specifically, the attack is meaningfully disruptive (not espionage/intrusion), it is technically attributable to Iran, and Germany publicly attributes within 30 days. The Schelling framework identifies a deeper structural problem: there is no coercive logic that connects attacking Germany to Iran's actual bargaining objective. Germany has no leverage over US military operations in the Strait of Hormuz, so the coercive theory of change is broken \u2014 unlike Hormuz closure, which creates shared economic pain that coerces multiple parties simultaneously (Schelling's brinkmanship through shared autonomous risk). Attacking NATO's hosting state for US European Command (Ramstein) would instead unify European sentiment against Iran, raise Article 5 cyber discussions, and accelerate isolation, meaning audience costs fall entirely on Iran rather than creating mutual vulnerability. The one countervailing signal \u2014 PWL-026 tracking active MuddyWater/IRGC cyber operations at Ansoff 3 \u2014 indicates heightened capability and intent but not a Germany-specific coercive rationale. The 30-day public attribution requirement is a further constraint: German BfV practice and coalition government consensus processes rarely produce sovereign public attribution within 30 days of a sophisticated state-actor attack, even when technically attributable. Updating strongly downward from the cold-start prior of 0.42, which reflects general B4 regional-widening probability rather than this specific compound event.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "batna_analysis": {
+      "iran_batna": "Continue absorbing US-Israeli strikes at degraded fire rate (8-10% of pre-war capacity), preserve regime via Pakistan-China diplomatic channels, monetise Hormuz through selective transit fees. Conventional degradation raises relative attractiveness of asymmetric options, but coercive targeting logic must still connect to Iran's strategic objective.",
+      "germany_batna": "Maintain non-belligerent posture, support ceasefire diplomacy, absorb energy-price effects. Germany has no incentive to become a target and no leverage to offer Iran in exchange for restraint.",
+      "batna_shift": "Iran's BATNA has deteriorated (degraded conventional capacity), which elevates asymmetric options generally, but this is not scenario-specific because the coercive theory of change against Germany is structurally broken regardless of BATNA changes."
+    },
+    "credibility_assessment": {
+      "capability": "HIGH \u2014 IRGC cyber (MuddyWater, APT34) has demonstrated capability to penetrate European industrial control systems; PWL-026 flags active operations",
+      "willingness": "LOW for Germany specifically \u2014 no prior disruptive critical-infrastructure attacks on major NATO members' domestic territory; IRGC cyber targeting logic is opportunistic and symbol-focused (diaspora organisations, government ministries) not infrastructure-destructive against NATO states",
+      "audience_cost_of_backing_down": "N/A \u2014 no explicit threat has been made, so there is no face-saving constraint operating",
+      "overall_credibility": "LOW \u2014 capability exists but willingness for this specific target-type at this escalation rung is not supported by doctrine or precedent"
+    },
+    "focal_point_analysis": {
+      "active_focal_points": [
+        "Hormuz reopening/monetisation (both sides converging)",
+        "Pakistan-China mediated 14-point MoU (Day 72: Iran transmitted formal response)",
+        "Kharg Island as US leverage point"
+      ],
+      "germany_as_focal_point": "ABSENT \u2014 there is no settlement Germany can offer that would resolve the Hormuz sovereignty dispute, nuclear question, or ceasefire terms. Germany is not a party to the core bargaining game.",
+      "schelling_point_for_exit": "The 14-point MoU being transmitted via Pakistan (Day 72) is the active focal point; attacking Germany would undermine this channel"
+    },
+    "brinkmanship_assessment": {
+      "hormuz_comparison": "Hormuz creates shared autonomous risk: once closed, oil prices rise globally, creating economic pain for US consumers (political cost for Trump) and European allies (pressure for ceasefire). This is genuine brinkmanship \u2014 neither side fully controls the economic escalation.",
+      "germany_comparison": "Attacking Germany's grid creates LOCAL damage to Germany and UNILATERAL risk for Iran (NATO response, EU sanctions). The 'autonomous risk' mechanism does not operate. There is no shared danger that creates mutual coercive pressure.",
+      "brinkmanship_verdict": "Germany critical infrastructure is a poor brinkmanship target precisely because it lacks the shared-risk property Schelling identifies as essential. Iran would absorb the full cost with no coercive leverage gained."
+    },
+    "commitment_problems": {
+      "primary": "Germany cannot credibly commit to delivering US military restraint even if it wanted to. The chain Germany pressure \u2192 US ceasefire is too long and too uncertain for rational coercion to operate.",
+      "secondary": "Iran cannot credibly commit to not attacking again post-settlement. This double commitment problem makes coercive bargaining with Germany as the target analytically incoherent.",
+      "fearon_extension": "Commitment problems are most acute when the coercing party is not the party that can deliver the demanded concession \u2014 which is precisely the case here."
+    },
+    "probability_decomposition": {
+      "p_attempt": 0.1,
+      "p_disruptive_given_attempt": 0.4,
+      "p_attribution_within_30d_given_disruptive": 0.25,
+      "p_german_public_attribution_given_technical_attribution": 0.4,
+      "compound": 0.004,
+      "wartime_and_b4_widening_adjustment": 2.5,
+      "adjusted_estimate": 0.01,
+      "germany_ramstein_significance_upward_adjustment": 1.5,
+      "ramstein_adjusted": 0.015,
+      "rounding_to_p_point": 0.04,
+      "rounding_note": "Rounded upward from 0.015 to 0.04 to account for: (1) IRGC institutional logic may pursue punitive signalling outside rational coercive calculation; (2) PWL-026 active watch signal; (3) Day 72 diplomatic tension with IRGC hardliners potentially trying to undermine the Pakistan channel by provoking European response"
+    },
+    "cold_start_prior_update": {
+      "tetlock_prior": 0.42,
+      "direction": "strongly downward",
+      "reason": "Tetlock's 0.42 reflects general B4 regional-widening probability. This scenario requires Germany specifically, critical infrastructure specifically, meaningful disruption specifically, and German public attribution within 30 days. Each condition reduces the probability multiplicatively. The Schelling framework provides additional downward pressure through the broken coercive theory of change.",
+      "final_estimate": 0.04
+    }
+  }
+}

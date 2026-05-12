@@ -1,0 +1,38 @@
+{
+  "p_point": 0.02,
+  "p_interval": [
+    0.005,
+    0.04
+  ],
+  "key_reasoning": "Fermi decomposition yields an extremely low base rate: P(Iran deliberately targets German CI) \u00d7 P(meaningful disruption achieved) \u00d7 P(German public attribution within 30 days) \u2248 0.03 \u00d7 0.25 \u00d7 0.30 \u2248 0.22%. The peripheral watch list (PWL-026, cycle 260327-1115) confirms IRGC cyber command is actively developing new destructive tools (MuddyWater 'Dindoor' backdoor, elevated wiper-attack risk), which pushes the estimate modestly above base rate. However, three hard constraints suppress the probability toward the low end: (1) zero historical precedent for a meaningfully disruptive Iranian cyberattack on German critical infrastructure in the public record \u2014 Iran's disruptive cyber operations have targeted Saudi Arabia, Israel, and US entities, not EU NATO members; (2) Germany is not a belligerent in the active conflict and attacking German energy/water/rail would open a new European front at the worst possible strategic moment, alienating a neutral that has not been particularly hostile to Iran's position; (3) the compound requirement \u2014 attempt, meaningful disruption of hardened BSI-protected systems, and German government public attribution all within a single 30-day window \u2014 is extremely demanding; German attribution alone typically takes weeks to months even after a confirmed incident. The ongoing Iran-US MoU negotiations (Day 72 war chronicle) further reduce Iran's incentive to provoke European reaction. The 2% central estimate reflects the elevated threat environment from active conflict, the PWL-026 cyber escalation signal, and a small non-zero tail for opportunistic or proxy-attributed incidents, offset sharply against the near-zero base rate for this specific target-geography-attribution compound event.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "fermi_decomposition": {
+      "p_iran_targets_german_ci_attempt": 0.03,
+      "p_meaningful_disruption_given_attempt": 0.25,
+      "p_public_german_attribution_within_window_given_disruption": 0.3,
+      "raw_product": 0.0023,
+      "upward_adjustment_for_elevated_threat_environment": 0.005,
+      "downward_adjustment_for_no_precedent_and_strategic_cost": -0.002,
+      "final_estimate": 0.02
+    },
+    "reference_class": "Disruptive Iranian cyberattacks on European NATO-member critical infrastructure publicly attributed within 30 days: base rate ~0 confirmed events in public record (2010-2026)",
+    "bias_checks": [
+      "Availability heuristic flagged: elevated media coverage of Iranian cyber threats does not alter the base rate for this specific geography/attribution combination",
+      "Scope insensitivity check: 30-day window + German CI (energy/water/rail) + meaningful disruption + public attribution are four independent probability multipliers; each one individually reduces composite probability",
+      "Round-number bias suppressed: estimate held at 2% rather than rounded to 5% or 0%"
+    ],
+    "key_diagnostic_observables": [
+      "MuddyWater/APT33 TTP shift to European critical infrastructure targeting (would update substantially upward)",
+      "German BSI or BfV elevated threat advisory specifically naming Iranian CI targeting",
+      "Iranian public statement or proxy signaling about European targets",
+      "German government issuing attribution for an ongoing lower-level Iranian cyber intrusion (precursor to higher-confidence disruptive attack)"
+    ],
+    "predetermined_elements": [
+      "Germany is not a belligerent and has not imposed unilateral Iran-specific sanctions beyond EU level",
+      "Iran's active cyber operations (PWL-026) are currently targeting US networks, not European CI",
+      "Ongoing Iran-US MoU negotiations reduce Iran's incentive to escalate against European NATO members",
+      "BSI-grade critical infrastructure defenses make successful disruptive attacks significantly harder than against comparable Middle Eastern targets"
+    ]
+  }
+}

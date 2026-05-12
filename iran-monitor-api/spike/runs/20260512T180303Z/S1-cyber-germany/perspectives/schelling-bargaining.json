@@ -1,0 +1,16 @@
+{
+  "p_point": 0.015,
+  "p_interval": [
+    0.005,
+    0.03
+  ],
+  "key_reasoning": "The Schelling framework's primary contribution here is coercive-logic analysis: for an attack to serve bargaining purposes, the target must control something Iran wants, and compliance must become more attractive than defiance after the attack. Germany controls none of the variables Iran is trying to move \u2014 US military posture, Hormuz transit rights, sanctions architecture \u2014 so the attack produces no coercive pathway to any of Iran's stated objectives. If anything it worsens Iran's BATNA by converting a sympathetic neutral (European states have pushed back on US war posture) into an adversary, and the bilateral commitment problem prevents any resulting German concessions from being credible anyway. PWL-026 (MuddyWater 'Dindoor' backdoor, elevated wiper-attack risk) establishes that IRGC cyber command is developing new destructive tools, but tool development does not constitute coercive purpose. The Tetlock prior of 2% is modestly reduced to 1.5% on the grounds that the bargaining structure actively disincentivises deliberate Germany-targeting, while preserving non-zero probability for rogue/unauthorised IRGC cyber actions, broad Western-targeting campaigns that incidentally reach German infrastructure, and the compound-attribution tail that Tetlock already discounted.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "batna_analysis": "Iran's BATNA does not improve from attacking Germany. Germany is not a party to the conflict; successful coercion of Germany produces no deliverable Iran requires. The attack would create a new adversary class (EU/NATO response) without removing an existing constraint. Rational actors improve their BATNA before threatening, not after.",
+    "coercive_logic_gap": "Schelling's coercion requires a compliant path: the target must be able to give the coercer what it wants, and compliance must become preferable to defiance. Germany cannot withdraw US forces, reopen Hormuz, or lift US sanctions. No coercive pathway from German CI disruption to any Iranian objective exists.",
+    "focal_point_absent": "No Schelling focal point structures German CI as a natural target. Iran's graduated Hormuz regime, the Pakistan-mediated MoU track, and the Xi summit (14-15 May) are the active focal points in this bargaining game \u2014 Germany is structurally outside all of them.",
+    "audience_cost_reversal": "Attacking a non-belligerent EU state that has criticised the US war posture would undermine the IRGC's resistance-legitimacy narrative domestically. The domestic audience cost of being seen as the aggressor against Europe exceeds the domestic benefit of any signalling it might achieve.",
+    "residual_probability_sources": "Non-zero tail preserved for: (1) rogue/unauthorised IRGC cyber elements acting without IRGC command authorisation (Ostovar's institutional autonomy thesis applies); (2) broad Western-targeting campaigns where German infrastructure is incidentally disrupted and subsequently attributed by BSI; (3) genuinely irrational or desperation-driven horizontal escalation if Iran faces existential conventional defeat \u2014 a scenario the current war-chronicle places at low probability."
+  }
+}

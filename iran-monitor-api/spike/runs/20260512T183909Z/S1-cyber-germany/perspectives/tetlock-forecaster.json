@@ -1,0 +1,47 @@
+{
+  "p_point": 0.022,
+  "p_interval": [
+    0.01,
+    0.05
+  ],
+  "key_reasoning": "The historical base rate for a publicly-attributed, meaningfully disruptive Iranian cyber attack on German critical infrastructure is effectively zero; no such event has occurred in the 72 days of active conflict despite Iran having both motive and opportunity. Fermi decomposition: P(Iran decides to target European CI) \u2248 3-4%, P(Germany selected among European targets) \u2248 25%, P(meaningful disruption achieved against hardened BSI-defended infrastructure) \u2248 15%, P(German government publicly attributes within 30 days) \u2248 20% \u2014 yielding a compound probability below 0.05%. Inside-view adjustments lift this modestly: PWL-026 confirms MuddyWater's new Dindoor backdoor deployment and Unit 42's elevated wiper-attack warning signal a real cyber escalation posture, and IRGC's 70% launcher attrition creates genuine incentive to shift toward asymmetric instruments. However, three structural factors dominate downward: (1) Iran has strong strategic incentives to preserve German and European neutrality during active diplomacy \u2014 attacking Germany risks foreclosing the one diplomatic track that could provide an exit; (2) the non-occurrence of European CI targeting over 72 conflict days is mildly diagnostic against the hypothesis (a Bayesian LR of ~0.5); (3) the Trump-Xi summit on 14\u201315 May creates a near-term diplomatic focal point that makes provocation especially costly for Iran right now. Scope insensitivity guard: MuddyWater's active operations are real but concentrated against US targets, and extrapolating from US-focused cyber escalation to German CI disruption requires an additional decision step Iran has not taken.",
+  "evidence_urls": [],
+  "framework_specific": {
+    "bayesian_chain": {
+      "prior": 0.005,
+      "evidence_updates": {
+        "muddywater_wiper_escalation": 1.5,
+        "irgc_launcher_attrition_asymmetric_incentive": 1.3,
+        "non_occurrence_72_days": 0.5,
+        "trump_xi_summit_diplomatic_window": 0.7,
+        "iran_european_neutrality_incentive": 0.6
+      },
+      "posterior": 0.022
+    },
+    "fermi_decomposition": {
+      "p_iran_decides_european_CI_target": 0.035,
+      "p_germany_selected": 0.25,
+      "p_meaningful_disruption_achieved": 0.15,
+      "p_german_public_attribution_30_days": 0.2,
+      "compound": 0.00026,
+      "upward_adjustment_for_inside_view_factors": 8.5,
+      "adjusted_estimate": 0.022
+    },
+    "anti_bias_flags": [
+      "scope_insensitivity_guard_applied: muddywater_us_focus_not_germany",
+      "inside_view_dominance_check: structural_factors_dominate_over_case_specific_narrative",
+      "no_round_number_bias: 0.022_not_0.02_or_0.025"
+    ],
+    "key_reference_classes": [
+      "Iran state-attributed disruptive cyber attacks on Western European CI: 0 confirmed events",
+      "State-actor disruptive CI attacks publicly attributed by German government within 30 days: 0 confirmed events",
+      "Iran cyber escalation during active conventional conflict: MuddyWater Dindoor (US-focused, March 2026)"
+    ],
+    "what_would_change_my_mind": [
+      "Evidence of Iran pre-positioning in German energy/rail SCADA systems",
+      "German BSI or federal government warning about elevated Iranian CI threat",
+      "Iran publicly threatening European infrastructure as retaliation for European sanctions",
+      "German participation in any US military coalition activity"
+    ]
+  }
+}

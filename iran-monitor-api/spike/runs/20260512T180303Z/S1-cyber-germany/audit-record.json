@@ -1,0 +1,37 @@
+{
+  "audit_record": {
+    "query_id": "887d011a-c148-496d-b8ea-8c5b8feb1a49",
+    "scenario_id": "S1-cyber-germany",
+    "scenario_text": "Iran (IRGC or proxy) launches a meaningfully disruptive cyber attack on German critical infrastructure (energy grid, water utilities, or rail) attributable to Iran within the next 30 days, with German government public attribution.",
+    "horizon_days": 30,
+    "tier": "standard",
+    "intelligence_base_hash": "sha256:688028d990580189611326674316b847aa5a7a4953add4395a53b38d8c5263fc",
+    "query_delta_hash": null,
+    "perspectives_invoked": [
+      "tetlock-forecaster",
+      "schelling-bargaining",
+      "wack-strategic"
+    ],
+    "perspectives_completed": [
+      "tetlock-forecaster",
+      "schelling-bargaining",
+      "wack-strategic"
+    ],
+    "perspectives_failed": [],
+    "aggregation_method": "weighted_uniform_average_v1",
+    "result_summary": {
+      "p_point": 0.016666666666666666,
+      "p_range": [
+        0.015,
+        0.02
+      ],
+      "divergence_pp": 0.5000000000000001,
+      "divergence_flag": false
+    },
+    "evidence_urls": [],
+    "started_at_utc": "2026-05-12T18:09:31.248792+00:00",
+    "runtime_seconds": 387,
+    "version": "1.0-spike"
+  },
+  "audit_signature": "ncB+OtLhe4LqwD9Pt8jilbUtacjKm1k6jnUdYQmswhBR69ajNNMy+tsM7dmMU7uqhn+lRqtysR5Oq3Nlwyt2BQ=="
+}
