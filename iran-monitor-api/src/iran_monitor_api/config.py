@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     smtp_use_starttls: bool = True    # STARTTLS on port 587
     smtp_username: str = ""
     smtp_password: str = ""
-    smtp_from: str = ""               # e.g. "iran-monitor@sgept.org"
+    smtp_from: str = ""               # e.g. "a2a@globaltradealert.org"
 
     @property
     def db_path(self) -> Path:

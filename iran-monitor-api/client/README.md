@@ -14,7 +14,7 @@ from iran_monitor_client import Client
 
 client = Client(
     api_key="your-pilot-key",
-    base_url="https://api.iran-monitor.sgept.org",
+    base_url="https://a2a.globaltradealert.org",
 )
 
 # Submit

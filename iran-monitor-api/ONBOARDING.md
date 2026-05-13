@@ -15,10 +15,10 @@ Two tiers, identical pipeline, different freshness:
 
 | | |
 |---|---|
-| **Base URL** | `https://api.iran-monitor.sgept.org` |
+| **Base URL** | `https://a2a.globaltradealert.org` |
 | **API key** | _delivered out-of-band (encrypted attachment / 1Password vault link)_ |
-| **Verify key** | `https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.pub` |
-| **Status** | `https://api.iran-monitor.sgept.org/healthz` |
+| **Verify key** | `https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.pub` |
+| **Status** | `https://a2a.globaltradealert.org/healthz` |
 
 Authentication is HTTP Bearer:
 
@@ -36,7 +36,7 @@ Pick whichever fits your infrastructure. All three hit the same REST surface.
 
 ```bash
 KEY="your-pilot-key"
-BASE="https://api.iran-monitor.sgept.org"
+BASE="https://a2a.globaltradealert.org"
 
 # Submit
 QID=$(curl -s -X POST $BASE/v1/queries \
@@ -118,7 +118,7 @@ tools = [{
 }]
 ```
 
-Your agent's tool runtime handles the POST + polling against `https://api.iran-monitor.sgept.org/v1/queries`.
+Your agent's tool runtime handles the POST + polling against `https://a2a.globaltradealert.org/v1/queries`.
 
 ## Delivery options
 
@@ -208,7 +208,7 @@ from nacl.signing import VerifyKey
 from nacl.encoding import RawEncoder
 import base64, json, requests
 
-vk_bytes = requests.get("https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.pub").content
+vk_bytes = requests.get("https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.pub").content
 vk = VerifyKey(vk_bytes, encoder=RawEncoder)
 
 msg = json.dumps(response["audit_record"], sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
@@ -219,7 +219,7 @@ vk.verify(msg, sig)  # raises BadSignatureError if tampered
 
 **Bash (with `signify` or similar):** ask for the script.
 
-If verification fails, the audit record has been tampered or the signing key has rotated. Check the [signing-key rotation page](https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.versions.json) (when published) for current key versions.
+If verification fails, the audit record has been tampered or the signing key has rotated. Check the [signing-key rotation page](https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.versions.json) (when published) for current key versions.
 
 ## Rate limits
 

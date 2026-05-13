@@ -5,8 +5,8 @@ Go-live checklist for production deployment on the Hetzner CPX32 VPS at `204.168
 ## Pre-flight (one-time, CEO actions)
 
 - [ ] **DNS:** Add A records at the SGEPT DNS provider:
-  - `api.iran-monitor.sgept.org` → `204.168.141.21`
-  - `iran-monitor.sgept.org` → `204.168.141.21`
+  - `a2a.globaltradealert.org` → `204.168.141.21`
+  - `a2a.globaltradealert.org` → `204.168.141.21`
 - [ ] **SMTP (optional but recommended):** Choose an SMTP provider for email delivery — Postmark, Resend, Mailgun, or the existing `metis@jfritz.xyz` IMAP/SMTP. Capture host + port + username + password.
 - [ ] **Cloudflare (optional):** If routing through Cloudflare proxy, set the DNS records as proxied and ensure SSL/TLS mode is "Full (strict)". Caddy already handles Let's Encrypt origin certs.
 
@@ -82,21 +82,21 @@ From your local machine (NOT on Metis):
 
 ```bash
 # Liveness
-curl https://api.iran-monitor.sgept.org/healthz
+curl https://a2a.globaltradealert.org/healthz
 # → "ok"
 
 # Public verify key
-curl -sI https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.pub
+curl -sI https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.pub
 # → 200 OK; Content-Type: application/octet-stream
 
 # Auth check
-curl -s https://api.iran-monitor.sgept.org/v1/queries -X POST \
+curl -s https://a2a.globaltradealert.org/v1/queries -X POST \
   -H "Content-Type: application/json" -d '{"scenario":"x","horizon":"30d","tier":"standard"}'
 # → 401 with error: missing_api_key
 
 # Submit a real Standard query
 KEY="imk-..."   # the minted pilot key
-curl -s -X POST https://api.iran-monitor.sgept.org/v1/queries \
+curl -s -X POST https://a2a.globaltradealert.org/v1/queries \
   -H "Authorization: Bearer $KEY" \
   -H "Content-Type: application/json" \
   -d '{"scenario":"Iran formally announces resumption of uranium enrichment above 60% within 30 days","horizon":"30d","tier":"standard"}' \
@@ -105,7 +105,7 @@ curl -s -X POST https://api.iran-monitor.sgept.org/v1/queries \
 
 # Poll (Standard p50 ~8 min)
 QID="..."
-curl -s -H "Authorization: Bearer $KEY" https://api.iran-monitor.sgept.org/v1/queries/$QID | jq .status
+curl -s -H "Authorization: Bearer $KEY" https://a2a.globaltradealert.org/v1/queries/$QID | jq .status
 ```
 
 ## Hook the cron's Phase 6 to seal intel-base hash
@@ -124,7 +124,7 @@ Until this is wired, queries will see `intel_base_hash: "sha256:UNSEALED"` in th
 If SMTP is configured:
 
 ```bash
-curl -s -X POST https://api.iran-monitor.sgept.org/v1/queries \
+curl -s -X POST https://a2a.globaltradealert.org/v1/queries \
   -H "Authorization: Bearer $KEY" \
   -H "Content-Type: application/json" \
   -d '{"scenario":"...","horizon":"30d","tier":"premium","deliver_to":"johannes.fritz@sgept.org"}'
@@ -144,8 +144,8 @@ API keys remain in the env file; nothing destructive. To re-enable later, restar
 
 ## What good looks like after deploy
 
-- `https://iran-monitor.sgept.org` loads the landing page over TLS.
-- `https://api.iran-monitor.sgept.org/healthz` returns `ok`.
+- `https://a2a.globaltradealert.org` loads the landing page over TLS.
+- `https://a2a.globaltradealert.org/healthz` returns `ok`.
 - `journalctl -u iran-monitor-api -f` shows `Uvicorn running on 127.0.0.1:8080`.
 - `journalctl -u iran-monitor-worker -f` shows `worker started`.
 - A pilot query submitted from outside Metis returns 202 immediately and completes within the latency SLO.

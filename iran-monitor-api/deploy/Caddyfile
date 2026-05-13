@@ -1,69 +1,56 @@
 # Iran Monitor Inference API — Caddy reverse-proxy config for Metis.
 #
-# Two virtual hosts:
-#   api.iran-monitor.sgept.org    → reverse proxy to the local FastAPI service
-#   iran-monitor.sgept.org        → static landing page
+# Single host serves BOTH the landing page and the API:
+#   /                         → static landing page
+#   /v1/*                     → reverse proxy to FastAPI on 127.0.0.1:8080
+#   /.well-known/*            → reverse proxy (the verify-key endpoint)
+#   /healthz                  → reverse proxy
 #
 # Caddy handles ACME / Let's Encrypt automatically.
 #
 # Install on Metis:
-#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile.d/iran-monitor.caddy
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile.d/a2a.caddy
 #   sudo systemctl reload caddy
 #
-# DNS prereq (do these in your registrar / Cloudflare):
-#   A     iran-monitor.sgept.org           → 204.168.141.21
-#   A     api.iran-monitor.sgept.org       → 204.168.141.21
+# DNS prereq:
+#   A     a2a.globaltradealert.org    → 204.168.141.21
 
-api.iran-monitor.sgept.org {
+a2a.globaltradealert.org {
     encode zstd gzip
 
-    # Standard hardening headers
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains"
-        X-Content-Type-Options    "nosniff"
-        X-Frame-Options           "DENY"
-        Referrer-Policy           "no-referrer"
-        # No CORS — institutional buyers call from servers, not browsers.
-        # Add CORS explicitly if a buyer requests browser-side use.
-    }
-
-    # The API service binds to 127.0.0.1:8080 (see Settings.host/.port).
-    reverse_proxy 127.0.0.1:8080 {
-        # Long timeouts — Premium queries can take 60 min before the worker
-        # writes a result, but each GET poll is short. Reverse-proxy timeouts
-        # apply per-request, not to the worker's background work.
-        transport http {
-            response_header_timeout 60s
-            read_timeout 60s
-        }
-    }
-
-    log {
-        output file /var/log/caddy/iran-monitor-api.log {
-            roll_size 50mb
-            roll_keep 7
-        }
-        format json
-    }
-}
-
-iran-monitor.sgept.org {
-    encode zstd gzip
-
+    # Hardening
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains"
         X-Content-Type-Options    "nosniff"
         Referrer-Policy           "no-referrer-when-downgrade"
-        # Allow the page to be embedded in a sales deck iframe if needed
+        # The API has no browser-side use, but the landing might be embedded
+        # in a sales-deck iframe.
         X-Frame-Options           "SAMEORIGIN"
     }
 
-    root * /home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api/landing
-    file_server
+    # API paths — reverse proxy to FastAPI
+    @api path /v1/* /.well-known/* /healthz
+    handle @api {
+        reverse_proxy 127.0.0.1:8080 {
+            # Per-request HTTP timeouts. Buyer queries are async (worker runs
+            # in the background); each poll request returns quickly. The 60s
+            # bound is for the HTTP request itself, not the worker's job.
+            transport http {
+                response_header_timeout 60s
+                read_timeout 60s
+            }
+        }
+    }
+
+    # Everything else — static landing page
+    handle {
+        root * /home/deploy/jf-private/jf-dev/sgept-dev/sgept-mcp-servers/iran-monitor-api/landing
+        file_server
+    }
 
     log {
-        output file /var/log/caddy/iran-monitor-landing.log {
-            roll_size 10mb
+        output file /var/log/caddy/a2a.log {
+            roll_size 50mb
             roll_keep 7
         }
         format json

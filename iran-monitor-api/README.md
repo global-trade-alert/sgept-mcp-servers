@@ -64,7 +64,7 @@ uv run iran-monitor-worker  # background worker
 ## Deploy on Metis
 
 - Systemd unit at `systemd/iran-monitor-api.service` (HTTP + worker in one process).
-- Caddy reverse-proxy on `api.iran-monitor.sgept.org`.
+- Caddy reverse-proxy on `a2a.globaltradealert.org`.
 - API keys + signing key in SOPS-encrypted env.
 - Seal intel-base hash from the cron's Phase 6 (COMMIT) via `iran-monitor-seal-intel-base`.
 

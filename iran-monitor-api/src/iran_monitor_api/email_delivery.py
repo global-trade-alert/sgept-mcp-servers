@@ -131,7 +131,7 @@ def render_html_email(briefing_md: str, query_id: UUID, intelligence_base_hash: 
   Query ID: <code>{query_id}</code><br>
   Intelligence base: <code>{intelligence_base_hash}</code><br>
   The attached <code>iran-monitor-result.json</code> contains the full structured response and the Ed25519-signed audit record.
-  Verify the signature against the public key at <code>https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.pub</code>.
+  Verify the signature against the public key at <code>https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.pub</code>.
 </div>
 </body></html>"""
 
@@ -141,7 +141,7 @@ def render_text_email(briefing_md: str, query_id: UUID) -> str:
         (briefing_md or "(No briefing content available.)")
         + f"\n\n--\nQuery ID: {query_id}\n"
         + "Verify the attached audit signature against\n"
-        + "https://api.iran-monitor.sgept.org/.well-known/iran-monitor-signing-key.pub\n"
+        + "https://a2a.globaltradealert.org/.well-known/iran-monitor-signing-key.pub\n"
     )
 
 

@@ -6,7 +6,7 @@ Usage:
 
     client = Client(
         api_key=os.environ["IRAN_MONITOR_API_KEY"],
-        base_url="https://api.iran-monitor.sgept.org",
+        base_url="https://a2a.globaltradealert.org",
     )
 
     query = client.submit(
@@ -181,7 +181,7 @@ class Client:
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.iran-monitor.sgept.org",
+        base_url: str = "https://a2a.globaltradealert.org",
         timeout: float = 60.0,
     ):
         if not api_key:
