@@ -2,7 +2,9 @@
 
 Reusable Python implementation of Google's [A2A (Agent-to-Agent) protocol](https://a2a-protocol.org/latest/specification/) — agent card publication, JSON-RPC 2.0 task dispatch, SSE event streaming, the 8-state task lifecycle, and multi-turn `input-required` clarification machinery.
 
-**Backend-agnostic.** Implement the `AgentBackend` Protocol with your domain logic; this package provides the protocol surface. First consumer is `iran-monitor-api`; designed to be transferable to GTA, DPA, and any future SGEPT analytic asset that needs an A2A endpoint.
+**Backend-agnostic.** Implement the `AgentBackend` Protocol with your domain logic; this package provides the protocol surface. First consumer is `iran-monitor-api` (sibling directory); designed to be transferable to GTA, DPA, and any future SGEPT analytic asset that needs an A2A endpoint.
+
+**👉 If you landed here looking for the developer onboarding, the entry point is [../iran-monitor-api/DEVELOPING.md](../iran-monitor-api/DEVELOPING.md). It covers both packages and explains how they fit together.**
 
 ## Why a sibling package
 

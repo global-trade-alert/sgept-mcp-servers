@@ -1,8 +1,10 @@
 # iran-monitor-api
 
-Queryable inference API for the Iran Conflict Scenario Monitor. Async novel-scenario assessment with reasoning trace and signed audit records.
+Queryable inference API for the Iran Conflict Scenario Monitor. Async novel-scenario assessment with reasoning trace and signed audit records. A2A-protocol-native; REST back-compat.
 
-**Status:** Phase 1 (wedge). See design doc at `~/.gstack/projects/johannesfritz-jf-metis/johannesfritz-main-design-iran-monitor-api-*.md` for full architecture, premises, and rationale.
+**👉 New here? Start with [DEVELOPING.md](DEVELOPING.md) — full developer onboarding, architecture tour, file-by-file code map, and pointers to every design doc.**
+
+**Status:** Phase 1 (wedge). Core design in [documentation/01-design-doc.md](documentation/01-design-doc.md); access-surface strategy review in [documentation/02-access-surface-proposal.md](documentation/02-access-surface-proposal.md); A2A retrofit plan in [documentation/03-a2a-retrofit-plan.md](documentation/03-a2a-retrofit-plan.md).
 
 ## What it does
 
