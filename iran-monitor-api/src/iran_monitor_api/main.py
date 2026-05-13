@@ -11,22 +11,51 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from a2a_protocol import create_app as create_a2a_app
+from a2a_protocol.card import build_card_router
+from a2a_protocol.jsonrpc import build_jsonrpc_router
+from a2a_protocol.sse import build_sse_router
+
 from . import db
 from .api.routes import router
+from .backend import IranMonitorBackend
 from .config import get_settings
 from .errors import APIError
+
+# Process-wide backend instance so the worker can publish events to the same
+# event bus the SSE endpoint subscribes against.
+_backend: IranMonitorBackend | None = None
+
+
+def get_backend() -> IranMonitorBackend:
+    global _backend
+    if _backend is None:
+        _backend = IranMonitorBackend()
+    return _backend
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     db.init_db()
 
+    backend = get_backend()
+
     app = FastAPI(
         title="Iran Monitor Inference API",
         version="0.1.0",
-        description="Queryable inference for novel scenarios. See README and design doc.",
+        description=(
+            "Queryable inference for novel scenarios. A2A-native + REST. "
+            "See ONBOARDING.md and design doc."
+        ),
     )
+
+    # Existing REST routes (back-compat for the named pilot buyer)
     app.include_router(router)
+
+    # A2A protocol surface — agent card, JSON-RPC dispatcher, SSE streaming
+    app.include_router(build_card_router(backend.agent_card))
+    app.include_router(build_jsonrpc_router(backend))
+    app.include_router(build_sse_router(backend))
 
     @app.exception_handler(APIError)
     async def _api_error_handler(request: Request, exc: APIError):  # noqa: ARG001

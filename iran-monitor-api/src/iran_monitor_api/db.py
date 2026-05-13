@@ -247,8 +247,35 @@ def find_running_queries() -> list[dict]:
 def reset_running_to_queued(query_id: UUID) -> None:
     with get_conn() as conn, _lock:
         conn.execute(
-            "UPDATE queries SET status = ?, started_at_utc = NULL WHERE query_id = ? AND status = ?",
-            (Status.QUEUED.value, str(query_id), Status.RUNNING.value),
+            "UPDATE queries SET status = ?, started_at_utc = NULL WHERE query_id = ?",
+            (Status.QUEUED.value, str(query_id)),
+        )
+
+
+def update_scenario_after_clarification(query_id: UUID, new_scenario: str) -> None:
+    """Layer 5 multi-turn: caller's clarification message gets folded into the
+    scenario text. Worker re-runs the clarifier on the augmented scenario."""
+    with get_conn() as conn, _lock:
+        conn.execute(
+            "UPDATE queries SET scenario = ? WHERE query_id = ?",
+            (new_scenario, str(query_id)),
+        )
+
+
+def cancel_query(query_id: UUID) -> None:
+    """Best-effort cancellation. No-op if the query is already terminal."""
+    with get_conn() as conn, _lock:
+        cur = conn.execute(
+            "SELECT status FROM queries WHERE query_id = ?", (str(query_id),),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return
+        if row["status"] in (Status.COMPLETED.value, Status.PARTIAL.value, Status.FAILED.value, "canceled"):
+            return
+        conn.execute(
+            "UPDATE queries SET status = ?, completed_at_utc = ? WHERE query_id = ?",
+            ("canceled", utc_now().isoformat(), str(query_id)),
         )
 
 

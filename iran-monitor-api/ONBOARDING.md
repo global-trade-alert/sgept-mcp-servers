@@ -2,6 +2,47 @@
 
 You've been granted pilot access to the Iran Monitor Inference API. This document is everything you need to integrate.
 
+## A2A protocol surface
+
+The service is A2A-spec-compliant. Buyers running A2A-native agents (Claude, LangChain A2A integration, Spring AI, IBM watsonx, etc.) can discover the agent automatically:
+
+```
+GET https://a2a.globaltradealert.org/.well-known/agent-card.json
+```
+
+This returns the [A2A Agent Card](https://a2a-protocol.org/latest/specification/#agent-card) declaring our single skill (`assess_scenario`), capabilities (streaming = yes, push notifications = no), authentication scheme (Bearer), and example queries.
+
+For A2A-native integration, point your client at `https://a2a.globaltradealert.org`. The REST surface below remains available as a back-compat transport.
+
+Sample JSON-RPC envelope:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "message/send",
+  "params": {
+    "message": {
+      "role": "user",
+      "parts": [{
+        "kind": "data",
+        "data": {
+          "scenario": "Iran launches a meaningfully disruptive cyber attack on German critical infrastructure within 30 days, with German government public attribution.",
+          "horizon": "30d",
+          "tier": "premium"
+        }
+      }]
+    }
+  },
+  "id": "<your request id>"
+}
+```
+
+POST that to `https://a2a.globaltradealert.org/v1/jsonrpc` with `Authorization: Bearer <your-key>`. The response is an A2A `Task` object.
+
+For streaming (`message/stream`) — POST to `https://a2a.globaltradealert.org/v1/jsonrpc/stream` and consume Server-Sent Events. Each event is a `TaskStatusUpdateEvent` or `TaskArtifactUpdateEvent` per the A2A spec.
+
+**Multi-turn:** if you submit an underspecified scenario (e.g. missing time horizon or actor), the task transitions to `input-required` and the SSE stream emits a clarification question from the agent. Reply with another `message/send` carrying the same `taskId` to continue. Up to 3 round-trips per task.
+
 ## What this is
 
 A queryable inference layer over the Iran Monitor's perspective stack — 14 agents grounded in conflict theory, forecasting science, and intelligence tradecraft. Submit a novel scenario; get back a probability + reasoning trace + signed audit record drawn from the same verified intelligence base the cron-driven canonical-8 report uses.

@@ -12,7 +12,12 @@ dependencies = [
     "httpx>=0.27.0",
     "pynacl>=1.5.0",
     "python-multipart>=0.0.12",
+    "sse-starlette>=2.1.0",
+    "a2a-protocol",
 ]
+
+[tool.uv.sources]
+a2a-protocol = { path = "../a2a-protocol", editable = true }
 
 [project.scripts]
 iran-monitor-api = "iran_monitor_api.main:run"
