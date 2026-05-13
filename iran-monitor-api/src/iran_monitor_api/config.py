@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     api_keys_json: str = '{"dev-key-local": "dev-org"}'
 
     # Rate limits (per org, per hour)
-    rate_limit_standard_per_hr: int = 30
-    rate_limit_premium_per_hr: int = 10
+    rate_limit_standard_per_hr: int = 10
+    rate_limit_premium_per_hr: int = 30
 
     # Latency budgets (seconds, p99 hard cutoff)
     standard_ceiling_seconds: int = 30 * 60

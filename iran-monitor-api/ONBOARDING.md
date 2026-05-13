@@ -6,10 +6,10 @@ You've been granted pilot access to the Iran Monitor Inference API. This documen
 
 A queryable inference layer over the Iran Monitor's perspective stack — 14 agents grounded in conflict theory, forecasting science, and intelligence tradecraft. Submit a novel scenario; get back a probability + reasoning trace + signed audit record drawn from the same verified intelligence base the cron-driven canonical-8 report uses.
 
-Two tiers, identical pipeline, different freshness:
+Two tiers, same perspective stack and same independence safeguards, different freshness of evidence:
 
-- **Standard** — assesses against the latest cron-sealed intelligence base (≤6h fresh). Faster (p50 ~8 min), cheaper.
-- **Premium** — runs a scenario-targeted live GATHER pass before assessment. Latest possible evidence. Slower (p50 ~25 min, p99 ≤60 min). Only Premium produces the structured `briefing_markdown` + `major_disagreements` + `high_elasticity_events` fields.
+- **Standard** — perspective agents read from the standing intelligence base assembled by the monitor's 6-hourly cron (canonical sources, peripheral-signal watch list, cross-cycle reasoning history). No fresh web search per query. Faster (p50 ~8 min), cheaper. Evidence is at most ~6 hours old.
+- **Premium** — before the perspective agents reason about your scenario, the system runs a focused web search keyed off the specific terms in your scenario (e.g. a "cyber attack on Germany" query triggers searches like "IRGC cyber unit Germany", "BfV Iran attribution 2026", "Iran cyber operations EU targets"). Up to 20 queries and 60 page fetches; each result is verified (source URL resolvable, publication date present) and appended to the standing intelligence base for this query only. The agents then assess against the freshest available evidence. Slower (p50 ~25 min, p99 ≤60 min). Only Premium produces the `briefing_markdown` + `major_disagreements` + `high_elasticity_events` synthesis fields.
 
 ## Your credentials
 
@@ -146,7 +146,7 @@ Webhook delivery is on the Phase 2 roadmap — let us know if you'd like to be i
     "p_point": 0.018,
     "p_interval": [0.015, 0.025],
     "divergence_flag": false,
-    "consensus_summary": "Weighted-uniform average across 12 perspectives: P = 0.018 (range 0.013–0.025, spread 1.2pp). Within tolerance.",
+    "consensus_summary": "Weighted-uniform average across 14 perspectives: P = 0.018 (range 0.013–0.025, spread 1.2pp). Within tolerance.",
     "perspectives": [
       {
         "name": "tetlock-forecaster",
@@ -156,7 +156,7 @@ Webhook delivery is on the Phase 2 roadmap — let us know if you'd like to be i
         "evidence_urls": [...],
         "divergence_from_consensus_pp": 0.2
       }
-      // 11 more
+      // 13 more
     ],
     "major_disagreements": [
       {
@@ -223,14 +223,14 @@ If verification fails, the audit record has been tampered or the signing key has
 
 ## Rate limits
 
-Per organisation, sliding window:
+Per organisation, sliding window. Premium tier has higher entitlement because it's the higher-priced tier; both caps are admission limits, not throughput guarantees — the worker is single-concurrency in Phase 1, so a flood of submissions queues serially.
 
 | Tier | Limit | 429 response |
 |---|---|---|
-| Standard | 30 / hour | with `Retry-After` header |
-| Premium  | 10 / hour | with `Retry-After` header |
+| Standard | 10 / hour | with `Retry-After` header |
+| Premium  | 30 / hour | with `Retry-After` header |
 
-If you anticipate burst usage above these caps, ping the operations contact 24h ahead for a temporary lift.
+If you anticipate burst usage above these caps, ping the pilot contact 24h ahead for a temporary lift.
 
 ## Error taxonomy
 
@@ -266,24 +266,11 @@ If any of these matter for your use case, let us know — we're sequencing the P
 We retain:
 
 - Scenario text + audit records: 24 months (auditability)
-- Per-query intelligence deltas (Premium GATHER outputs): 90 days, then archived
+- Per-query intelligence deltas (the scenario-targeted web-search results from Premium queries): 90 days, then archived
 
 We do not share your scenario text with third parties or use it for model training. A standalone data-handling note covering DPA-style obligations is available on request.
 
 ## Escalation
 
-- **Operations:** `metis@jfritz.xyz` (response within 24h)
-- **Product / methodology questions:** `johannes.fritz@sgept.org`
-- **Pilot relationship:** _your named contact at SGEPT_
-
-## What we'd like back
-
-This is a pilot. We want to learn:
-
-1. Are the three trigger patterns (curl / SDK / agent tool) the right surface, or is something missing?
-2. Are the response fields (`briefing_markdown`, `major_disagreements`, `high_elasticity_events`) the right shape?
-3. Does the polling/email split work, or are webhooks load-bearing for your workflow?
-4. Probability calibration — when you can compare our P against your internal view, where are the gaps?
-5. What scenarios do you ask repeatedly? (Tells us where to invest in the perspective stack next.)
-
-A 30-min check-in at week 2, week 6, week 12 would help us improve fast.
+- **Pilot contact (product, methodology, commercial):** `johannes.fritz@sgept.org`
+- **Technical lead:** `liubomyr.garvyliv@sgept.org`

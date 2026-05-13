@@ -144,12 +144,13 @@ def test_get_query_org_isolation(client):
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 
 
-def test_premium_rate_limit_exceeded_returns_429(client, monkeypatch):
-    # Premium default is 10/hr; submit 11 and the last should 429
+def test_standard_rate_limit_exceeded_returns_429(client, monkeypatch):
+    # Standard default is 10/hr; submit 11 and the last should 429.
+    # (Standard is the lower-cap tier; Premium pays more and gets 30/hr.)
     payload = {
         "scenario": "Iran launches a cyber attack on German infrastructure in 30 days",
         "horizon": "30d",
-        "tier": "premium",
+        "tier": "standard",
     }
     headers = {"Authorization": "Bearer test-key-A"}
     for _ in range(10):
