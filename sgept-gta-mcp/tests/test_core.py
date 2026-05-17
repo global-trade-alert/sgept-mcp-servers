@@ -407,6 +407,31 @@ class TestModelValidators:
         model = GTASearchInput()
         assert model.sorting == "-date_announced"
 
+    def test_semantic_query_accepted(self):
+        """semantic_query field is accepted when sorting is None."""
+        model = GTASearchInput(semantic_query="AI chip subsidies", sorting=None)
+        assert model.semantic_query == "AI chip subsidies"
+
+    def test_semantic_query_default_none(self):
+        model = GTASearchInput()
+        assert model.semantic_query is None
+
+    def test_semantic_query_and_sorting_raises(self):
+        """Setting both semantic_query and sorting raises ValidationError."""
+        with pytest.raises(ValidationError, match="semantic_query"):
+            GTASearchInput(semantic_query="AI subsidies", sorting="-date_announced")
+
+    def test_semantic_query_and_sorting_none_ok(self):
+        """semantic_query + sorting=None is valid (no conflict)."""
+        model = GTASearchInput(semantic_query="export controls", sorting=None)
+        assert model.semantic_query == "export controls"
+        assert model.sorting is None
+
+    def test_semantic_query_stripped(self):
+        """Leading/trailing whitespace stripped from semantic_query."""
+        model = GTASearchInput(semantic_query="  subsidies  ", sorting=None)
+        assert model.semantic_query == "subsidies"
+
 
 # ============================================================================
 # Facet dimension tests

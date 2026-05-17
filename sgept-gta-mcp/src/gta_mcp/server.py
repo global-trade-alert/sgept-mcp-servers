@@ -14,6 +14,7 @@ from .models import (
     GTACountInput,
     ResponseFormat,
     SEMANTIC_SEARCH_SHOW_KEYS_AVAILABLE,
+    SEMANTIC_CANDIDATE_CEILING_DEFAULT,
 )
 from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY, semantic_search_interventions
 from mcp.server.fastmcp.exceptions import ToolError
@@ -117,6 +118,131 @@ KEY_PROFILES = {
 
 
 
+async def _gta_unified_semantic_search(
+    params,
+    filters,
+    filter_messages,
+    original_params,
+    client,
+):
+    """Two-stage unified search: structured filter → semantic ranking.
+
+    Stage 1: Run structured filter, collect up to SEMANTIC_CANDIDATE_CEILING IDs.
+    Stage 2: Semantic-rank those IDs, get top params.limit results.
+    Stage 3: Fetch full structural records for top-N IDs.
+    Stage 4: Merge semantic scores into structural records.
+    """
+    candidate_ceiling = int(
+        os.getenv("SEMANTIC_CANDIDATE_CEILING", str(SEMANTIC_CANDIDATE_CEILING_DEFAULT))
+    )
+
+    # Stage 1: collect candidate intervention IDs from structured filter
+    candidate_results = await client.search_interventions(
+        filters=filters,
+        limit=candidate_ceiling,
+        offset=0,
+        sorting=None,
+        show_keys=["intervention_id"],
+    )
+    candidate_ids = [r["intervention_id"] for r in candidate_results if r.get("intervention_id")]
+
+    if not candidate_ids:
+        data = {"results": [], "count": 0, "next": None, "previous": None}
+        if params.response_format == ResponseFormat.MARKDOWN:
+            return "No interventions found matching the specified filters."
+        return format_interventions_json(data)
+
+    # Stage 2: semantic ranking over candidate IDs
+    danswer_base_url, danswer_api_key = get_danswer_config()
+    semantic_data = await semantic_search_interventions(
+        query=params.semantic_query,
+        intervention_ids=candidate_ids,
+        limit=params.limit,
+        show_keys=None,  # always get score from semantic backend
+        danswer_base_url=danswer_base_url,
+        danswer_api_key=danswer_api_key,
+    )
+    semantic_results = semantic_data.get("results", [])
+
+    if not semantic_results:
+        data = {"results": [], "count": 0, "next": None, "previous": None}
+        if params.response_format == ResponseFormat.MARKDOWN:
+            return "No semantically-matching interventions found for the given query."
+        return format_interventions_json(data)
+
+    top_ids = [r["intervention_id"] for r in semantic_results if r.get("intervention_id")]
+
+    # Resolve structural show_keys (same logic as standard path, but default to standard not overview)
+    struct_show_keys = None
+    if params.show_keys:
+        # Remove 'score' — it's not an API field, added client-side
+        struct_show_keys = [k for k in params.show_keys if k != "score"] or None
+        if struct_show_keys == ["*"]:
+            struct_show_keys = None
+    elif params.detail_level:
+        struct_show_keys = KEY_PROFILES.get(params.detail_level)
+    elif params.intervention_id:
+        struct_show_keys = KEY_PROFILES["standard"]
+    else:
+        struct_show_keys = KEY_PROFILES["standard"]
+
+    # Stage 3: fetch full structural records for the ranked IDs
+    # Use intervention_id filter; must include announcement_period for the API
+    struct_filters = {"intervention_id": top_ids, "announcement_period": ["1900-01-01", "2099-12-31"]}
+    struct_results = await client.search_interventions(
+        filters=struct_filters,
+        limit=len(top_ids),
+        offset=0,
+        sorting=None,
+        show_keys=struct_show_keys,
+    )
+
+    # Stage 4: merge scores and restore semantic order
+    score_by_id = {r["intervention_id"]: r.get("score") for r in semantic_results if r.get("intervention_id")}
+    struct_by_id = {r["intervention_id"]: r for r in struct_results if r.get("intervention_id")}
+
+    # Determine whether to include score in output
+    user_keys = params.show_keys
+    include_score = (user_keys is None) or ("*" in user_keys) or ("score" in user_keys)
+
+    merged = []
+    for sem_rec in semantic_results:
+        iid = sem_rec.get("intervention_id")
+        if iid is None:
+            continue
+        struct_rec = dict(struct_by_id.get(iid, {"intervention_id": iid}))
+        if include_score:
+            struct_rec["score"] = score_by_id.get(iid)
+        merged.append(struct_rec)
+
+    data = {
+        "results": merged,
+        "count": len(merged),
+        "next": None,
+        "previous": None,
+        "semantic_query": params.semantic_query,
+        "candidate_count": len(candidate_ids),
+    }
+
+    if params.response_format == ResponseFormat.MARKDOWN:
+        formatted_response = format_interventions_markdown(data)
+        if filter_messages:
+            message_section = "\n".join([f"ℹ️ {msg}" for msg in filter_messages])
+            formatted_response = f"{message_section}\n\n{formatted_response}"
+        links_header = make_dataset_links_header(filters, original_params)
+        if links_header:
+            formatted_response = links_header + "\n\n" + formatted_response
+            formatted_response += "\n\n" + make_dataset_links_section(filters, original_params)
+        return formatted_response
+    else:
+        if filter_messages:
+            data["filter_messages"] = filter_messages
+        dataset_urls = build_dataset_urls(filters, original_params)
+        if dataset_urls:
+            data["dataset_urls"] = dataset_urls
+        return format_interventions_json(data)
+
+
 @mcp.tool(name="gta_search_interventions")
 async def gta_search_interventions(
     implementing_jurisdictions: list[str] | None = None,
@@ -136,6 +262,7 @@ async def gta_search_interventions(
     date_modified_lte: str | None = None,
     is_in_force: bool | None = None,
     query: str | None = None,
+    semantic_query: str | None = None,
     detail_level: str | None = None,
     sorting: str | None = "-date_announced",
     show_keys: list[str] | None = None,
@@ -165,7 +292,13 @@ async def gta_search_interventions(
     Do NOT use `gta_count_interventions` when the user asks to see or read interventions.
     `gta_count_interventions` only returns aggregate numbers, not intervention records.
 
+    UNIFIED SEARCH PATTERN:
+    - Structured filters narrow the candidate set (jurisdiction, type, date, sector, etc.)
+    - Optional `semantic_query` re-ranks that set by text similarity to a natural-language query
+    - `show_keys` controls response width for every call
+
     Use structured filters FIRST, then add 'query' ONLY for entity names not captured by filters.
+    Use 'semantic_query' when you need relevance ranking by meaning, not just keyword presence.
 
     BEFORE calling this tool:
     - For commodity/product queries → use `gta_lookup_hs_codes` to find HS product codes
@@ -179,12 +312,23 @@ async def gta_search_interventions(
     gta_evaluation: 'Red' (harmful), 'Amber' (likely harmful), 'Green' (liberalising).
     Use 'Harmful' as shorthand for Red+Amber.
 
+    FIELD PROJECTION — use show_keys to return only the fields you need:
+    Available fields: intervention_id, state_act_id, state_act_title, intervention_type,
+    gta_evaluation, mast_chapter, implementation_level, eligible_firm,
+    date_announced, date_implemented, date_removed, is_in_force,
+    implementing_jurisdictions, affected_jurisdictions, affected_sectors,
+    affected_products, intervention_description, state_act_source,
+    intervention_url, state_act_url, is_official_source, score.
+    Pass show_keys=["*"] for all fields (default). In semantic mode, 'score' is auto-included.
+
     Examples:
         - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
         - Subsidies: mast_chapters=['L']
         - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
           then mast_chapters=['P'], affected_products=[282520, 283691, ...]
+        - Semantic: mast_chapters=['L'], semantic_query='AI chip production subsidies',
+          show_keys=['intervention_id', 'state_act_title', 'score', 'gta_evaluation']
 
     Facet aggregations (include_facets): request per-value counts for one or more dimensions
     alongside results, reflecting the full filtered set (not just the returned page).
@@ -195,16 +339,37 @@ async def gta_search_interventions(
     Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
     gta://reference/mast-chapters, gta://reference/jurisdiction-groups
     """
-    params = GTASearchInput(**{k: v for k, v in locals().items()})
+    # Pre-process: when semantic_query is set, clear sorting so the model validator
+    # doesn't fire on the default "-date_announced" value from the function signature.
+    raw_kwargs = {k: v for k, v in locals().items()}
+    if raw_kwargs.get('semantic_query'):
+        raw_kwargs['sorting'] = None
+    params = GTASearchInput(**raw_kwargs)
     try:
         client = get_api_client()
 
         # Build filter dictionary and get informational messages
         original_params = params.model_dump(exclude={
             'limit', 'offset', 'sorting', 'response_format',
-            'detail_level', 'show_keys', 'include_facets'
+            'detail_level', 'show_keys', 'include_facets', 'semantic_query'
         })
         filters, filter_messages = build_filters(original_params)
+
+        # ----------------------------------------------------------------
+        # Unified semantic search path
+        # ----------------------------------------------------------------
+        if params.semantic_query:
+            return await _gta_unified_semantic_search(
+                params=params,
+                filters=filters,
+                filter_messages=filter_messages,
+                original_params=original_params,
+                client=client,
+            )
+
+        # ----------------------------------------------------------------
+        # Standard structured search path (unchanged from before)
+        # ----------------------------------------------------------------
 
         # Resolve show_keys from detail_level or explicit show_keys
         #
@@ -248,7 +413,7 @@ async def gta_search_interventions(
             filters=filters,
             limit=effective_limit,
             offset=params.offset,
-            sorting=params.sorting,
+            sorting=params.sorting if params.sorting else "-date_announced",
             show_keys=show_keys
         )
 
@@ -264,7 +429,7 @@ async def gta_search_interventions(
         if params.include_facets:
             count_filter_params = params.model_dump(exclude={
                 'limit', 'offset', 'sorting', 'response_format',
-                'detail_level', 'show_keys', 'include_facets'
+                'detail_level', 'show_keys', 'include_facets', 'semantic_query'
             })
             count_filters, _ = build_count_filters(count_filter_params)
             data["facets"] = await client.get_facets(

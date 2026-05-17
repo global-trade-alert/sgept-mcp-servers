@@ -221,16 +221,26 @@ class GTASearchInput(BaseModel):
     show_keys: Optional[List[str]] = Field(
         default=None,
         description=(
-            "Restrict which fields are returned per record. "
-            "Use this to stay within token budget on broad queries. "
-            "Overrides detail_level when set. "
+            "Primary control for response width — restrict which fields are returned per record. "
+            "Use this to stay within token budget. Overrides detail_level when set. "
             "Available keys: intervention_id, state_act_id, state_act_title, intervention_type, "
             "gta_evaluation, mast_chapter, implementation_level, eligible_firm, "
             "date_announced, date_implemented, date_removed, is_in_force, "
             "implementing_jurisdictions, affected_jurisdictions, affected_sectors, "
             "affected_products, intervention_description, state_act_source, "
-            "intervention_url, state_act_url, is_official_source. "
+            "intervention_url, state_act_url, is_official_source, score. "
             "Pass [\"*\"] for all fields."
+        )
+    )
+
+    semantic_query: Optional[str] = Field(
+        default=None,
+        description=(
+            "Natural-language query for semantic (vector) ranking. When set, the server first runs "
+            "the structured filters to collect candidate interventions (up to the candidate ceiling), "
+            "then re-ranks them by text similarity to this query. Results are returned in "
+            "score-descending order and each record includes a 'score' field (0–1). "
+            "Cannot be combined with 'sorting' — ordering source must be unambiguous."
         )
     )
 
@@ -381,6 +391,15 @@ class GTASearchInput(BaseModel):
             return [code.upper() for code in v]
         return v
 
+    @model_validator(mode='after')
+    def validate_semantic_query_sorting_conflict(self) -> 'GTASearchInput':
+        if self.semantic_query is not None and self.sorting is not None:
+            raise ValueError(
+                "Cannot set both 'semantic_query' and 'sorting': ordering source must be unambiguous. "
+                "When semantic_query is set, results are ordered by relevance score."
+            )
+        return self
+
 
 FACET_VALID_DIMENSIONS = sorted([
     "gta_evaluation",
@@ -397,8 +416,11 @@ SHOW_KEYS_AVAILABLE = [
     "date_announced", "date_implemented", "date_removed", "is_in_force",
     "implementing_jurisdictions", "affected_jurisdictions", "affected_sectors",
     "affected_products", "intervention_description", "state_act_source",
-    "intervention_url", "state_act_url", "is_official_source",
+    "intervention_url", "state_act_url", "is_official_source", "score",
 ]
+
+# Default candidate ceiling for unified semantic search (structured filter → semantic rank)
+SEMANTIC_CANDIDATE_CEILING_DEFAULT = 1000
 
 
 class GTAGetInterventionInput(BaseModel):

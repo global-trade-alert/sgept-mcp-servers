@@ -159,14 +159,25 @@ def format_interventions_overview(data: Dict[str, Any]) -> str:
     if not results:
         return "No interventions found matching the specified filters."
 
+    # Check if any result carries a score (semantic mode)
+    has_scores = any(r.get('score') is not None for r in results)
+
     lines = [
         f"**Found {count} interventions.** Compact overview below.",
         "*To get full details, call again with `intervention_id=[selected IDs]` "
         "and `detail_level=\"standard\"`.*",
         "",
-        "| # | ID | Title | Type | Eval | Date | Status |",
-        "|---|-----|-------|------|------|------|--------|"
     ]
+    if has_scores:
+        lines += [
+            "| # | ID | Title | Type | Eval | Date | Status | Score |",
+            "|---|-----|-------|------|------|------|--------|-------|"
+        ]
+    else:
+        lines += [
+            "| # | ID | Title | Type | Eval | Date | Status |",
+            "|---|-----|-------|------|------|------|--------|"
+        ]
 
     for i, intervention in enumerate(results, 1):
         iid = intervention.get('intervention_id', '?')
@@ -183,7 +194,12 @@ def format_interventions_overview(data: Dict[str, Any]) -> str:
         else:
             status = "Not yet in force"
         url = make_gta_url(iid)
-        lines.append(f"| {i} | [{iid}]({url}) | {title} | {itype} | {eval_} | {date} | {status} |")
+        if has_scores:
+            score = intervention.get('score')
+            score_str = f"{score:.4f}" if score is not None else "—"
+            lines.append(f"| {i} | [{iid}]({url}) | {title} | {itype} | {eval_} | {date} | {status} | {score_str} |")
+        else:
+            lines.append(f"| {i} | [{iid}]({url}) | {title} | {itype} | {eval_} | {date} | {status} |")
 
         # Truncate if approaching character limit
         current_size = sum(len(line) for line in lines)
@@ -230,9 +246,13 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
         intervention_id = intervention.get('intervention_id')
         title = intervention.get('state_act_title', 'Untitled')
         citation = make_inline_citation(intervention_id) if intervention_id else ""
-        output.append(f"## {i}. {title} {citation}\n")
+        score = intervention.get('score')
+        score_str = f" (score: {score:.4f})" if score is not None else ""
+        output.append(f"## {i}. {title} {citation}{score_str}\n")
         output.append(f"**Intervention ID**: {intervention_id}")
         output.append(f"**State Act ID**: {intervention.get('state_act_id')}")
+        if score is not None:
+            output.append(f"**Relevance Score**: {score:.4f}")
         output.append(f"**Type**: {intervention.get('intervention_type', 'N/A')}")
         output.append(f"**GTA Evaluation**: {intervention.get('gta_evaluation', 'N/A')}")
         if intervention.get('is_in_force'):
