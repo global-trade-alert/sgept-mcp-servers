@@ -924,6 +924,7 @@ async def semantic_search_interventions(
     show_keys: Optional[List[str]] = None,
     danswer_base_url: Optional[str] = None,
     danswer_api_key: Optional[str] = None,
+    include_matched_snippets: bool = False,
 ) -> Dict[str, Any]:
     """Semantic vector search over GTA intervention descriptions via danswer.
 
@@ -938,6 +939,8 @@ async def semantic_search_interventions(
             named keys restrict each result record. Forwarded to the danswer endpoint.
         danswer_base_url: Base URL of danswer backend (default: http://localhost:8080).
         danswer_api_key: API key for X-API-Key header authentication.
+        include_matched_snippets: When True, request the danswer backend to include
+            matched text snippets in each result record.
 
     Returns:
         Dict with 'results' (list of projected records), 'total' (int), 'query' (str).
@@ -957,6 +960,8 @@ async def semantic_search_interventions(
         body["intervention_ids"] = intervention_ids
     if show_keys and show_keys != ["*"]:
         body["show_keys"] = show_keys
+    if include_matched_snippets:
+        body["include_matched_snippets"] = True
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(endpoint, json=body, headers=headers)

@@ -301,6 +301,14 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
         if dates:
             output.append(f"**Dates**: {' | '.join(dates)}")
         
+        # Matched snippets (citation-ready text from semantic search)
+        snippets = intervention.get('matched_snippets')
+        if snippets:
+            output.append("\n**Matched Snippets**:")
+            for snippet in snippets:
+                output.append(f"> {snippet}")
+            output.append("")
+
         # Description (if available, truncate)
         description = intervention.get('intervention_description')
         if description:

@@ -244,6 +244,18 @@ class GTASearchInput(BaseModel):
         )
     )
 
+    include_matched_snippets: bool = Field(
+        default=False,
+        description=(
+            "Return citation-ready matched-text snippets alongside each record. "
+            "Requires 'semantic_query' to be set — the snippets are the 1–2 sentences from each "
+            "intervention's description that most closely matched the semantic query. "
+            "When set without 'semantic_query', this flag is a no-op (no snippets are computed). "
+            "Each record gains a 'matched_snippets: List[str]' field when this is True. "
+            "Default False — omitting this flag leaves response shape unchanged."
+        )
+    )
+
     # Exclusion/inclusion controls (keep parameters)
     keep_affected: Optional[bool] = Field(
         default=None,
@@ -417,7 +429,11 @@ SHOW_KEYS_AVAILABLE = [
     "implementing_jurisdictions", "affected_jurisdictions", "affected_sectors",
     "affected_products", "intervention_description", "state_act_source",
     "intervention_url", "state_act_url", "is_official_source", "score",
+    "matched_snippets",
 ]
+
+# Keys that are synthesised client-side and must not be forwarded to the GTA API's show_keys filter.
+_SYNTHETIC_SHOW_KEYS = frozenset({"score", "matched_snippets"})
 
 # Default candidate ceiling for unified semantic search (structured filter → semantic rank)
 SEMANTIC_CANDIDATE_CEILING_DEFAULT = 1000

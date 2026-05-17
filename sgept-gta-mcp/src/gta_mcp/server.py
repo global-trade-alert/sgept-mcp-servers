@@ -15,6 +15,7 @@ from .models import (
     ResponseFormat,
     SEMANTIC_SEARCH_SHOW_KEYS_AVAILABLE,
     SEMANTIC_CANDIDATE_CEILING_DEFAULT,
+    _SYNTHETIC_SHOW_KEYS,
 )
 from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY, semantic_search_interventions
 from mcp.server.fastmcp.exceptions import ToolError
@@ -161,6 +162,7 @@ async def _gta_unified_semantic_search(
         show_keys=None,  # always get score from semantic backend
         danswer_base_url=danswer_base_url,
         danswer_api_key=danswer_api_key,
+        include_matched_snippets=params.include_matched_snippets,
     )
     semantic_results = semantic_data.get("results", [])
 
@@ -175,8 +177,8 @@ async def _gta_unified_semantic_search(
     # Resolve structural show_keys (same logic as standard path, but default to standard not overview)
     struct_show_keys = None
     if params.show_keys:
-        # Remove 'score' — it's not an API field, added client-side
-        struct_show_keys = [k for k in params.show_keys if k != "score"] or None
+        # Remove synthetic fields (score, matched_snippets) — not GTA API fields, added client-side
+        struct_show_keys = [k for k in params.show_keys if k not in _SYNTHETIC_SHOW_KEYS] or None
         if struct_show_keys == ["*"]:
             struct_show_keys = None
     elif params.detail_level:
@@ -197,13 +199,20 @@ async def _gta_unified_semantic_search(
         show_keys=struct_show_keys,
     )
 
-    # Stage 4: merge scores and restore semantic order
+    # Stage 4: merge scores, snippets, and restore semantic order
     score_by_id = {r["intervention_id"]: r.get("score") for r in semantic_results if r.get("intervention_id")}
+    snippets_by_id = (
+        {r["intervention_id"]: r.get("matched_snippets") for r in semantic_results if r.get("intervention_id")}
+        if params.include_matched_snippets else {}
+    )
     struct_by_id = {r["intervention_id"]: r for r in struct_results if r.get("intervention_id")}
 
     # Determine whether to include score in output
     user_keys = params.show_keys
     include_score = (user_keys is None) or ("*" in user_keys) or ("score" in user_keys)
+    include_snippets = params.include_matched_snippets and (
+        (user_keys is None) or ("*" in user_keys) or ("matched_snippets" in user_keys)
+    )
 
     merged = []
     for sem_rec in semantic_results:
@@ -213,6 +222,10 @@ async def _gta_unified_semantic_search(
         struct_rec = dict(struct_by_id.get(iid, {"intervention_id": iid}))
         if include_score:
             struct_rec["score"] = score_by_id.get(iid)
+        if include_snippets:
+            snippets = snippets_by_id.get(iid)
+            if snippets is not None:
+                struct_rec["matched_snippets"] = snippets
         merged.append(struct_rec)
 
     data = {
@@ -279,6 +292,7 @@ async def gta_search_interventions(
     intervention_id: list[int] | None = None,
     keep_intervention_id: bool | None = None,
     include_facets: list[str] | None = None,
+    include_matched_snippets: bool = False,
     response_format: str = "markdown",
     limit: int = 50,
     offset: int = 0,
@@ -321,6 +335,12 @@ async def gta_search_interventions(
     intervention_url, state_act_url, is_official_source, score.
     Pass show_keys=["*"] for all fields (default). In semantic mode, 'score' is auto-included.
 
+    CITATION PATTERN — use include_matched_snippets with semantic_query for inline evidence:
+    Set both together to receive a 'matched_snippets' field on each record: 1–2 sentences from
+    the intervention's description that earned it its score. Pass the snippet directly to the
+    user as a blockquote citation without a separate gta_get_intervention fetch.
+    Note: include_matched_snippets is a no-op when semantic_query is not set.
+
     Examples:
         - US tariffs on China: implementing_jurisdictions=['USA'], affected_jurisdictions=['CHN'],
           intervention_types=['Import tariff'], date_announced_gte='2024-01-01'
@@ -329,6 +349,8 @@ async def gta_search_interventions(
           then mast_chapters=['P'], affected_products=[282520, 283691, ...]
         - Semantic: mast_chapters=['L'], semantic_query='AI chip production subsidies',
           show_keys=['intervention_id', 'state_act_title', 'score', 'gta_evaluation']
+        - Semantic with citations: semantic_query='solar panel import duties',
+          include_matched_snippets=True
 
     Facet aggregations (include_facets): request per-value counts for one or more dimensions
     alongside results, reflecting the full filtered set (not just the returned page).
@@ -351,7 +373,8 @@ async def gta_search_interventions(
         # Build filter dictionary and get informational messages
         original_params = params.model_dump(exclude={
             'limit', 'offset', 'sorting', 'response_format',
-            'detail_level', 'show_keys', 'include_facets', 'semantic_query'
+            'detail_level', 'show_keys', 'include_facets', 'semantic_query',
+            'include_matched_snippets',
         })
         filters, filter_messages = build_filters(original_params)
 
