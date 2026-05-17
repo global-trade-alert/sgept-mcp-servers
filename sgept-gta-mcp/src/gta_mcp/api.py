@@ -917,6 +917,53 @@ class GTAAPIClient:
             return response.json()
 
 
+async def semantic_search_interventions(
+    query: str,
+    intervention_ids: Optional[List[int]] = None,
+    limit: int = 20,
+    show_keys: Optional[List[str]] = None,
+    danswer_base_url: Optional[str] = None,
+    danswer_api_key: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Semantic vector search over GTA intervention descriptions via danswer.
+
+    Calls POST /chat/gta/semantic-search on the danswer backend. Returns the
+    full response dict (keys: results, total, query).
+
+    Args:
+        query: Natural-language query text.
+        intervention_ids: Optional list of IDs to restrict ranking scope.
+        limit: Maximum results (1-100).
+        show_keys: Optional field projection. ``["*"]`` or None returns all fields;
+            named keys restrict each result record. Forwarded to the danswer endpoint.
+        danswer_base_url: Base URL of danswer backend (default: http://localhost:8080).
+        danswer_api_key: API key for X-API-Key header authentication.
+
+    Returns:
+        Dict with 'results' (list of projected records), 'total' (int), 'query' (str).
+
+    Raises:
+        httpx.HTTPStatusError: If the danswer endpoint returns an error response.
+    """
+    base = (danswer_base_url or "http://localhost:8080").rstrip("/")
+    endpoint = f"{base}/chat/gta/semantic-search"
+
+    headers: Dict[str, str] = {"Content-Type": "application/json"}
+    if danswer_api_key:
+        headers["X-API-Key"] = danswer_api_key
+
+    body: Dict[str, Any] = {"query": query, "limit": limit}
+    if intervention_ids is not None:
+        body["intervention_ids"] = intervention_ids
+    if show_keys and show_keys != ["*"]:
+        body["show_keys"] = show_keys
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(endpoint, json=body, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+
 def convert_intervention_types(type_names: List[Any]) -> List[int]:
     """Convert intervention type names to IDs.
 

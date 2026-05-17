@@ -8,12 +8,14 @@ from mcp.server.fastmcp import FastMCP
 from .models import (
     GTASearchInput,
     GTAGetInterventionInput,
+    GTASemanticSearchInput,
     GTATickerInput,
     GTAImpactChainInput,
     GTACountInput,
-    ResponseFormat
+    ResponseFormat,
+    SEMANTIC_SEARCH_SHOW_KEYS_AVAILABLE,
 )
-from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY
+from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY, semantic_search_interventions
 from mcp.server.fastmcp.exceptions import ToolError
 from .formatters import (
     format_interventions_markdown,
@@ -1229,6 +1231,119 @@ def get_privacy_policy() -> str:
 		Complete privacy policy as markdown
 	"""
 	return load_privacy_policy()
+
+
+def get_danswer_config() -> tuple[str, str | None]:
+    """Return (danswer_base_url, danswer_api_key) from environment."""
+    base_url = os.getenv("DANSWER_BASE_URL", "http://localhost:8080")
+    api_key = os.getenv("DANSWER_API_KEY")
+    return base_url, api_key
+
+
+@mcp.tool(name="gta_semantic_search")
+async def gta_semantic_search(
+    query: str,
+    intervention_ids: list[int] | None = None,
+    limit: int = 20,
+    show_keys: list[str] | None = None,
+    response_format: str = "markdown",
+):
+    """Semantic vector search over GTA intervention descriptions.
+
+    **Focused "rank a known ID list" path.** Use when you have a set of
+    intervention IDs from structured filtering and want to re-rank them by
+    text similarity to a natural-language query.
+
+    For new workflows that combine structured filters with semantic ranking
+    in a single call, use ``gta_search_interventions(semantic_query=...)``
+    instead — it handles the filter → rank pipeline automatically.
+
+    Returns interventions ranked by cosine similarity (score 0–1) to the
+    query text. Higher score = more semantically similar.
+
+    Ceiling: limit ≤ 100. Default 20.
+
+    Field projection via ``show_keys`` restricts which fields appear per record.
+    Available fields: intervention_id, title, score, blurb, url, publication_date.
+    Pass ``["*"]`` for all fields (default).
+
+    Args:
+        query: Natural-language query text to rank interventions against.
+        intervention_ids: Optional list of GTA intervention IDs to restrict
+            ranking scope. Omit to search the full corpus.
+        limit: Maximum number of ranked results (1-100, default 20).
+        show_keys: Field projection list. Omit or pass ["*"] for all fields.
+        response_format: 'markdown' (default) or 'json'.
+
+    Examples:
+        - Rank 50 pre-filtered IDs by relevance to a query:
+            intervention_ids=[...], query="export restrictions on semiconductors"
+        - Top 10 most relevant interventions mentioning solar panels:
+            query="solar panel import duties", limit=10
+    """
+    params = GTASemanticSearchInput(
+        query=query,
+        intervention_ids=intervention_ids,
+        limit=limit,
+        show_keys=show_keys,
+        response_format=response_format,
+    )
+    danswer_base_url, danswer_api_key = get_danswer_config()
+    try:
+        data = await semantic_search_interventions(
+            query=params.query,
+            intervention_ids=params.intervention_ids,
+            limit=params.limit,
+            show_keys=params.show_keys,
+            danswer_base_url=danswer_base_url,
+            danswer_api_key=danswer_api_key,
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "403" in error_msg:
+            raise ToolError(
+                "Authentication Error: Invalid or missing DANSWER_API_KEY. "
+                "Set DANSWER_API_KEY environment variable."
+            )
+        if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            raise ToolError("Request timeout. Try reducing limit or narrowing intervention_ids.")
+        raise ToolError(f"Semantic search error: {error_msg}")
+
+    results = data.get("results", [])
+    total = data.get("total", len(results))
+
+    if not results:
+        return "No results found for the given query."
+
+    if params.response_format == ResponseFormat.JSON:
+        import json as _json
+        return _json.dumps({"results": results, "total": total, "query": params.query}, indent=2)
+
+    lines = [f"## Semantic Search Results\n**Query:** {params.query}  |  **Total returned:** {total}\n"]
+    for i, rec in enumerate(results, 1):
+        iid = rec.get("intervention_id", "?")
+        title = rec.get("title", "")
+        score = rec.get("score", "")
+        blurb = rec.get("blurb", "")
+        url = rec.get("url", "")
+        pub_date = rec.get("publication_date", "")
+
+        parts = [f"**{i}.** Intervention {iid}"]
+        if title:
+            parts.append(f" — {title}")
+        if score != "":
+            parts.append(f" (score: {score})")
+        lines.append("".join(parts))
+
+        if blurb:
+            lines.append(f"> {blurb}")
+        if pub_date:
+            lines.append(f"Date: {pub_date}")
+        if url:
+            lines.append(f"[View]({url})")
+        lines.append("")
+
+    return "\n".join(lines)
 
 
 def main():

@@ -470,15 +470,73 @@ class GTAGetInterventionInput(BaseModel):
         return self
 
 
-class GTATickerInput(BaseModel):
-    """Input model for GTA ticker updates."""
-    
+SEMANTIC_SEARCH_SHOW_KEYS_AVAILABLE = [
+    "intervention_id", "title", "score", "blurb", "url", "publication_date",
+]
+
+
+class GTASemanticSearchInput(BaseModel):
+    """Input model for semantic (vector) search over GTA intervention descriptions.
+
+    Ranks a candidate pool by text similarity to a natural-language query.
+    Use when you already have a list of intervention IDs to rank (the focused
+    "rank a known ID list" path).
+
+    For new workflows that combine structured filters with semantic ranking,
+    use ``gta_search_interventions(semantic_query=...)`` instead.
+    """
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
         extra='forbid'
     )
-    
+
+    query: str = Field(
+        ...,
+        description="Natural-language query to rank interventions by text similarity.",
+        min_length=1,
+    )
+
+    intervention_ids: Optional[List[int]] = Field(
+        default=None,
+        description=(
+            "Restrict ranking to this specific set of intervention IDs. "
+            "Omit to rank across the full corpus."
+        ),
+    )
+
+    limit: int = Field(
+        default=20,
+        description="Maximum number of ranked interventions to return (1-100).",
+        ge=1,
+        le=100,
+    )
+
+    show_keys: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Restrict which fields are returned per record. "
+            "Available keys: intervention_id, title, score, blurb, url, publication_date. "
+            "Pass [\"*\"] for all fields (default)."
+        ),
+    )
+
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable or 'json' for machine-readable",
+    )
+
+
+class GTATickerInput(BaseModel):
+    """Input model for GTA ticker updates."""
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
     implementing_jurisdictions: Optional[List[str]] = Field(
         default=None,
         description="Filter by implementing jurisdiction ISO codes"
