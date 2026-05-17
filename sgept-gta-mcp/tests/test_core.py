@@ -16,6 +16,7 @@ from gta_mcp.api import (
     convert_sectors,
     convert_eligible_firms,
     convert_implementation_levels,
+    FACET_DIMENSION_TO_COUNT_BY,
     MAST_CHAPTER_TO_ID,
     ISO_TO_UN_CODE,
     GTA_EVALUATION_TO_ID,
@@ -25,8 +26,10 @@ from gta_mcp.models import (
     GTAGetInterventionInput,
     GTAImpactChainInput,
     GTACountInput,
+    FACET_VALID_DIMENSIONS,
     ResponseFormat,
 )
+from gta_mcp.formatters import format_facets_section_markdown
 from gta_mcp.hs_lookup import search_hs_codes
 from gta_mcp.sector_lookup import search_sectors
 
@@ -403,3 +406,119 @@ class TestModelValidators:
     def test_default_sorting(self):
         model = GTASearchInput()
         assert model.sorting == "-date_announced"
+
+
+# ============================================================================
+# Facet dimension tests
+# ============================================================================
+
+
+class TestFacetDimensions:
+    """Tests for include_facets model validation and formatter rendering."""
+
+    def test_valid_facet_dimensions_accepted(self):
+        """All FACET_VALID_DIMENSIONS are accepted by the model."""
+        model = GTASearchInput(include_facets=FACET_VALID_DIMENSIONS)
+        assert set(model.include_facets) == set(FACET_VALID_DIMENSIONS)
+
+    def test_single_valid_dimension(self):
+        model = GTASearchInput(include_facets=["implementing_country"])
+        assert model.include_facets == ["implementing_country"]
+
+    def test_multiple_valid_dimensions(self):
+        model = GTASearchInput(include_facets=["implementing_country", "year"])
+        assert "implementing_country" in model.include_facets
+        assert "year" in model.include_facets
+
+    def test_unknown_dimension_raises(self):
+        """Unknown dimension name → validation error listing valid names."""
+        with pytest.raises(ValidationError) as exc_info:
+            GTASearchInput(include_facets=["nonexistent_dim"])
+        err = str(exc_info.value)
+        assert "nonexistent_dim" in err
+        assert "Valid dimensions" in err
+
+    def test_include_facets_none_by_default(self):
+        model = GTASearchInput()
+        assert model.include_facets is None
+
+    def test_include_facets_omitted_no_extra_fields(self):
+        """Model dump without include_facets contains no facets key beyond None."""
+        model = GTASearchInput()
+        dumped = model.model_dump()
+        assert dumped["include_facets"] is None
+
+    def test_facet_dimension_map_covers_all_valid_dims(self):
+        """Every FACET_VALID_DIMENSIONS entry maps to a count_by dimension."""
+        for dim in FACET_VALID_DIMENSIONS:
+            assert dim in FACET_DIMENSION_TO_COUNT_BY, (
+                f"Dimension '{dim}' in FACET_VALID_DIMENSIONS but not in "
+                "FACET_DIMENSION_TO_COUNT_BY"
+            )
+
+    # ------------------------------------------------------------------
+    # Formatter tests
+    # ------------------------------------------------------------------
+
+    def test_format_facets_none_returns_empty(self):
+        assert format_facets_section_markdown(None) == ""
+
+    def test_format_facets_empty_dict_returns_empty(self):
+        assert format_facets_section_markdown({}) == ""
+
+    def test_format_facets_single_dimension_markdown(self):
+        facets = {"gta_evaluation": {"Red": 100, "Green": 50, "Amber": 25}}
+        result = format_facets_section_markdown(facets)
+        assert "gta_evaluation" in result
+        assert "Red" in result
+        assert "100" in result
+        assert "175" in result  # total = 100+50+25
+
+    def test_format_facets_counts_sum_shown(self):
+        """Total in header equals sum of per-value counts."""
+        facets = {"year": {"2023": 40, "2024": 60}}
+        result = format_facets_section_markdown(facets)
+        assert "100" in result  # 40 + 60
+
+    def test_format_facets_empty_dimension_shows_no_results(self):
+        facets = {"implementing_country": {}}
+        result = format_facets_section_markdown(facets)
+        assert "implementing_country" in result
+        assert "no results" in result or "0 values" in result
+
+    def test_format_facets_multiple_dimensions(self):
+        facets = {
+            "gta_evaluation": {"Red": 10, "Green": 5},
+            "year": {"2023": 8, "2024": 7},
+        }
+        result = format_facets_section_markdown(facets)
+        assert "gta_evaluation" in result
+        assert "year" in result
+
+    def test_format_facets_json_passthrough(self):
+        """JSON formatter includes facets when present in data dict."""
+        from gta_mcp.formatters import format_interventions_json
+        import json
+        data = {
+            "results": [],
+            "count": 0,
+            "facets": {"gta_evaluation": {"Red": 5}},
+        }
+        out = format_interventions_json(data)
+        parsed = json.loads(out)
+        assert "facets" in parsed
+        assert parsed["facets"]["gta_evaluation"]["Red"] == 5
+
+    def test_format_facets_omitted_json_no_key(self):
+        """JSON output has no 'facets' key when include_facets was not requested."""
+        from gta_mcp.formatters import format_interventions_json
+        import json
+        data = {"results": [], "count": 0}
+        out = format_interventions_json(data)
+        parsed = json.loads(out)
+        assert "facets" not in parsed
+
+    def test_build_filters_include_facets_not_in_output(self):
+        """include_facets is NOT a filter field — build_filters ignores it if present."""
+        filters, _ = build_filters({"include_facets": ["gta_evaluation"]})
+        assert "include_facets" not in filters

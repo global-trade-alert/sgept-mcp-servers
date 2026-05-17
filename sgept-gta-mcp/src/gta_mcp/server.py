@@ -13,7 +13,7 @@ from .models import (
     GTACountInput,
     ResponseFormat
 )
-from .api import GTAAPIClient, build_filters, build_count_filters
+from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY
 from mcp.server.fastmcp.exceptions import ToolError
 from .formatters import (
     format_interventions_markdown,
@@ -25,6 +25,7 @@ from .formatters import (
     format_ticker_markdown,
     format_counts_markdown,
     format_counts_json,
+    format_facets_section_markdown,
     CHARACTER_LIMIT
 )
 from .resources_loader import (
@@ -148,6 +149,7 @@ async def gta_search_interventions(
     keep_revocation_na: bool | None = None,
     intervention_id: list[int] | None = None,
     keep_intervention_id: bool | None = None,
+    include_facets: list[str] | None = None,
     response_format: str = "markdown",
     limit: int = 50,
     offset: int = 0,
@@ -182,6 +184,12 @@ async def gta_search_interventions(
         - Lithium export controls: First use gta_lookup_hs_codes('lithium') to get codes,
           then mast_chapters=['P'], affected_products=[282520, 283691, ...]
 
+    Facet aggregations (include_facets): request per-value counts for one or more dimensions
+    alongside results, reflecting the full filtered set (not just the returned page).
+    Valid facet dimensions: gta_evaluation, implementing_country, intervention_type,
+    mast_chapter, year. Example: include_facets=["implementing_country", "gta_evaluation"]
+    adds a "facets" block to the response with count maps per dimension.
+
     Resources: gta://guide/parameters, gta://guide/query-intent-mapping,
     gta://reference/mast-chapters, gta://reference/jurisdiction-groups
     """
@@ -192,7 +200,7 @@ async def gta_search_interventions(
         # Build filter dictionary and get informational messages
         original_params = params.model_dump(exclude={
             'limit', 'offset', 'sorting', 'response_format',
-            'detail_level', 'show_keys'
+            'detail_level', 'show_keys', 'include_facets'
         })
         filters, filter_messages = build_filters(original_params)
 
@@ -249,6 +257,18 @@ async def gta_search_interventions(
             "next": None if len(results) < effective_limit else f"Use offset={params.offset + effective_limit}",
             "previous": None if params.offset == 0 else f"Use offset={max(0, params.offset - effective_limit)}"
         }
+
+        # Fan out to counts endpoint for requested facet dimensions
+        if params.include_facets:
+            count_filter_params = params.model_dump(exclude={
+                'limit', 'offset', 'sorting', 'response_format',
+                'detail_level', 'show_keys', 'include_facets'
+            })
+            count_filters, _ = build_count_filters(count_filter_params)
+            data["facets"] = await client.get_facets(
+                dimension_names=list(params.include_facets),
+                count_filters=count_filters,
+            )
 
         # Format response — overview mode uses compact table
         if use_overview_format and params.response_format == ResponseFormat.MARKDOWN:

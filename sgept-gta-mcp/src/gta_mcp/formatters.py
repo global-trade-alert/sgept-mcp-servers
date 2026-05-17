@@ -197,6 +197,10 @@ def format_interventions_overview(data: Dict[str, Any]) -> str:
     if data.get("next"):
         lines.append(f"\n*More results available: {data['next']}*")
 
+    facets_section = format_facets_section_markdown(data.get("facets"))
+    if facets_section:
+        lines.append(facets_section)
+
     return "\n".join(lines)
 
 
@@ -309,6 +313,11 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
         
         output.append("\n---\n")
 
+    # Facets section (only when requested)
+    facets_section = format_facets_section_markdown(data.get("facets"))
+    if facets_section:
+        output.append(facets_section)
+
     # Add references section
     output.append("\n")
     output.append("---\n")
@@ -330,7 +339,7 @@ def format_interventions_markdown(data: Dict[str, Any]) -> str:
             "next": data.get("next"),
             "truncated": True
         }) + f"\n\n⚠️ **Response truncated**: Showing {truncated_count} of {total} interventions. Use `offset` or add filters to see more."
-    
+
     return result
 
 
@@ -872,6 +881,43 @@ def format_counts_json(
 # ============================================================================
 # Field projection helper
 # ============================================================================
+
+
+def format_facets_section_markdown(facets: Optional[Dict[str, Any]]) -> str:
+    """Render facets as collapsible per-dimension count tables.
+
+    Args:
+        facets: Dict mapping dimension_name → {value: count}. None or empty → empty string.
+
+    Returns:
+        Markdown string with one collapsible block per dimension, or empty string.
+    """
+    if not facets:
+        return ""
+
+    lines = ["\n## Facets\n"]
+    for dim_name, counts in facets.items():
+        if not counts:
+            lines.append(
+                f"<details>\n<summary><strong>{dim_name}</strong> (0 values)</summary>\n\n"
+                "*no results*\n\n</details>\n"
+            )
+            continue
+
+        total = sum(counts.values())
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        lines.append(
+            f"<details open>\n<summary><strong>{dim_name}</strong> — {total:,} total</summary>\n"
+        )
+        lines.append("| Value | Count |")
+        lines.append("|---|---:|")
+        for val, count in sorted_counts[:50]:
+            lines.append(f"| {val} | {count:,} |")
+        if len(sorted_counts) > 50:
+            lines.append(f"| *(+{len(sorted_counts) - 50} more)* | |")
+        lines.append("\n</details>\n")
+
+    return "\n".join(lines)
 
 
 def apply_show_keys_projection(

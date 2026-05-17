@@ -1,5 +1,6 @@
 """GTA API client for making authenticated requests."""
 
+import asyncio
 import json
 from typing import Dict, Any, Optional, List, Tuple
 import httpx
@@ -576,6 +577,16 @@ SECTOR_LEVEL2_GROUPS = {
 }
 
 
+# Maps user-facing facet dimension names to API count_by dimensions
+FACET_DIMENSION_TO_COUNT_BY: Dict[str, str] = {
+    "gta_evaluation": "gta_evaluation",
+    "implementing_country": "implementer",
+    "intervention_type": "intervention_type",
+    "mast_chapter": "mast_chapter",
+    "year": "date_announced_year",
+}
+
+
 class GTAAPIClient:
     """Client for interacting with the GTA API."""
 
@@ -818,6 +829,54 @@ class GTAAPIClient:
             data = response.json()
             # API returns {"count": N, "results": [...]}, extract results
             return data.get("results", data)
+
+    async def get_facets(
+        self,
+        dimension_names: List[str],
+        count_filters: Dict[str, Any],
+    ) -> Dict[str, Dict[str, int]]:
+        """Compute per-dimension facet counts by fanning out to the counts endpoint.
+
+        Each requested dimension triggers one count_interventions call. All calls
+        run concurrently. Uses the GTA upstream API's native aggregation endpoint
+        (/api/v1/gta/data-counts/) — no client-side aggregation.
+
+        Args:
+            dimension_names: User-friendly facet names (e.g., "implementing_country").
+            count_filters: Already-built count endpoint filters (from build_count_filters).
+
+        Returns:
+            Dict mapping dimension_name → {display_value: count} map.
+            An empty dict is returned for a dimension that produces no results.
+        """
+        async def _fetch_one(dim_name: str) -> Tuple[str, Dict[str, int]]:
+            api_dim = FACET_DIMENSION_TO_COUNT_BY[dim_name]
+            try:
+                records = await self.count_interventions(
+                    count_by=[api_dim],
+                    count_variable="intervention_id",
+                    filters=count_filters,
+                )
+            except Exception:
+                return dim_name, {}
+
+            dim_counts: Dict[str, int] = {}
+            for rec in records:
+                name_key = f"{api_dim}_name"
+                if name_key in rec:
+                    val = str(rec[name_key])
+                elif api_dim in rec:
+                    val = str(rec[api_dim])
+                else:
+                    id_key = f"{api_dim}_id"
+                    val = str(rec.get(id_key, "?"))
+                dim_counts[val] = rec.get("value", 0)
+
+            return dim_name, dim_counts
+
+        tasks = [_fetch_one(dim) for dim in dimension_names]
+        results = await asyncio.gather(*tasks)
+        return dict(results)
 
     async def get_impact_chains(
         self,

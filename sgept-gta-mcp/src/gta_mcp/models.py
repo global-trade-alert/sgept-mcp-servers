@@ -343,11 +343,36 @@ class GTASearchInput(BaseModel):
         )
     )
 
+    include_facets: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Request facet aggregations alongside results. "
+            "Returns per-value counts for each requested dimension, "
+            "reflecting the full filtered set (not just the returned page). "
+            "Valid dimensions: gta_evaluation, implementing_country, intervention_type, "
+            "mast_chapter, year."
+        )
+    )
+
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN,
         description="Output format: 'markdown' for human-readable or 'json' for machine-readable"
     )
-    
+
+    @field_validator('include_facets')
+    @classmethod
+    def validate_include_facets(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        if v is None:
+            return v
+        valid = set(FACET_VALID_DIMENSIONS)
+        unknown = [d for d in v if d not in valid]
+        if unknown:
+            raise ValueError(
+                f"Unknown facet dimension(s): {unknown}. "
+                f"Valid dimensions: {FACET_VALID_DIMENSIONS}"
+            )
+        return v
+
     @field_validator('implementing_jurisdictions', 'affected_jurisdictions')
     @classmethod
     def validate_iso_codes(cls, v: Optional[List[str]]) -> Optional[List[str]]:
@@ -355,6 +380,15 @@ class GTASearchInput(BaseModel):
         if v is not None:
             return [code.upper() for code in v]
         return v
+
+
+FACET_VALID_DIMENSIONS = sorted([
+    "gta_evaluation",
+    "implementing_country",
+    "intervention_type",
+    "mast_chapter",
+    "year",
+])
 
 
 SHOW_KEYS_AVAILABLE = [
