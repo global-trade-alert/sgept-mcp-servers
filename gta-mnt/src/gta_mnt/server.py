@@ -1019,6 +1019,117 @@ async def guess_hs_codes(params: GuessHSCodesInput) -> str:
         ) from e
 
 
+class ScrapeUrlInput(_StrictInput):
+    """Input for fetching text content from an arbitrary URL via Bastiat scrape_urls."""
+    url: str = Field(
+        ...,
+        description="URL to fetch. Must include scheme (http:// or https://)."
+    )
+    agent: bool = Field(
+        default=False,
+        description=(
+            "When true, run the BastiatAgentScraper (LLM-driven browser) to "
+            "navigate the page, discover content URLs, and fetch their text. "
+            "Use for index/listing pages or sites where the seed URL is not "
+            "the direct content. Slower (minutes per URL). Default false."
+        ),
+    )
+    instructions: str = Field(
+        default="",
+        description=(
+            "Optional note_for_agent (agent mode only). Tells the LLM how to "
+            "navigate this specific site, e.g. 'Click the L (Legislation) tab.'."
+        ),
+    )
+    cleaning_mode: str = Field(
+        default="no_cleaning",
+        description=(
+            "HTML cleaning mode: 'no_cleaning' (default, raw HTML), "
+            "'readability', 'docling', 'density', 'hybrid'. PDF/DOCX extraction "
+            "runs server-side regardless."
+        ),
+    )
+
+
+@mcp.tool(name="gta_mnt_scrape_url")
+async def scrape_url_tool(params: ScrapeUrlInput) -> str:
+    """Fetch text content from a URL via the Bastiat scrape_urls endpoint.
+
+    Uses Scrapling tiered fetcher (curl_cffi → Playwright → Camoufox stealth),
+    handles PDF/DOCX/ZIP extraction server-side, and can optionally run an
+    LLM-driven browser agent for sites that require navigation.
+
+    Use when:
+    - You need to fetch arbitrary URLs (not DB-linked sources)
+    - WebFetch fails due to Cloudflare, JS rendering, or anti-bot blocks
+    - You need PDF/DOCX text extraction
+
+    For DB-linked review sources, prefer gta_mnt_get_source (S3 priority).
+    """
+    api_key = os.getenv("GTA_API_KEY")
+    if not api_key:
+        raise ToolError(
+            "GTA_API_KEY environment variable not set. "
+            "Cannot access Bastiat scrape_urls endpoint."
+        )
+
+    try:
+        client = BastiatAPIClient(api_key=api_key)
+        result = await client.scrape_url(
+            url=params.url,
+            agent=params.agent,
+            instructions=params.instructions,
+            cleaning_mode=params.cleaning_mode,
+        )
+    except TimeoutError as e:
+        raise ToolError(str(e)) from e
+    except RuntimeError as e:
+        raise ToolError(f"Scrape failed: {e}") from e
+    except httpx.HTTPStatusError as e:
+        raise ToolError(
+            f"Bastiat API returned {e.response.status_code}: "
+            f"{e.response.text[:200]}"
+        ) from e
+
+    if result["mode"] == "static":
+        text = result.get("text") or ""
+        return (
+            f"# Scraped content\n\n"
+            f"**URL:** {result['url']}\n"
+            f"**Mode:** static (cleaning_mode={params.cleaning_mode})\n"
+            f"**Length:** {len(text)} chars\n\n"
+            f"---\n\n{text}"
+        )
+    else:
+        discovered = result.get("discovered_urls", [])
+        content = result.get("content", {})
+        outcome = result.get("outcome")
+        if not discovered:
+            err = result.get("error")
+            return (
+                f"# Scrape (agent mode) — no URLs discovered\n\n"
+                f"**Seed URL:** {result.get('seed_url')}\n"
+                f"**Outcome:** {outcome}\n"
+                f"**Iterations:** {result.get('iterations')}\n"
+                + (f"**Error:** {err}\n" if err else "")
+            )
+        sections = [
+            f"# Scrape (agent mode)",
+            f"",
+            f"**Seed URL:** {result.get('seed_url')}",
+            f"**Outcome:** {outcome}",
+            f"**Iterations:** {result.get('iterations')}",
+            f"**Duration:** {result.get('duration')}s",
+            f"**Discovered URLs:** {len(discovered)}",
+            f"",
+            f"---",
+        ]
+        for u in discovered:
+            text = content.get(u, "")
+            sections.append(f"\n## {u}\n\n**Length:** {len(text)} chars\n\n{text}")
+        return "\n".join(sections)
+
+
 @mcp.tool(name="gta_mnt_find_duplicates")
 async def find_duplicates(params: FindDuplicatesInput) -> str:
     """Find candidate duplicate state acts via deterministic SQL vectors plus optional semantic ranking.

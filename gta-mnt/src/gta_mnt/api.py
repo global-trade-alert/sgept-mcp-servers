@@ -4,9 +4,12 @@ Refactored to use direct MySQL connections instead of REST API endpoints.
 Also includes BastiatAPIClient for AI-powered HS code guessing.
 """
 
+import asyncio
+import json
 import os
 import re
 import sys
+import time
 from typing import Optional
 from datetime import datetime, UTC
 
@@ -170,6 +173,109 @@ class BastiatAPIClient:
             )
             response.raise_for_status()
             return response.json()
+
+    async def scrape_url(
+        self,
+        url: str,
+        agent: bool = False,
+        instructions: str = "",
+        cleaning_mode: str = "no_cleaning",
+        poll_interval: float = 2.0,
+        max_wait: Optional[float] = None,
+    ) -> dict:
+        """Fetch text content from a URL via bastiat-api's /scrape_urls/ endpoint.
+
+        Hides the async task model: POSTs the request, polls
+        /ric_task_status/<task_id>/ until completed/failed, returns parsed result.
+
+        Args:
+            url: URL to fetch.
+            agent: When True, run BastiatAgentScraper navigation. Combined with
+                return_content=true so discovered URLs are also fetched.
+            instructions: note_for_agent (agent mode only; ignored otherwise).
+            cleaning_mode: 'no_cleaning' (default raw HTML), 'readability',
+                'docling', 'density', 'hybrid'. PDF extraction is always applied
+                server-side regardless of this flag.
+            poll_interval: Seconds between status polls.
+            max_wait: Max wait seconds. Defaults: 600s agent, 120s static.
+
+        Returns:
+            Static mode: {'mode': 'static', 'url', 'text'}.
+            Agent mode:  {'mode': 'agent', 'seed_url', 'discovered_urls',
+                          'content': {url: text, ...}, 'outcome', 'iterations',
+                          'duration'}.
+
+        Raises:
+            TimeoutError: Task did not complete within max_wait.
+            RuntimeError: Task failed; message includes server error.
+            httpx.HTTPStatusError: Initial POST or status GET returned non-2xx.
+        """
+        if max_wait is None:
+            max_wait = 600.0 if agent else 120.0
+
+        payload = {
+            "urls": [{"url": url, "instructions": instructions}] if agent else [url],
+            "agent": agent,
+            "cleaning_mode": cleaning_mode,
+            "return_content": agent,
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            post_resp = await client.post(
+                f"{self.base_url}/bastiat/scrape_urls/",
+                headers=self.headers,
+                json=payload,
+            )
+            post_resp.raise_for_status()
+            task_id = post_resp.json()["task_id"]
+
+            status_url = f"{self.base_url}/bastiat/ric_task_status/{task_id}/"
+            deadline = time.monotonic() + max_wait
+            while True:
+                if time.monotonic() > deadline:
+                    raise TimeoutError(
+                        f"scrape_urls task {task_id} did not complete in {max_wait}s"
+                    )
+                status_resp = await client.get(status_url, headers=self.headers)
+                status_resp.raise_for_status()
+                status_data = status_resp.json()
+                status = status_data.get("status")
+                if status == "completed":
+                    message = status_data.get("message") or "{}"
+                    parsed = json.loads(message) if isinstance(message, str) else message
+                    if agent:
+                        results = parsed.get("results", [])
+                        if not results:
+                            raise RuntimeError(
+                                f"scrape_urls agent task {task_id} returned no results"
+                            )
+                        r = results[0]
+                        return {
+                            "mode": "agent",
+                            "seed_url": r.get("seed_url", url),
+                            "discovered_urls": r.get("discovered_urls", []),
+                            "content": r.get("content", {}),
+                            "outcome": r.get("outcome"),
+                            "iterations": r.get("iterations"),
+                            "duration": r.get("duration"),
+                            "error": r.get("error"),
+                        }
+                    else:
+                        results = parsed.get("results", [])
+                        if not results:
+                            raise RuntimeError(
+                                f"scrape_urls task {task_id} returned no results"
+                            )
+                        return {
+                            "mode": "static",
+                            "url": results[0].get("url", url),
+                            "text": results[0].get("text", ""),
+                        }
+                if status == "failed":
+                    raise RuntimeError(
+                        f"scrape_urls task {task_id} failed: {status_data.get('message')}"
+                    )
+                await asyncio.sleep(poll_interval)
 
 
 class GTADatabaseClient:
