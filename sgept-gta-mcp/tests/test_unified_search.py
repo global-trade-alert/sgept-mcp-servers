@@ -11,7 +11,7 @@ Covers acceptance criteria from issue 060:
 
 import os
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from gta_mcp.models import GTASearchInput, SEMANTIC_CANDIDATE_CEILING_DEFAULT
 
@@ -106,22 +106,21 @@ class TestUnifiedSearchOrchestration:
             _make_semantic_record(20, score=0.5),
         ]
 
-        from gta_mcp.api import semantic_search_interventions as real_sem
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 3, "query": "chip"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            import json
-            result = await _gta_unified_semantic_search(
-                params=base_params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
-            data = json.loads(result)
-            ids = [r["intervention_id"] for r in data["results"]]
-            assert ids == [30, 10, 20], f"Expected score-desc order, got {ids}"
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        import json
+        result = await _gta_unified_semantic_search(
+            params=base_params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
+        data = json.loads(result)
+        ids = [r["intervention_id"] for r in data["results"]]
+        assert ids == [30, 10, 20], f"Expected score-desc order, got {ids}"
 
     async def test_score_field_present_by_default(self, mock_client, base_params, monkeypatch):
         """When semantic_query set, score auto-included in each record."""
@@ -137,21 +136,21 @@ class TestUnifiedSearchOrchestration:
             _make_semantic_record(2, score=0.77),
         ]
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 2, "query": "test"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            import json
-            result = await _gta_unified_semantic_search(
-                params=base_params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
-            data = json.loads(result)
-            for rec in data["results"]:
-                assert "score" in rec, f"score missing from record {rec}"
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        import json
+        result = await _gta_unified_semantic_search(
+            params=base_params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
+        data = json.loads(result)
+        for rec in data["results"]:
+            assert "score" in rec, f"score missing from record {rec}"
 
     async def test_score_excluded_when_show_keys_omits_it(self, mock_client, monkeypatch):
         """score is excluded when show_keys is set but doesn't include 'score'."""
@@ -174,21 +173,21 @@ class TestUnifiedSearchOrchestration:
             _make_semantic_record(2, score=0.77),
         ]
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 2, "query": "test"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            import json
-            result = await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
-            data = json.loads(result)
-            for rec in data["results"]:
-                assert "score" not in rec, f"score should be excluded, got {rec}"
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        import json
+        result = await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
+        data = json.loads(result)
+        for rec in data["results"]:
+            assert "score" not in rec, f"score should be excluded, got {rec}"
 
     async def test_zero_structural_matches_empty_results(self, mock_client, base_params, monkeypatch):
         """Zero structured matches → empty results list, no error raised."""
@@ -227,17 +226,17 @@ class TestUnifiedSearchOrchestration:
         mock_client.search_interventions.side_effect = fake_search_interventions
 
         semantic_results = [_make_semantic_record(i, score=0.9 - i * 0.1) for i in range(1, 4)]
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 3, "query": "test"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            await _gta_unified_semantic_search(
-                params=base_params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        await _gta_unified_semantic_search(
+            params=base_params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
         assert stage1_limit == 42, f"Expected ceiling=42 as limit, got {stage1_limit}"
 
     async def test_score_included_when_show_keys_star(self, mock_client, monkeypatch):
@@ -258,21 +257,21 @@ class TestUnifiedSearchOrchestration:
         ]
         semantic_results = [_make_semantic_record(i, score=0.8) for i in candidate_ids]
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 2, "query": "subsidies"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            import json
-            result = await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
-            data = json.loads(result)
-            for rec in data["results"]:
-                assert "score" in rec
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        import json
+        result = await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
+        data = json.loads(result)
+        for rec in data["results"]:
+            assert "score" in rec
 
 
 # ---------------------------------------------------------------------------

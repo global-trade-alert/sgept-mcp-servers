@@ -917,56 +917,49 @@ class GTAAPIClient:
             return response.json()
 
 
-async def semantic_search_interventions(
-    query: str,
-    intervention_ids: Optional[List[int]] = None,
-    limit: int = 20,
-    show_keys: Optional[List[str]] = None,
-    danswer_base_url: Optional[str] = None,
-    danswer_api_key: Optional[str] = None,
-    include_matched_snippets: bool = False,
-) -> Dict[str, Any]:
-    """Semantic vector search over GTA intervention descriptions via danswer.
+    async def semantic_search_interventions(
+        self,
+        query: str,
+        intervention_ids: Optional[List[int]] = None,
+        limit: int = 20,
+        show_keys: Optional[List[str]] = None,
+        include_matched_snippets: bool = False,
+    ) -> Dict[str, Any]:
+        """Semantic vector search over GTA intervention descriptions via the GTAAPI proxy.
 
-    Calls POST /chat/gta/semantic-search on the danswer backend. Returns the
-    full response dict (keys: results, total, query).
+        POSTs to ``/api/v1/gta/semantic-search/`` on GTAAPI, which authenticates
+        the caller, enforces tier limits, and forwards to the RAG backend. Returns
+        the full response dict (keys: results, total, query).
 
-    Args:
-        query: Natural-language query text.
-        intervention_ids: Optional list of IDs to restrict ranking scope.
-        limit: Maximum results (1-100).
-        show_keys: Optional field projection. ``["*"]`` or None returns all fields;
-            named keys restrict each result record. Forwarded to the danswer endpoint.
-        danswer_base_url: Base URL of danswer backend (default: http://localhost:8080).
-        danswer_api_key: API key for X-API-Key header authentication.
-        include_matched_snippets: When True, request the danswer backend to include
-            matched text snippets in each result record.
+        Args:
+            query: Natural-language query text.
+            intervention_ids: Optional list of IDs to restrict ranking scope.
+            limit: Maximum results (1-100).
+            show_keys: Optional field projection. ``["*"]`` or None returns all
+                fields; named keys restrict each result record.
+            include_matched_snippets: When True, request matched text snippets
+                in each result record.
 
-    Returns:
-        Dict with 'results' (list of projected records), 'total' (int), 'query' (str).
+        Returns:
+            Dict with 'results' (list of projected records), 'total' (int), 'query' (str).
 
-    Raises:
-        httpx.HTTPStatusError: If the danswer endpoint returns an error response.
-    """
-    base = (danswer_base_url or "http://localhost:8080").rstrip("/")
-    endpoint = f"{base}/chat/gta/semantic-search"
+        Raises:
+            httpx.HTTPStatusError: If the GTAAPI endpoint returns an error response.
+        """
+        endpoint = f"{self.base_url}/api/v1/gta/semantic-search/"
 
-    headers: Dict[str, str] = {"Content-Type": "application/json"}
-    if danswer_api_key:
-        headers["X-API-Key"] = danswer_api_key
+        body: Dict[str, Any] = {"query": query, "limit": limit}
+        if intervention_ids is not None:
+            body["intervention_ids"] = intervention_ids
+        if show_keys and show_keys != ["*"]:
+            body["show_keys"] = show_keys
+        if include_matched_snippets:
+            body["include_matched_snippets"] = True
 
-    body: Dict[str, Any] = {"query": query, "limit": limit}
-    if intervention_ids is not None:
-        body["intervention_ids"] = intervention_ids
-    if show_keys and show_keys != ["*"]:
-        body["show_keys"] = show_keys
-    if include_matched_snippets:
-        body["include_matched_snippets"] = True
-
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(endpoint, json=body, headers=headers)
-        response.raise_for_status()
-        return response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(endpoint, json=body, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
 
 
 def convert_intervention_types(type_names: List[Any]) -> List[int]:

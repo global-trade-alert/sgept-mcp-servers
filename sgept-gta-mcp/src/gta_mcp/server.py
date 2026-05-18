@@ -17,7 +17,7 @@ from .models import (
     SEMANTIC_CANDIDATE_CEILING_DEFAULT,
     _SYNTHETIC_SHOW_KEYS,
 )
-from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY, semantic_search_interventions
+from .api import GTAAPIClient, build_filters, build_count_filters, FACET_DIMENSION_TO_COUNT_BY
 from mcp.server.fastmcp.exceptions import ToolError
 from .formatters import (
     format_interventions_markdown,
@@ -153,15 +153,12 @@ async def _gta_unified_semantic_search(
             return "No interventions found matching the specified filters."
         return format_interventions_json(data)
 
-    # Stage 2: semantic ranking over candidate IDs
-    danswer_base_url, danswer_api_key = get_danswer_config()
-    semantic_data = await semantic_search_interventions(
+    # Stage 2: semantic ranking over candidate IDs (proxied through GTAAPI)
+    semantic_data = await client.semantic_search_interventions(
         query=params.semantic_query,
         intervention_ids=candidate_ids,
         limit=params.limit,
         show_keys=None,  # always get score from semantic backend
-        danswer_base_url=danswer_base_url,
-        danswer_api_key=danswer_api_key,
         include_matched_snippets=params.include_matched_snippets,
     )
     semantic_results = semantic_data.get("results", [])
@@ -1421,13 +1418,6 @@ def get_privacy_policy() -> str:
 	return load_privacy_policy()
 
 
-def get_danswer_config() -> tuple[str, str | None]:
-    """Return (danswer_base_url, danswer_api_key) from environment."""
-    base_url = os.getenv("DANSWER_BASE_URL", "http://localhost:8080")
-    api_key = os.getenv("DANSWER_API_KEY")
-    return base_url, api_key
-
-
 @mcp.tool(name="gta_semantic_search")
 async def gta_semantic_search(
     query: str,
@@ -1476,22 +1466,20 @@ async def gta_semantic_search(
         show_keys=show_keys,
         response_format=response_format,
     )
-    danswer_base_url, danswer_api_key = get_danswer_config()
+    client = get_api_client()
     try:
-        data = await semantic_search_interventions(
+        data = await client.semantic_search_interventions(
             query=params.query,
             intervention_ids=params.intervention_ids,
             limit=params.limit,
             show_keys=params.show_keys,
-            danswer_base_url=danswer_base_url,
-            danswer_api_key=danswer_api_key,
         )
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg:
             raise ToolError(
-                "Authentication Error: Invalid or missing DANSWER_API_KEY. "
-                "Set DANSWER_API_KEY environment variable."
+                "Authentication Error: Invalid or missing GTA_API_KEY. "
+                "Set GTA_API_KEY environment variable."
             )
         if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
             raise ToolError("Request timeout. Try reducing limit or narrowing intervention_ids.")

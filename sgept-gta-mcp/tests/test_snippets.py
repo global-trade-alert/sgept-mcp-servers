@@ -121,17 +121,17 @@ class TestUnifiedSearchSnippets:
             include_matched_snippets=True,
         )
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 2, "query": "export restrictions"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            result = await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        result = await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
         data = json.loads(result)
         for rec in data["results"]:
             assert "matched_snippets" in rec, f"matched_snippets missing from record {rec}"
@@ -161,17 +161,17 @@ class TestUnifiedSearchSnippets:
             include_matched_snippets=False,
         )
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": semantic_results, "total": 2, "query": "export restrictions"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            result = await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        result = await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
         data = json.loads(result)
         for rec in data["results"]:
             assert "matched_snippets" not in rec, f"matched_snippets should be absent, got {rec}"
@@ -201,15 +201,15 @@ class TestUnifiedSearchSnippets:
             return {"results": [_make_semantic_record(1, 0.9, snippets=["Test snippet."])],
                     "total": 1, "query": "export restrictions"}
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=fake_semantic_search):
-            from gta_mcp.server import _gta_unified_semantic_search
-            await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        mock_client.semantic_search_interventions = fake_semantic_search
+        from gta_mcp.server import _gta_unified_semantic_search
+        await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
 
         assert captured_kwargs.get("include_matched_snippets") is True
 
@@ -238,15 +238,15 @@ class TestUnifiedSearchSnippets:
             return {"results": [_make_semantic_record(1, 0.9)],
                     "total": 1, "query": "export restrictions"}
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=fake_semantic_search):
-            from gta_mcp.server import _gta_unified_semantic_search
-            await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        mock_client.semantic_search_interventions = fake_semantic_search
+        from gta_mcp.server import _gta_unified_semantic_search
+        await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
 
         assert captured_kwargs.get("include_matched_snippets") is False
 
@@ -265,25 +265,25 @@ class TestUnifiedSearchSnippets:
         )
         assert params.semantic_query is None
 
-        # Should not call danswer at all — danswer mock should not be invoked
-        danswer_called = []
+        # Should not call the proxy at all — semantic_search_interventions should not be invoked
+        proxy_called = []
 
         async def should_not_call(**kwargs):
-            danswer_called.append(True)
+            proxy_called.append(True)
             return {}
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=should_not_call):
-            from gta_mcp.server import gta_search_interventions
-            import os
-            os.environ.setdefault("GTA_API_KEY", "test-key")
-            with patch("gta_mcp.server.get_api_client", return_value=mock_client):
-                result = await gta_search_interventions(
-                    include_matched_snippets=True,
-                    response_format="json",
-                    limit=5,
-                )
+        mock_client.semantic_search_interventions = should_not_call
+        from gta_mcp.server import gta_search_interventions
+        import os
+        os.environ.setdefault("GTA_API_KEY", "test-key")
+        with patch("gta_mcp.server.get_api_client", return_value=mock_client):
+            result = await gta_search_interventions(
+                include_matched_snippets=True,
+                response_format="json",
+                limit=5,
+            )
 
-        assert not danswer_called, "danswer should not be called when semantic_query is None"
+        assert not proxy_called, "semantic search proxy should not be called when semantic_query is None"
         data = json.loads(result)
         for rec in data.get("results", []):
             assert "matched_snippets" not in rec
@@ -312,18 +312,18 @@ class TestUnifiedSearchSnippets:
             show_keys=["intervention_id", "state_act_title", "matched_snippets"],
         )
 
-        with patch("gta_mcp.server.semantic_search_interventions", new=AsyncMock(
+        mock_client.semantic_search_interventions = AsyncMock(
             return_value={"results": [_make_semantic_record(1, 0.9, snippets=["Snippet."])],
                           "total": 1, "query": "test"}
-        )):
-            from gta_mcp.server import _gta_unified_semantic_search
-            await _gta_unified_semantic_search(
-                params=params,
-                filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
-                filter_messages=[],
-                original_params={},
-                client=mock_client,
-            )
+        )
+        from gta_mcp.server import _gta_unified_semantic_search
+        await _gta_unified_semantic_search(
+            params=params,
+            filters={"announcement_period": ["1900-01-01", "2099-12-31"]},
+            filter_messages=[],
+            original_params={},
+            client=mock_client,
+        )
 
         assert captured_struct_show_keys, "struct fetch was not called"
         for keys in captured_struct_show_keys:
