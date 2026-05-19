@@ -1,0 +1,2771 @@
+{
+  "metadata": {
+    "source": "gtaapi MySQL database",
+    "tables": [
+      "api_sector_level2_list",
+      "api_sector_list"
+    ],
+    "total_entries": 404,
+    "divisions": 73,
+    "groups": 331
+  },
+  "divisions": [
+    {
+      "id": 1,
+      "code": "1",
+      "name": "Products of agriculture, horticulture and market gardening",
+      "level": "division"
+    },
+    {
+      "id": 2,
+      "code": "2",
+      "name": "Live animals and animal products (excluding meat)",
+      "level": "division"
+    },
+    {
+      "id": 3,
+      "code": "3",
+      "name": "Forestry and logging products",
+      "level": "division"
+    },
+    {
+      "id": 4,
+      "code": "4",
+      "name": "Fish and other fishing products",
+      "level": "division"
+    },
+    {
+      "id": 11,
+      "code": "11",
+      "name": "Coal and peat",
+      "level": "division"
+    },
+    {
+      "id": 12,
+      "code": "12",
+      "name": "Crude petroleum and natural gas",
+      "level": "division"
+    },
+    {
+      "id": 13,
+      "code": "13",
+      "name": "Uranium and thorium ores and concentrates",
+      "level": "division"
+    },
+    {
+      "id": 14,
+      "code": "14",
+      "name": "Metal ores",
+      "level": "division"
+    },
+    {
+      "id": 15,
+      "code": "15",
+      "name": "Stone, sand and clay",
+      "level": "division"
+    },
+    {
+      "id": 16,
+      "code": "16",
+      "name": "Other minerals",
+      "level": "division"
+    },
+    {
+      "id": 17,
+      "code": "17",
+      "name": "Electricity, town gas, steam and hot water",
+      "level": "division"
+    },
+    {
+      "id": 18,
+      "code": "18",
+      "name": "Natural water",
+      "level": "division"
+    },
+    {
+      "id": 21,
+      "code": "21",
+      "name": "Meat, fish, fruits, vegetables, oils and fats",
+      "level": "division"
+    },
+    {
+      "id": 22,
+      "code": "22",
+      "name": "Dairy products and egg products",
+      "level": "division"
+    },
+    {
+      "id": 23,
+      "code": "23",
+      "name": "Grain mill products, starches and starch products; other food products",
+      "level": "division"
+    },
+    {
+      "id": 24,
+      "code": "24",
+      "name": "Beverages",
+      "level": "division"
+    },
+    {
+      "id": 25,
+      "code": "25",
+      "name": "Tobacco products",
+      "level": "division"
+    },
+    {
+      "id": 26,
+      "code": "26",
+      "name": "Yarn and thread; woven and tufted textile fabrics",
+      "level": "division"
+    },
+    {
+      "id": 27,
+      "code": "27",
+      "name": "Textile articles other than apparel",
+      "level": "division"
+    },
+    {
+      "id": 28,
+      "code": "28",
+      "name": "Knitted or crocheted fabrics; wearing apparel",
+      "level": "division"
+    },
+    {
+      "id": 29,
+      "code": "29",
+      "name": "Leather and leather products; footwear",
+      "level": "division"
+    },
+    {
+      "id": 31,
+      "code": "31",
+      "name": "Products of wood, cork, straw and plaiting materials",
+      "level": "division"
+    },
+    {
+      "id": 32,
+      "code": "32",
+      "name": "Pulp, paper and paper products; printed matter and related articles",
+      "level": "division"
+    },
+    {
+      "id": 33,
+      "code": "33",
+      "name": "Coke oven products; refined petroleum products; nuclear fuel",
+      "level": "division"
+    },
+    {
+      "id": 34,
+      "code": "34",
+      "name": "Basic chemicals",
+      "level": "division"
+    },
+    {
+      "id": 35,
+      "code": "35",
+      "name": "Other chemical products; man-made fibres",
+      "level": "division"
+    },
+    {
+      "id": 36,
+      "code": "36",
+      "name": "Rubber and plastics products",
+      "level": "division"
+    },
+    {
+      "id": 37,
+      "code": "37",
+      "name": "Glass and glass products and other non-metallic products n.e.c.",
+      "level": "division"
+    },
+    {
+      "id": 38,
+      "code": "38",
+      "name": "Furniture; other transportable goods n.e.c.",
+      "level": "division"
+    },
+    {
+      "id": 39,
+      "code": "39",
+      "name": "Wastes or scraps",
+      "level": "division"
+    },
+    {
+      "id": 41,
+      "code": "41",
+      "name": "Basic metals",
+      "level": "division"
+    },
+    {
+      "id": 42,
+      "code": "42",
+      "name": "Fabricated metal products, except machinery and equipment",
+      "level": "division"
+    },
+    {
+      "id": 43,
+      "code": "43",
+      "name": "General-purpose machinery",
+      "level": "division"
+    },
+    {
+      "id": 44,
+      "code": "44",
+      "name": "Special-purpose machinery",
+      "level": "division"
+    },
+    {
+      "id": 45,
+      "code": "45",
+      "name": "Office, accounting and computing machinery",
+      "level": "division"
+    },
+    {
+      "id": 46,
+      "code": "46",
+      "name": "Electrical machinery and apparatus",
+      "level": "division"
+    },
+    {
+      "id": 47,
+      "code": "47",
+      "name": "Radio, television and communication equipment and apparatus",
+      "level": "division"
+    },
+    {
+      "id": 48,
+      "code": "48",
+      "name": "Medical appliances, precision and optical instruments, watches and clocks",
+      "level": "division"
+    },
+    {
+      "id": 49,
+      "code": "49",
+      "name": "Transport equipment",
+      "level": "division"
+    },
+    {
+      "id": 53,
+      "code": "53",
+      "name": "Constructions",
+      "level": "division"
+    },
+    {
+      "id": 54,
+      "code": "54",
+      "name": "Construction services",
+      "level": "division"
+    },
+    {
+      "id": 61,
+      "code": "61",
+      "name": "Wholesale trade services",
+      "level": "division"
+    },
+    {
+      "id": 62,
+      "code": "62",
+      "name": "Retail trade services",
+      "level": "division"
+    },
+    {
+      "id": 63,
+      "code": "63",
+      "name": "Accommodation, food and beverage services",
+      "level": "division"
+    },
+    {
+      "id": 64,
+      "code": "64",
+      "name": "Passenger transport services",
+      "level": "division"
+    },
+    {
+      "id": 65,
+      "code": "65",
+      "name": "Freight transport services",
+      "level": "division"
+    },
+    {
+      "id": 66,
+      "code": "66",
+      "name": "Rental services of transport vehicles with operators",
+      "level": "division"
+    },
+    {
+      "id": 67,
+      "code": "67",
+      "name": "Supporting transport services",
+      "level": "division"
+    },
+    {
+      "id": 68,
+      "code": "68",
+      "name": "Postal and courier services",
+      "level": "division"
+    },
+    {
+      "id": 69,
+      "code": "69",
+      "name": "Electricity, gas and water distribution (on own account)",
+      "level": "division"
+    },
+    {
+      "id": 71,
+      "code": "71",
+      "name": "Financial and related services",
+      "level": "division"
+    },
+    {
+      "id": 72,
+      "code": "72",
+      "name": "Real estate services",
+      "level": "division"
+    },
+    {
+      "id": 73,
+      "code": "73",
+      "name": "Leasing or rental services without operator",
+      "level": "division"
+    },
+    {
+      "id": 81,
+      "code": "81",
+      "name": "Research and development services",
+      "level": "division"
+    },
+    {
+      "id": 82,
+      "code": "82",
+      "name": "Legal and accounting services",
+      "level": "division"
+    },
+    {
+      "id": 83,
+      "code": "83",
+      "name": "Professional, technical and business services (except research, development, legal and accounting services)",
+      "level": "division"
+    },
+    {
+      "id": 84,
+      "code": "84",
+      "name": "Telecommunications, broadcasting and information supply services",
+      "level": "division"
+    },
+    {
+      "id": 85,
+      "code": "85",
+      "name": "Support services",
+      "level": "division"
+    },
+    {
+      "id": 86,
+      "code": "86",
+      "name": "Support and operation services to agriculture, hunting, forestry, fishing, mining and utilities",
+      "level": "division"
+    },
+    {
+      "id": 87,
+      "code": "87",
+      "name": "Maintenance, repair and installation (except construction) services",
+      "level": "division"
+    },
+    {
+      "id": 88,
+      "code": "88",
+      "name": "Manufacturing services on physical inputs owned by others",
+      "level": "division"
+    },
+    {
+      "id": 89,
+      "code": "89",
+      "name": "Other manufacturing services; publishing, printing and reproduction services; materials recovery services",
+      "level": "division"
+    },
+    {
+      "id": 91,
+      "code": "91",
+      "name": "Public administration and other services provided to the community as a whole; compulsory social security services",
+      "level": "division"
+    },
+    {
+      "id": 92,
+      "code": "92",
+      "name": "Education services",
+      "level": "division"
+    },
+    {
+      "id": 93,
+      "code": "93",
+      "name": "Human health and social care services",
+      "level": "division"
+    },
+    {
+      "id": 94,
+      "code": "94",
+      "name": "Sewage and waste collection, treatment and disposal and other environmental protection services",
+      "level": "division"
+    },
+    {
+      "id": 95,
+      "code": "95",
+      "name": "Services of membership organizations",
+      "level": "division"
+    },
+    {
+      "id": 96,
+      "code": "96",
+      "name": "Recreational, cultural and sporting services",
+      "level": "division"
+    },
+    {
+      "id": 97,
+      "code": "97",
+      "name": "Other services",
+      "level": "division"
+    },
+    {
+      "id": 98,
+      "code": "98",
+      "name": "Domestic services",
+      "level": "division"
+    },
+    {
+      "id": 99,
+      "code": "99",
+      "name": "Services provided by extraterritorial organizations and bodies",
+      "level": "division"
+    },
+    {
+      "id": 100,
+      "code": "100",
+      "name": "ALL",
+      "level": "division"
+    },
+    {
+      "id": 101,
+      "code": "101",
+      "name": "NONE",
+      "level": "division"
+    }
+  ],
+  "groups": [
+    {
+      "id": 11,
+      "code": "11",
+      "name": "Cereals",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 12,
+      "code": "12",
+      "name": "Vegetables",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 13,
+      "code": "13",
+      "name": "Fruits and nuts",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 14,
+      "code": "14",
+      "name": "Oilseeds and oleaginous fruits",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 15,
+      "code": "15",
+      "name": "Edible roots and tubers with high starch or inulin content",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 16,
+      "code": "16",
+      "name": "Stimulant, spice and aromatic crops",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 17,
+      "code": "17",
+      "name": "Pulses (dried leguminous vegetables)",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 18,
+      "code": "18",
+      "name": "Sugar crops",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 19,
+      "code": "19",
+      "name": "Forage products, fibre crops, plants used in perfumery, pharmacy, or for insecticidal, fungicidal or similar purposes, beet, forage plant and flower seeds, natural rubber, living plants, cut flowers and flower buds, unmanufactured tobacco, other raw veget",
+      "level": "group",
+      "division_id": 1
+    },
+    {
+      "id": 21,
+      "code": "21",
+      "name": "Live animals",
+      "level": "group",
+      "division_id": 2
+    },
+    {
+      "id": 22,
+      "code": "22",
+      "name": "Raw milk",
+      "level": "group",
+      "division_id": 2
+    },
+    {
+      "id": 23,
+      "code": "23",
+      "name": "Eggs of hens or other birds in shell, fresh",
+      "level": "group",
+      "division_id": 2
+    },
+    {
+      "id": 24,
+      "code": "24",
+      "name": "Reproductive materials of animals",
+      "level": "group",
+      "division_id": 2
+    },
+    {
+      "id": 29,
+      "code": "29",
+      "name": "Other animal products",
+      "level": "group",
+      "division_id": 2
+    },
+    {
+      "id": 31,
+      "code": "31",
+      "name": "Wood in the rough",
+      "level": "group",
+      "division_id": 3
+    },
+    {
+      "id": 32,
+      "code": "32",
+      "name": "Non-wood forest products",
+      "level": "group",
+      "division_id": 3
+    },
+    {
+      "id": 41,
+      "code": "41",
+      "name": "Fish, live, not for human consumption",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 42,
+      "code": "42",
+      "name": "Fish live, fresh or chilled for human consumption",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 43,
+      "code": "43",
+      "name": "Crustaceans, live, fresh or chilled",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 44,
+      "code": "44",
+      "name": "Molluscs live, fresh or chilled",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 45,
+      "code": "45",
+      "name": "Other aquatic invertebrates, live, fresh or chilled",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 49,
+      "code": "49",
+      "name": "Other aquatic plants and animals",
+      "level": "group",
+      "division_id": 4
+    },
+    {
+      "id": 110,
+      "code": "110",
+      "name": "Coal and peat",
+      "level": "group",
+      "division_id": 11
+    },
+    {
+      "id": 120,
+      "code": "120",
+      "name": "Crude petroleum and natural gas",
+      "level": "group",
+      "division_id": 12
+    },
+    {
+      "id": 130,
+      "code": "130",
+      "name": "Uranium and thorium ores and concentrates",
+      "level": "group",
+      "division_id": 13
+    },
+    {
+      "id": 141,
+      "code": "141",
+      "name": "Iron ores and concentrates, other than roasted iron pyrites",
+      "level": "group",
+      "division_id": 14
+    },
+    {
+      "id": 142,
+      "code": "142",
+      "name": "Non-ferrous metal ores and concentrates (other than uranium or thorium ores and concentrates)",
+      "level": "group",
+      "division_id": 14
+    },
+    {
+      "id": 151,
+      "code": "151",
+      "name": "Monumental or building stone",
+      "level": "group",
+      "division_id": 15
+    },
+    {
+      "id": 152,
+      "code": "152",
+      "name": "Gypsum; anhydrite; limestone flux; limestone and other calcareous stone, of a kind used for the manufacture of lime or cement",
+      "level": "group",
+      "division_id": 15
+    },
+    {
+      "id": 153,
+      "code": "153",
+      "name": "Sands, pebbles, gravel, broken or crushed stone, natural bitumen and asphalt",
+      "level": "group",
+      "division_id": 15
+    },
+    {
+      "id": 154,
+      "code": "154",
+      "name": "Clays",
+      "level": "group",
+      "division_id": 15
+    },
+    {
+      "id": 161,
+      "code": "161",
+      "name": "Chemical and fertilizer minerals",
+      "level": "group",
+      "division_id": 16
+    },
+    {
+      "id": 162,
+      "code": "162",
+      "name": "Salt and pure sodium chloride; sea water",
+      "level": "group",
+      "division_id": 16
+    },
+    {
+      "id": 163,
+      "code": "163",
+      "name": "Precious and semi-precious stones; pumice stone; emery; natural abrasives; other minerals",
+      "level": "group",
+      "division_id": 16
+    },
+    {
+      "id": 171,
+      "code": "171",
+      "name": "Electrical energy",
+      "level": "group",
+      "division_id": 17
+    },
+    {
+      "id": 172,
+      "code": "172",
+      "name": "Coal gas, water gas, producer gas and similar gases, other than petroleum gases and other gaseous hydrocarbons",
+      "level": "group",
+      "division_id": 17
+    },
+    {
+      "id": 173,
+      "code": "173",
+      "name": "Steam and hot water",
+      "level": "group",
+      "division_id": 17
+    },
+    {
+      "id": 174,
+      "code": "174",
+      "name": "Ice and snow",
+      "level": "group",
+      "division_id": 17
+    },
+    {
+      "id": 180,
+      "code": "180",
+      "name": "Natural water",
+      "level": "group",
+      "division_id": 18
+    },
+    {
+      "id": 211,
+      "code": "211",
+      "name": "Meat and meat products",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 212,
+      "code": "212",
+      "name": "Prepared and preserved fish, crustaceans, molluscs and other aquatic invertebrates",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 213,
+      "code": "213",
+      "name": "Prepared and preserved vegetables, pulses and potatoes",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 214,
+      "code": "214",
+      "name": "Prepared and preserved fruits and nuts",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 215,
+      "code": "215",
+      "name": "Animal fats",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 216,
+      "code": "216",
+      "name": "Vegetable oils",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 217,
+      "code": "217",
+      "name": "Margarine and similar preparations",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 218,
+      "code": "218",
+      "name": "Cotton linters",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 219,
+      "code": "219",
+      "name": "Oil-cake and other residues resulting from the extraction of vegetable fats or oils; flours and meals of oil seeds or oleaginous fruits, except those of mustard; vegetable waxes, except triglycerides; degras; residues resulting from the treatment of fatty",
+      "level": "group",
+      "division_id": 21
+    },
+    {
+      "id": 221,
+      "code": "221",
+      "name": "Processed liquid milk, cream and whey",
+      "level": "group",
+      "division_id": 22
+    },
+    {
+      "id": 222,
+      "code": "222",
+      "name": "Other dairy products",
+      "level": "group",
+      "division_id": 22
+    },
+    {
+      "id": 223,
+      "code": "223",
+      "name": "Eggs, in shell, preserved or cooked",
+      "level": "group",
+      "division_id": 22
+    },
+    {
+      "id": 231,
+      "code": "231",
+      "name": "Grain mill products",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 232,
+      "code": "232",
+      "name": "Starches and starch products; sugars and sugar syrups n.e.c.",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 233,
+      "code": "233",
+      "name": "Preparations used in animal feeding; lucerne (alfalfa) meal and pellets",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 234,
+      "code": "234",
+      "name": "Bakery products",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 235,
+      "code": "235",
+      "name": "Sugar and molasses",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 236,
+      "code": "236",
+      "name": "Cocoa, chocolate and sugar confectionery",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 237,
+      "code": "237",
+      "name": "Macaroni, noodles, couscous and similar farinaceous products",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 239,
+      "code": "239",
+      "name": "Food products n.e.c.",
+      "level": "group",
+      "division_id": 23
+    },
+    {
+      "id": 241,
+      "code": "241",
+      "name": "Ethyl alcohol; spirits, liqueurs and other spirituous beverages",
+      "level": "group",
+      "division_id": 24
+    },
+    {
+      "id": 242,
+      "code": "242",
+      "name": "Wines",
+      "level": "group",
+      "division_id": 24
+    },
+    {
+      "id": 243,
+      "code": "243",
+      "name": "Malt liquors and malt",
+      "level": "group",
+      "division_id": 24
+    },
+    {
+      "id": 244,
+      "code": "244",
+      "name": "Soft drinks; bottled mineral waters",
+      "level": "group",
+      "division_id": 24
+    },
+    {
+      "id": 250,
+      "code": "250",
+      "name": "Tobacco products",
+      "level": "group",
+      "division_id": 25
+    },
+    {
+      "id": 261,
+      "code": "261",
+      "name": "Natural textile fibres prepared for spinning",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 262,
+      "code": "262",
+      "name": "Man-made textile staple fibres processed for spinning",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 263,
+      "code": "263",
+      "name": "Textile yarn and thread of natural fibres",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 264,
+      "code": "264",
+      "name": "Textile yarn and thread of man-made filaments or staple fibres",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 265,
+      "code": "265",
+      "name": "Woven fabrics (except special fabrics) of natural fibres other than cotton",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 266,
+      "code": "266",
+      "name": "Woven fabrics (except special fabrics) of cotton",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 267,
+      "code": "267",
+      "name": "Woven fabrics (except special fabrics) of man-made filaments and staple fibres",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 268,
+      "code": "268",
+      "name": "Special fabrics",
+      "level": "group",
+      "division_id": 26
+    },
+    {
+      "id": 271,
+      "code": "271",
+      "name": "Made-up textile articles",
+      "level": "group",
+      "division_id": 27
+    },
+    {
+      "id": 272,
+      "code": "272",
+      "name": "Carpets and other textile floor coverings",
+      "level": "group",
+      "division_id": 27
+    },
+    {
+      "id": 273,
+      "code": "273",
+      "name": "Twine, cordage, ropes and cables and articles thereof (including netting)",
+      "level": "group",
+      "division_id": 27
+    },
+    {
+      "id": 279,
+      "code": "279",
+      "name": "Textiles n.e.c.",
+      "level": "group",
+      "division_id": 27
+    },
+    {
+      "id": 281,
+      "code": "281",
+      "name": "Knitted or crocheted fabrics",
+      "level": "group",
+      "division_id": 28
+    },
+    {
+      "id": 282,
+      "code": "282",
+      "name": "Wearing apparel, except fur apparel",
+      "level": "group",
+      "division_id": 28
+    },
+    {
+      "id": 283,
+      "code": "283",
+      "name": "Tanned or dressed furskins and artificial fur; articles thereof (except headgear)",
+      "level": "group",
+      "division_id": 28
+    },
+    {
+      "id": 291,
+      "code": "291",
+      "name": "Tanned or dressed leather; composition leather",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 292,
+      "code": "292",
+      "name": "Luggage, handbags and the like; saddlery and harness; other articles of leather",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 293,
+      "code": "293",
+      "name": "Footwear, with outer soles and uppers of rubber or plastics, or with uppers of leather or textile materials, other than sports footwear, footwear incorporating a protective metal toe- cap and miscellaneous special footwear",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 294,
+      "code": "294",
+      "name": "Sports footwear, except skating boots",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 295,
+      "code": "295",
+      "name": "Other footwear, except asbestos footwear, orthopaedic footwear and skating boots",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 296,
+      "code": "296",
+      "name": "Parts of footwear; removable insoles, heel cushions and similar articles; gaiters, leggings and similar articles, and parts thereof",
+      "level": "group",
+      "division_id": 29
+    },
+    {
+      "id": 311,
+      "code": "311",
+      "name": "Wood, sawn or chipped lengthwise, sliced or peeled, of a thickness exceeding 6 mm; railway or tramway sleepers (cross-ties) of wood, not impregnated",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 312,
+      "code": "312",
+      "name": "Wood continuously shaped along any of its edges or faces; wood wool; wood flour; wood in chips or particles",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 313,
+      "code": "313",
+      "name": "Wood in the rough, treated with paint, stains, creosote or other preservatives; railway or tramway sleepers (cross-ties) of wood, impregnated; hoopwood, split poles, wooden sticks and the like",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 314,
+      "code": "314",
+      "name": "Boards and panels",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 315,
+      "code": "315",
+      "name": "Veneer sheets; sheets for plywood; densified wood",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 316,
+      "code": "316",
+      "name": "Builders' joinery and carpentry of wood (including cellular wood panels, assembled parquet panels, shingles and shakes)",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 317,
+      "code": "317",
+      "name": "Packing cases, boxes, crates, drums and similar packings, of wood; cable-drums of wood; pallets, box pallets and other load boards, of wood; casks, barrels, vats, tubs and other coopers' products and parts thereof, of wood (including staves)",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 319,
+      "code": "319",
+      "name": "Other products of wood; articles of cork, plaiting materials and straw",
+      "level": "group",
+      "division_id": 31
+    },
+    {
+      "id": 321,
+      "code": "321",
+      "name": "Pulp, paper and paperboard",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 322,
+      "code": "322",
+      "name": "Books, in print",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 323,
+      "code": "323",
+      "name": "Newspapers and periodicals, daily, in print",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 324,
+      "code": "324",
+      "name": "Newspapers and periodicals, other than daily, in print",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 325,
+      "code": "325",
+      "name": "Printed maps; music, printed or in manuscript; postcards, greeting cards, pictures and plans",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 326,
+      "code": "326",
+      "name": "Stamps, cheque forms, banknotes, stock certificates, brochures and leaflets, advertising material and other printed matter",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 327,
+      "code": "327",
+      "name": "Registers, account books, notebooks, letter pads, diaries and similar articles, blotting-pads, binders, file covers, forms and other articles of stationery, of paper or paperboard",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 328,
+      "code": "328",
+      "name": "Composed type, prepared printing plates or cylinders, impressed lithographic stones or other impressed media for use in printing",
+      "level": "group",
+      "division_id": 32
+    },
+    {
+      "id": 331,
+      "code": "331",
+      "name": "Coke and semi-coke of coal, of lignite or of peat; retort carbon",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 332,
+      "code": "332",
+      "name": "Tar distilled from coal, from lignite or from peat, and other mineral tars",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 333,
+      "code": "333",
+      "name": "Petroleum oils and oils obtained from bituminous materials, other than crude; preparations n.e.c. containing by weight 70% or more of these oils, such oils being the basic constituents of the preparations",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 334,
+      "code": "334",
+      "name": "Petroleum gases and other gaseous hydrocarbons, except natural gas",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 335,
+      "code": "335",
+      "name": "Petroleum jelly; paraffin wax, micro- crystalline petroleum wax, slack wax, ozokerite, lignite wax, peat wax, other mineral waxes, and similar products; petroleum coke, petroleum bitumen and other residues of petroleum oils or of oils obtained from bitumi",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 336,
+      "code": "336",
+      "name": "Radioactive elements and isotopes and compounds; alloys, dispersions, ceramic products and mixtures containing these elements, isotopes or compounds; radioactive residues",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 337,
+      "code": "337",
+      "name": "Fuel elements (cartridges), for or of nuclear reactors",
+      "level": "group",
+      "division_id": 33
+    },
+    {
+      "id": 341,
+      "code": "341",
+      "name": "Basic organic chemicals",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 342,
+      "code": "342",
+      "name": "Basic inorganic chemicals n.e.c.",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 343,
+      "code": "343",
+      "name": "Tanning or dyeing extracts; tannins and their derivatives; colouring matter n.e.c.",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 344,
+      "code": "344",
+      "name": "Activated natural mineral products; animal black; tall oil; terpenic oils produced by the treatment of coniferous woods; crude dipentene; crude para-cymene; pine oil; rosin and resin acids, and derivatives thereof; rosin spirit and rosin oils; rum gums; w",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 345,
+      "code": "345",
+      "name": "Miscellaneous basic chemical products",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 346,
+      "code": "346",
+      "name": "Fertilizers and pesticides",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 347,
+      "code": "347",
+      "name": "Plastics in primary forms",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 348,
+      "code": "348",
+      "name": "Synthetic rubber and factice derived from oils, and mixtures thereof with natural rubber and similar natural gums, in primary forms or in plates, sheets or strip",
+      "level": "group",
+      "division_id": 34
+    },
+    {
+      "id": 351,
+      "code": "351",
+      "name": "Paints and varnishes and related products; artists' colours; ink",
+      "level": "group",
+      "division_id": 35
+    },
+    {
+      "id": 352,
+      "code": "352",
+      "name": "Pharmaceutical products",
+      "level": "group",
+      "division_id": 35
+    },
+    {
+      "id": 353,
+      "code": "353",
+      "name": "Soap, cleaning preparations, perfumes and toilet preparations",
+      "level": "group",
+      "division_id": 35
+    },
+    {
+      "id": 354,
+      "code": "354",
+      "name": "Chemical products n.e.c.",
+      "level": "group",
+      "division_id": 35
+    },
+    {
+      "id": 355,
+      "code": "355",
+      "name": "Man-made fibres",
+      "level": "group",
+      "division_id": 35
+    },
+    {
+      "id": 361,
+      "code": "361",
+      "name": "Rubber tyres and tubes",
+      "level": "group",
+      "division_id": 36
+    },
+    {
+      "id": 362,
+      "code": "362",
+      "name": "Other rubber products",
+      "level": "group",
+      "division_id": 36
+    },
+    {
+      "id": 363,
+      "code": "363",
+      "name": "Semi-manufactures of plastics",
+      "level": "group",
+      "division_id": 36
+    },
+    {
+      "id": 364,
+      "code": "364",
+      "name": "Packaging products of plastics",
+      "level": "group",
+      "division_id": 36
+    },
+    {
+      "id": 369,
+      "code": "369",
+      "name": "Other plastics products",
+      "level": "group",
+      "division_id": 36
+    },
+    {
+      "id": 371,
+      "code": "371",
+      "name": "Glass and glass products",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 372,
+      "code": "372",
+      "name": "Non-structural ceramic ware",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 373,
+      "code": "373",
+      "name": "Refractory products and structural non-refractory clay products",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 374,
+      "code": "374",
+      "name": "Plaster, lime and cement",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 375,
+      "code": "375",
+      "name": "Articles of concrete, cement and plaster",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 376,
+      "code": "376",
+      "name": "Monumental or building stone and articles thereof",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 379,
+      "code": "379",
+      "name": "Other non-metallic mineral products n.e.c.",
+      "level": "group",
+      "division_id": 37
+    },
+    {
+      "id": 381,
+      "code": "381",
+      "name": "Furniture",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 382,
+      "code": "382",
+      "name": "Jewellery and related articles",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 383,
+      "code": "383",
+      "name": "Musical instruments",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 384,
+      "code": "384",
+      "name": "Sports goods",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 385,
+      "code": "385",
+      "name": "Games and toys",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 386,
+      "code": "386",
+      "name": "Roundabouts, swings, shooting galleries and other fairground amusements",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 387,
+      "code": "387",
+      "name": "Prefabricated buildings",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 389,
+      "code": "389",
+      "name": "Other manufactured articles n.e.c.",
+      "level": "group",
+      "division_id": 38
+    },
+    {
+      "id": 391,
+      "code": "391",
+      "name": "Wastes from food and tobacco industry",
+      "level": "group",
+      "division_id": 39
+    },
+    {
+      "id": 392,
+      "code": "392",
+      "name": "Non-metal wastes or scraps",
+      "level": "group",
+      "division_id": 39
+    },
+    {
+      "id": 393,
+      "code": "393",
+      "name": "Metal wastes or scraps",
+      "level": "group",
+      "division_id": 39
+    },
+    {
+      "id": 399,
+      "code": "399",
+      "name": "Other wastes and scraps",
+      "level": "group",
+      "division_id": 39
+    },
+    {
+      "id": 411,
+      "code": "411",
+      "name": "Basic iron and steel",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 412,
+      "code": "412",
+      "name": "Products of iron or steel",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 413,
+      "code": "413",
+      "name": "Basic precious metals and metals clad with precious metals",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 414,
+      "code": "414",
+      "name": "Copper, nickel, aluminium, alumina, lead, zinc and tin, unwrought",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 415,
+      "code": "415",
+      "name": "Semi-finished products of copper, nickel, aluminium, lead, zinc and tin or their alloys",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 416,
+      "code": "416",
+      "name": "Other non-ferrous metals and articles thereof (including waste and scrap of some metals); cermets and articles thereof",
+      "level": "group",
+      "division_id": 41
+    },
+    {
+      "id": 421,
+      "code": "421",
+      "name": "Structural metal products and parts thereof",
+      "level": "group",
+      "division_id": 42
+    },
+    {
+      "id": 422,
+      "code": "422",
+      "name": "Tanks, reservoirs and containers of iron, steel or aluminium",
+      "level": "group",
+      "division_id": 42
+    },
+    {
+      "id": 423,
+      "code": "423",
+      "name": "Steam generators, (except central heating boilers) and parts thereof",
+      "level": "group",
+      "division_id": 42
+    },
+    {
+      "id": 429,
+      "code": "429",
+      "name": "Other fabricated metal products",
+      "level": "group",
+      "division_id": 42
+    },
+    {
+      "id": 431,
+      "code": "431",
+      "name": "Engines and turbines and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 432,
+      "code": "432",
+      "name": "Pumps, compressors, hydraulic and pneumatic power engines, and valves, and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 433,
+      "code": "433",
+      "name": "Bearings, gears, gearing and driving elements, and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 434,
+      "code": "434",
+      "name": "Ovens and furnace burners and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 435,
+      "code": "435",
+      "name": "Lifting and handling equipment and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 439,
+      "code": "439",
+      "name": "Other general-purpose machinery and parts thereof",
+      "level": "group",
+      "division_id": 43
+    },
+    {
+      "id": 441,
+      "code": "441",
+      "name": "Agricultural or forestry machinery and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 442,
+      "code": "442",
+      "name": "Machine-tools and parts and accessories thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 443,
+      "code": "443",
+      "name": "Machinery for metallurgy and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 444,
+      "code": "444",
+      "name": "Machinery for mining, quarrying and construction, and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 445,
+      "code": "445",
+      "name": "Machinery for food, beverage and tobacco processing, and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 446,
+      "code": "446",
+      "name": "Machinery for textile, apparel and leather production, and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 447,
+      "code": "447",
+      "name": "Weapons and ammunition and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 448,
+      "code": "448",
+      "name": "Domestic appliances and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 449,
+      "code": "449",
+      "name": "Other special-purpose machinery and parts thereof",
+      "level": "group",
+      "division_id": 44
+    },
+    {
+      "id": 451,
+      "code": "451",
+      "name": "Office and accounting machinery, and parts and accessories thereof",
+      "level": "group",
+      "division_id": 45
+    },
+    {
+      "id": 452,
+      "code": "452",
+      "name": "Computing machinery and parts and accessories thereof",
+      "level": "group",
+      "division_id": 45
+    },
+    {
+      "id": 461,
+      "code": "461",
+      "name": "Electric motors, generators and transformers, and parts thereof",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 462,
+      "code": "462",
+      "name": "Electricity distribution and control apparatus, and parts thereof",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 463,
+      "code": "463",
+      "name": "Insulated wire and cable; optical fibre cables",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 464,
+      "code": "464",
+      "name": "Accumulators, primary cells and primary batteries, and parts thereof",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 465,
+      "code": "465",
+      "name": "Electric filament or discharge lamps; arc lamps; lighting equipment; parts thereof",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 469,
+      "code": "469",
+      "name": "Other electrical equipment and parts thereof",
+      "level": "group",
+      "division_id": 46
+    },
+    {
+      "id": 471,
+      "code": "471",
+      "name": "Electronic valves and tubes; electronic components; parts thereof",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 472,
+      "code": "472",
+      "name": "Television and radio transmitters; television, video and digital cameras; telephone sets",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 473,
+      "code": "473",
+      "name": "Radio broadcast and television receivers; apparatus for sound and video recording and reproducing; microphones, loudspeakers, amplifiers, etc.",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 474,
+      "code": "474",
+      "name": "Parts for the goods of classes 4721 to 4733 and 4822",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 475,
+      "code": "475",
+      "name": "Disks, tapes, solid-state non-volatile storage devices and other media, not recorded",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 476,
+      "code": "476",
+      "name": "Audio, video and other disks, tapes and other physical media, recorded",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 478,
+      "code": "478",
+      "name": "Packaged software",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 479,
+      "code": "479",
+      "name": "Cards with magnetic strips or chip",
+      "level": "group",
+      "division_id": 47
+    },
+    {
+      "id": 481,
+      "code": "481",
+      "name": "Medical and surgical equipment and orthopaedic appliances",
+      "level": "group",
+      "division_id": 48
+    },
+    {
+      "id": 482,
+      "code": "482",
+      "name": "Instruments and appliances for measuring, checking, testing, navigating and other purposes, except optical instruments; industrial process control equipment; parts and accessories thereof",
+      "level": "group",
+      "division_id": 48
+    },
+    {
+      "id": 483,
+      "code": "483",
+      "name": "Optical instruments and photographic equipment, and parts and accessories thereof",
+      "level": "group",
+      "division_id": 48
+    },
+    {
+      "id": 484,
+      "code": "484",
+      "name": "Watches and clocks, and parts thereof",
+      "level": "group",
+      "division_id": 48
+    },
+    {
+      "id": 491,
+      "code": "491",
+      "name": "Motor vehicles, trailers and semi-trailers; parts and accessories thereof",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 492,
+      "code": "492",
+      "name": "Bodies (coachwork) for motor vehicles; trailers and semi-trailers; parts and accessories thereof",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 493,
+      "code": "493",
+      "name": "Ships",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 494,
+      "code": "494",
+      "name": "Pleasure and sporting boats",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 495,
+      "code": "495",
+      "name": "Railway and tramway locomotives and rolling stock, and parts thereof",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 496,
+      "code": "496",
+      "name": "Aircraft and spacecraft, and parts thereof",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 499,
+      "code": "499",
+      "name": "Other transport equipment and parts thereof",
+      "level": "group",
+      "division_id": 49
+    },
+    {
+      "id": 531,
+      "code": "531",
+      "name": "Buildings",
+      "level": "group",
+      "division_id": 53
+    },
+    {
+      "id": 532,
+      "code": "532",
+      "name": "Civil engineering works",
+      "level": "group",
+      "division_id": 53
+    },
+    {
+      "id": 541,
+      "code": "541",
+      "name": "General construction services of buildings",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 542,
+      "code": "542",
+      "name": "General construction services of civil engineering works",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 543,
+      "code": "543",
+      "name": "Site preparation services",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 544,
+      "code": "544",
+      "name": "Assembly and erection of prefabricated constructions",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 545,
+      "code": "545",
+      "name": "Special trade construction services",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 546,
+      "code": "546",
+      "name": "Installation services",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 547,
+      "code": "547",
+      "name": "Building completion and finishing services",
+      "level": "group",
+      "division_id": 54
+    },
+    {
+      "id": 611,
+      "code": "611",
+      "name": "Wholesale trade services, except on a fee or contract basis",
+      "level": "group",
+      "division_id": 61
+    },
+    {
+      "id": 612,
+      "code": "612",
+      "name": "Wholesale trade services on a fee or contract basis",
+      "level": "group",
+      "division_id": 61
+    },
+    {
+      "id": 621,
+      "code": "621",
+      "name": "Non-specialized store retail trade services",
+      "level": "group",
+      "division_id": 62
+    },
+    {
+      "id": 622,
+      "code": "622",
+      "name": "Specialized store retail trade services",
+      "level": "group",
+      "division_id": 62
+    },
+    {
+      "id": 623,
+      "code": "623",
+      "name": "Mail order or Internet retail trade services",
+      "level": "group",
+      "division_id": 62
+    },
+    {
+      "id": 624,
+      "code": "624",
+      "name": "Other non-store retail trade services",
+      "level": "group",
+      "division_id": 62
+    },
+    {
+      "id": 625,
+      "code": "625",
+      "name": "Retail trade services on a fee or contract basis",
+      "level": "group",
+      "division_id": 62
+    },
+    {
+      "id": 631,
+      "code": "631",
+      "name": "Accommodation services for visitors",
+      "level": "group",
+      "division_id": 63
+    },
+    {
+      "id": 632,
+      "code": "632",
+      "name": "Other accommodation services for visitors and others",
+      "level": "group",
+      "division_id": 63
+    },
+    {
+      "id": 633,
+      "code": "633",
+      "name": "Food serving services",
+      "level": "group",
+      "division_id": 63
+    },
+    {
+      "id": 634,
+      "code": "634",
+      "name": "Beverage serving services",
+      "level": "group",
+      "division_id": 63
+    },
+    {
+      "id": 641,
+      "code": "641",
+      "name": "Local transport and sightseeing transportation services of passengers",
+      "level": "group",
+      "division_id": 64
+    },
+    {
+      "id": 642,
+      "code": "642",
+      "name": "Long-distance transport services of passengers",
+      "level": "group",
+      "division_id": 64
+    },
+    {
+      "id": 651,
+      "code": "651",
+      "name": "Land transport services of freight",
+      "level": "group",
+      "division_id": 65
+    },
+    {
+      "id": 652,
+      "code": "652",
+      "name": "Water transport services of freight",
+      "level": "group",
+      "division_id": 65
+    },
+    {
+      "id": 653,
+      "code": "653",
+      "name": "Air and space transport services of freight",
+      "level": "group",
+      "division_id": 65
+    },
+    {
+      "id": 660,
+      "code": "660",
+      "name": "Rental services of transport vehicles with operators",
+      "level": "group",
+      "division_id": 66
+    },
+    {
+      "id": 671,
+      "code": "671",
+      "name": "Cargo handling services",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 672,
+      "code": "672",
+      "name": "Storage and warehousing services",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 673,
+      "code": "673",
+      "name": "Supporting services for railway transport",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 674,
+      "code": "674",
+      "name": "Supporting services for road transport",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 675,
+      "code": "675",
+      "name": "Supporting services for water transport",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 676,
+      "code": "676",
+      "name": "Supporting services for air or space transport",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 679,
+      "code": "679",
+      "name": "Other supporting transport services",
+      "level": "group",
+      "division_id": 67
+    },
+    {
+      "id": 680,
+      "code": "680",
+      "name": "Postal and courier services",
+      "level": "group",
+      "division_id": 68
+    },
+    {
+      "id": 691,
+      "code": "691",
+      "name": "Electricity and gas distribution (on own account)",
+      "level": "group",
+      "division_id": 69
+    },
+    {
+      "id": 692,
+      "code": "692",
+      "name": "Water distribution (on own account)",
+      "level": "group",
+      "division_id": 69
+    },
+    {
+      "id": 711,
+      "code": "711",
+      "name": "Financial services, except investment banking, insurance services and pension services",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 712,
+      "code": "712",
+      "name": "Investment banking services",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 713,
+      "code": "713",
+      "name": "Insurance and pension services (excluding reinsurance services), except compulsory social security services",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 714,
+      "code": "714",
+      "name": "Reinsurance services",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 715,
+      "code": "715",
+      "name": "Services auxiliary to financial services other than to insurance and pensions",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 716,
+      "code": "716",
+      "name": "Services auxiliary to insurance and pensions",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 717,
+      "code": "717",
+      "name": "Services of holding financial assets",
+      "level": "group",
+      "division_id": 71
+    },
+    {
+      "id": 721,
+      "code": "721",
+      "name": "Real estate services involving own or leased property",
+      "level": "group",
+      "division_id": 72
+    },
+    {
+      "id": 722,
+      "code": "722",
+      "name": "Real estate services on a fee or contract basis",
+      "level": "group",
+      "division_id": 72
+    },
+    {
+      "id": 731,
+      "code": "731",
+      "name": "Leasing or rental services concerning machinery and equipment without operator",
+      "level": "group",
+      "division_id": 73
+    },
+    {
+      "id": 732,
+      "code": "732",
+      "name": "Leasing or rental services concerning other goods",
+      "level": "group",
+      "division_id": 73
+    },
+    {
+      "id": 733,
+      "code": "733",
+      "name": "Licensing services for the right to use intellectual property and similar products",
+      "level": "group",
+      "division_id": 73
+    },
+    {
+      "id": 811,
+      "code": "811",
+      "name": "Research and experimental development services in natural sciences and engineering",
+      "level": "group",
+      "division_id": 81
+    },
+    {
+      "id": 812,
+      "code": "812",
+      "name": "Research and experimental development services in social sciences and humanities",
+      "level": "group",
+      "division_id": 81
+    },
+    {
+      "id": 813,
+      "code": "813",
+      "name": "Interdisciplinary research and experimental development services",
+      "level": "group",
+      "division_id": 81
+    },
+    {
+      "id": 814,
+      "code": "814",
+      "name": "Research and development originals",
+      "level": "group",
+      "division_id": 81
+    },
+    {
+      "id": 821,
+      "code": "821",
+      "name": "Legal services",
+      "level": "group",
+      "division_id": 82
+    },
+    {
+      "id": 822,
+      "code": "822",
+      "name": "Accounting, auditing and bookkeeping services",
+      "level": "group",
+      "division_id": 82
+    },
+    {
+      "id": 823,
+      "code": "823",
+      "name": "Tax consultancy and preparation services",
+      "level": "group",
+      "division_id": 82
+    },
+    {
+      "id": 824,
+      "code": "824",
+      "name": "Insolvency and receivership services",
+      "level": "group",
+      "division_id": 82
+    },
+    {
+      "id": 831,
+      "code": "831",
+      "name": "Management consulting and management services; information technology services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 832,
+      "code": "832",
+      "name": "Architectural services, urban and land planning and landscape architectural services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 833,
+      "code": "833",
+      "name": "Engineering services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 834,
+      "code": "834",
+      "name": "Scientific and other technical services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 835,
+      "code": "835",
+      "name": "Veterinary services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 836,
+      "code": "836",
+      "name": "Advertising services and provision of advertising space or time",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 837,
+      "code": "837",
+      "name": "Market research and public opinion polling services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 838,
+      "code": "838",
+      "name": "Photography services and photographic processing services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 839,
+      "code": "839",
+      "name": "Other professional, technical and business services",
+      "level": "group",
+      "division_id": 83
+    },
+    {
+      "id": 841,
+      "code": "841",
+      "name": "Telephony and other telecommunications services",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 842,
+      "code": "842",
+      "name": "Internet telecommunications services",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 843,
+      "code": "843",
+      "name": "On-line content",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 844,
+      "code": "844",
+      "name": "News agency services",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 845,
+      "code": "845",
+      "name": "Library and archive services",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 846,
+      "code": "846",
+      "name": "Broadcasting, programming and programme distribution services",
+      "level": "group",
+      "division_id": 84
+    },
+    {
+      "id": 851,
+      "code": "851",
+      "name": "Employment services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 852,
+      "code": "852",
+      "name": "Investigation and security services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 853,
+      "code": "853",
+      "name": "Cleaning services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 854,
+      "code": "854",
+      "name": "Packaging services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 855,
+      "code": "855",
+      "name": "Travel arrangement, tour operator and related services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 859,
+      "code": "859",
+      "name": "Other support services",
+      "level": "group",
+      "division_id": 85
+    },
+    {
+      "id": 861,
+      "code": "861",
+      "name": "Support and operation services to agriculture, hunting, forestry and fishing",
+      "level": "group",
+      "division_id": 86
+    },
+    {
+      "id": 862,
+      "code": "862",
+      "name": "Support and operation services to mining",
+      "level": "group",
+      "division_id": 86
+    },
+    {
+      "id": 863,
+      "code": "863",
+      "name": "Support and operation services to electricity, gas and water distribution",
+      "level": "group",
+      "division_id": 86
+    },
+    {
+      "id": 871,
+      "code": "871",
+      "name": "Maintenance and repair services of fabricated metal products, machinery and equipment",
+      "level": "group",
+      "division_id": 87
+    },
+    {
+      "id": 872,
+      "code": "872",
+      "name": "Repair services of other goods",
+      "level": "group",
+      "division_id": 87
+    },
+    {
+      "id": 873,
+      "code": "873",
+      "name": "Installation services (other than construction)",
+      "level": "group",
+      "division_id": 87
+    },
+    {
+      "id": 881,
+      "code": "881",
+      "name": "Food, beverage and tobacco manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 882,
+      "code": "882",
+      "name": "Textile, wearing apparel and leather manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 883,
+      "code": "883",
+      "name": "Wood and paper manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 884,
+      "code": "884",
+      "name": "Petroleum, chemical and pharmaceutical product manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 885,
+      "code": "885",
+      "name": "Rubber, plastic and other non-metallic mineral product manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 886,
+      "code": "886",
+      "name": "Basic metal manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 887,
+      "code": "887",
+      "name": "Fabricated metal product, machinery and equipment manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 888,
+      "code": "888",
+      "name": "Transport equipment manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 889,
+      "code": "889",
+      "name": "Other manufacturing services",
+      "level": "group",
+      "division_id": 88
+    },
+    {
+      "id": 891,
+      "code": "891",
+      "name": "Publishing, printing and reproduction services",
+      "level": "group",
+      "division_id": 89
+    },
+    {
+      "id": 892,
+      "code": "892",
+      "name": "Moulding, pressing, stamping, extruding and similar plastic manufacturing services",
+      "level": "group",
+      "division_id": 89
+    },
+    {
+      "id": 893,
+      "code": "893",
+      "name": "Casting, forging, stamping and similar metal manufacturing services",
+      "level": "group",
+      "division_id": 89
+    },
+    {
+      "id": 894,
+      "code": "894",
+      "name": "Materials recovery (recycling) services, on a fee or contract basis",
+      "level": "group",
+      "division_id": 89
+    },
+    {
+      "id": 911,
+      "code": "911",
+      "name": "Administrative services of the government",
+      "level": "group",
+      "division_id": 91
+    },
+    {
+      "id": 912,
+      "code": "912",
+      "name": "Public administrative services provided to the community as a whole",
+      "level": "group",
+      "division_id": 91
+    },
+    {
+      "id": 913,
+      "code": "913",
+      "name": "Administrative services related to compulsory social security schemes",
+      "level": "group",
+      "division_id": 91
+    },
+    {
+      "id": 921,
+      "code": "921",
+      "name": "Pre-primary education services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 922,
+      "code": "922",
+      "name": "Primary education services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 923,
+      "code": "923",
+      "name": "Secondary education services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 924,
+      "code": "924",
+      "name": "Post-secondary non-tertiary education services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 925,
+      "code": "925",
+      "name": "Tertiary education services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 929,
+      "code": "929",
+      "name": "Other education and training services and educational support services",
+      "level": "group",
+      "division_id": 92
+    },
+    {
+      "id": 931,
+      "code": "931",
+      "name": "Human health services",
+      "level": "group",
+      "division_id": 93
+    },
+    {
+      "id": 932,
+      "code": "932",
+      "name": "Residential care services for the elderly and disabled",
+      "level": "group",
+      "division_id": 93
+    },
+    {
+      "id": 933,
+      "code": "933",
+      "name": "Other social services with accommodation",
+      "level": "group",
+      "division_id": 93
+    },
+    {
+      "id": 934,
+      "code": "934",
+      "name": "Social services without accommodation for the elderly and disabled",
+      "level": "group",
+      "division_id": 93
+    },
+    {
+      "id": 935,
+      "code": "935",
+      "name": "Other social services without accommodation",
+      "level": "group",
+      "division_id": 93
+    },
+    {
+      "id": 941,
+      "code": "941",
+      "name": "Sewerage, sewage treatment and septic tank cleaning services",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 942,
+      "code": "942",
+      "name": "Waste collection services",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 943,
+      "code": "943",
+      "name": "Waste treatment and disposal services",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 944,
+      "code": "944",
+      "name": "Remediation services",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 945,
+      "code": "945",
+      "name": "Sanitation and similar services",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 949,
+      "code": "949",
+      "name": "Other environmental protection services n.e.c.",
+      "level": "group",
+      "division_id": 94
+    },
+    {
+      "id": 951,
+      "code": "951",
+      "name": "Services furnished by business, employers and professional organizations",
+      "level": "group",
+      "division_id": 95
+    },
+    {
+      "id": 952,
+      "code": "952",
+      "name": "Services furnished by trade unions",
+      "level": "group",
+      "division_id": 95
+    },
+    {
+      "id": 959,
+      "code": "959",
+      "name": "Services furnished by other membership organizations",
+      "level": "group",
+      "division_id": 95
+    },
+    {
+      "id": 961,
+      "code": "961",
+      "name": "Audiovisual and related services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 962,
+      "code": "962",
+      "name": "Performing arts and other live entertainment event presentation and promotion services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 963,
+      "code": "963",
+      "name": "Services of performing and other artists",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 964,
+      "code": "964",
+      "name": "Museum and preservation services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 965,
+      "code": "965",
+      "name": "Sports and recreational sports services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 966,
+      "code": "966",
+      "name": "Services of athletes and related support services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 969,
+      "code": "969",
+      "name": "Other amusement and recreational services",
+      "level": "group",
+      "division_id": 96
+    },
+    {
+      "id": 971,
+      "code": "971",
+      "name": "Washing, cleaning and dyeing services",
+      "level": "group",
+      "division_id": 97
+    },
+    {
+      "id": 972,
+      "code": "972",
+      "name": "Beauty and physical well-being services",
+      "level": "group",
+      "division_id": 97
+    },
+    {
+      "id": 973,
+      "code": "973",
+      "name": "Funeral, cremation and undertaking services",
+      "level": "group",
+      "division_id": 97
+    },
+    {
+      "id": 979,
+      "code": "979",
+      "name": "Other miscellaneous services",
+      "level": "group",
+      "division_id": 97
+    },
+    {
+      "id": 980,
+      "code": "980",
+      "name": "Domestic services",
+      "level": "group",
+      "division_id": 98
+    },
+    {
+      "id": 990,
+      "code": "990",
+      "name": "Services provided by extraterritorial organizations and bodies",
+      "level": "group",
+      "division_id": 99
+    },
+    {
+      "id": 1000,
+      "code": "1000",
+      "name": "ALL",
+      "level": "group",
+      "division_id": 100
+    },
+    {
+      "id": 1001,
+      "code": "1001",
+      "name": "NONE",
+      "level": "group",
+      "division_id": 101
+    }
+  ]
+}
