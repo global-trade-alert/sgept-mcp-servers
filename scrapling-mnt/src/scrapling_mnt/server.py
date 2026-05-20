@@ -1,27 +1,24 @@
-"""MCP server for Scrapling-based web scraping.
+"""MCP server for scrapling-mnt — thin client to bastiat-api `/scrape_urls/`.
 
 Exposes:
-  scrape_url    — single URL with auto cascade (static → stealth → pdf)
-  scrape_pdf    — explicit PDF branch (pypdf → Gemini OCR fallback)
-  scrape_batch  — multi-URL harvest with concurrency clamp
-  scrape_status — health snapshot
+  scrape_url    — single URL, returns FetchResult dict
+  scrape_batch  — multi-URL, returns {results, total, successes, failures}
 
-Concurrency is clamped server-side: at most 1 browser-backed fetch at a time
-(configurable via SCRAPLING_BROWSER_MAX, default 1). Static httpx fetches do
-not hit the cap. SSRF defence via allowlist module.
+Both tools delegate to `BastiatScraper`. Heavy lifting (cascade, cache,
+PDF, OCR, SSRF gate) happens server-side in bastiat-api; this package is
+process-local only for the MCP transport and the auth header.
 """
 
 from __future__ import annotations
 
-import asyncio
-from typing import List, Optional
+import os
+from typing import List
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import fetcher
-from .allowlist import URLRejected
+from .bastiat_client import BastiatScraper
 
 
 mcp = FastMCP("scrapling_mnt")
@@ -41,107 +38,67 @@ class ScrapeUrlInput(_StrictInput):
         default="auto",
         description="Fetch strategy: auto | static | stealth | js | pdf",
     )
-    timeout: int = Field(default=30, ge=5, le=120,
-                         description="Per-request timeout in seconds")
-    use_cache: bool = Field(default=True,
-                            description="Return cached result if fresh (TTL via SCRAPLING_CACHE_TTL_DAYS)")
-
-
-class ScrapePdfInput(_StrictInput):
-    url: str = Field(description="PDF URL")
-    ocr_fallback: bool = Field(default=True,
-                               description="If native text extraction returns empty, try Gemini OCR")
-    timeout: int = Field(default=60, ge=10, le=180)
-    use_cache: bool = Field(default=True)
+    timeout: int = Field(
+        default=30, ge=5, le=180,
+        description="Per-request budget forwarded to bastiat as options_override.timeout",
+    )
+    max_wait_s: int = Field(
+        default=600, ge=10, le=1800,
+        description="Client-side poll budget — how long to wait for the bastiat task to finish",
+    )
 
 
 class ScrapeBatchInput(_StrictInput):
     urls: List[str] = Field(description="URLs to fetch", min_length=1, max_length=50)
     strategy: str = Field(default="auto")
-    timeout: int = Field(default=30, ge=5, le=120)
-    use_cache: bool = Field(default=True)
-    max_concurrency: int = Field(
-        default=1, ge=1, le=8,
-        description="Caller hint; server clamps to SCRAPLING_BROWSER_MAX.",
+    timeout: int = Field(default=30, ge=5, le=180)
+    max_wait_s: int = Field(default=600, ge=10, le=1800)
+
+
+def _build_scraper() -> BastiatScraper:
+    api_key = os.environ.get("GTA_API_KEY")
+    if not api_key:
+        raise ToolError("GTA_API_KEY environment variable is required")
+    return BastiatScraper(
+        api_key=api_key,
+        base_url=os.environ.get("BASTIAT_BASE_URL") or None,
+        default_profile=os.environ.get("BASTIAT_PROFILE", "mcp_thorough"),
+        verify_tls=os.environ.get("BASTIAT_VERIFY_TLS", "true").lower() != "false",
     )
 
 
 @mcp.tool()
 async def scrape_url(input: ScrapeUrlInput) -> dict:
-    """Fetch a single URL and return clean text. Auto-cascades from static
-    httpx to Camoufox stealth on signs of blocking; routes to PDF branch on
-    application/pdf content-type."""
-    try:
-        result = await fetcher.scrape_url(
-            input.url,
-            strategy=input.strategy,
-            timeout=input.timeout,
-            use_cache=input.use_cache,
-        )
-    except URLRejected as exc:
-        raise ToolError(f"URL rejected: {exc}")
-    except Exception as exc:
-        raise ToolError(f"scrape_url failed: {exc}")
-    return result.to_dict()
-
-
-@mcp.tool()
-async def scrape_pdf(input: ScrapePdfInput) -> dict:
-    """Fetch a PDF: native text extraction via pypdf, fall back to Gemini OCR
-    for scanned/image-only documents."""
-    try:
-        result = await fetcher.scrape_url(
-            input.url,
-            strategy="pdf",
-            timeout=input.timeout,
-            use_cache=input.use_cache,
-            ocr_fallback=input.ocr_fallback,
-        )
-    except URLRejected as exc:
-        raise ToolError(f"URL rejected: {exc}")
-    except Exception as exc:
-        raise ToolError(f"scrape_pdf failed: {exc}")
-    return result.to_dict()
+    """Fetch a single URL via bastiat-api. Returns FetchResult dict with
+    keys: url, content, status, strategy_used, content_type, fetched_at,
+    from_cache, error."""
+    scraper = _build_scraper()
+    results = await scraper.scrape(
+        [input.url],
+        strategy=input.strategy,
+        timeout=input.timeout,
+        max_wait_s=input.max_wait_s,
+    )
+    return results[0]
 
 
 @mcp.tool()
 async def scrape_batch(input: ScrapeBatchInput) -> dict:
-    """Fetch multiple URLs. Concurrency is clamped server-side; partial
-    successes are returned alongside per-URL errors."""
-    sem = asyncio.Semaphore(min(
-        input.max_concurrency,
-        int(__import__("os").environ.get("SCRAPLING_BROWSER_MAX", "1")) + 2,
-    ))
-
-    async def _one(u: str) -> dict:
-        async with sem:
-            try:
-                r = await fetcher.scrape_url(
-                    u, strategy=input.strategy,
-                    timeout=input.timeout, use_cache=input.use_cache,
-                )
-                return r.to_dict()
-            except URLRejected as exc:
-                return {"url": u, "error": f"rejected: {exc}", "status": 0}
-            except Exception as exc:
-                return {"url": u, "error": str(exc), "status": 0}
-
-    results = await asyncio.gather(*[_one(u) for u in input.urls])
+    """Fetch multiple URLs in one bastiat request. Partial successes are
+    returned alongside per-URL errors via the `error` field on each result."""
+    scraper = _build_scraper()
+    results = await scraper.scrape(
+        input.urls,
+        strategy=input.strategy,
+        timeout=input.timeout,
+        max_wait_s=input.max_wait_s,
+    )
     successes = sum(1 for r in results if not r.get("error"))
     return {
         "results": results,
         "total": len(results),
         "successes": successes,
         "failures": len(results) - successes,
-    }
-
-
-@mcp.tool()
-async def scrape_status() -> dict:
-    """Return server health and counters."""
-    return {
-        "ok": True,
-        **fetcher.status_snapshot(),
     }
 
 

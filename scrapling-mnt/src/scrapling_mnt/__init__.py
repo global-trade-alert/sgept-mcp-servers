@@ -1,9 +1,8 @@
-"""Scrapling MCP Server - Stealth web scraping for Sancho Claudito.
+"""Scrapling MCP Server — thin client to bastiat-api `/scrape_urls/`.
 
-Exposes a small MCP tool surface (scrape_url, scrape_pdf, scrape_batch,
-scrape_status) backed by Scrapling's Fetcher / StealthyFetcher cascade with a
-PDF branch and Gemini OCR fallback. Concurrency-clamped (1 browser at a time)
-and SSRF-guarded by URL allowlist.
+Exposes `scrape_url` and `scrape_batch` MCP tools that forward requests to
+the bastiat-api scraper endpoint (tiered fetcher, SSRF gate, cache, SPA-PDF
+interception, Gemini OCR fallback all live there).
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
