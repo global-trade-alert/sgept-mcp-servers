@@ -363,6 +363,7 @@ class FindDuplicatesInput(_StrictInput):
     description: Optional[str] = Field(default=None, description="Draft description (used for semantic search query)")
     exclude_state_act_ids: Optional[List[int]] = Field(default=None, description="State act IDs to omit from results")
     date_window_days: int = Field(default=60, ge=0, le=365, description="Date window for vectors D and E (±days)")
+    type_date_window_days: int = Field(default=0, ge=0, le=365, description="Date window for Vector C (jurisdiction+type+date). Default 0 preserves exact-date semantics; set 7 to catch near-misses like the 97625/92103 4-day-gap case (JCC-1105).")
     include_statuses: Optional[List[int]] = Field(default=None, description="Status IDs to consider; default [1,2,3,4,6,19]")
     limit: int = Field(default=20, ge=1, le=200, description="Max candidates to return")
     semantic_search: bool = Field(default=True, description="Run Vector G via the RAG (skipped if RAG_BASE_URL/RAG_API_KEY not set)")
@@ -1029,7 +1030,7 @@ async def find_duplicates(params: FindDuplicatesInput) -> str:
     - **B — DECREE**: regex-extracted decree/regulation/notification numbers from the
       title (e.g. "MP 1340", "VR 2036/2026", "BGBl I Nr. 96/2018"), LIKE-matched within
       the same implementing jurisdiction.
-    - **C — TYPE+DATE**: same jurisdiction, same `date_announced`, same `intervention_type_id`.
+    - **C — TYPE+DATE**: same jurisdiction, `date_announced` within ±`type_date_window_days` (default 0 = exact match), same `intervention_type_id`. Set `type_date_window_days=7` for Claudino's Gate 0 to catch near-misses (JCC-1105).
     - **D — HS+DATE**: same jurisdiction, `date_announced` within ±`date_window_days`,
       ≥1 shared HS code.
     - **E — POOL**: wide net (jurisdiction + date window) — collected as a candidate pool.
@@ -1061,6 +1062,7 @@ async def find_duplicates(params: FindDuplicatesInput) -> str:
         description=params.description,
         exclude_state_act_ids=params.exclude_state_act_ids,
         date_window_days=params.date_window_days,
+        type_date_window_days=params.type_date_window_days,
         include_statuses=params.include_statuses,
         limit=params.limit,
     )

@@ -2428,6 +2428,7 @@ class GTADatabaseClient:
         description: Optional[str] = None,
         exclude_state_act_ids: Optional[list[int]] = None,
         date_window_days: int = 60,
+        type_date_window_days: int = 0,
         include_statuses: Optional[list[int]] = None,
         limit: int = 50,
     ) -> dict:
@@ -2436,7 +2437,11 @@ class GTADatabaseClient:
         Vectors run (skipped if their inputs are missing):
           - A: Source URL host+path verbatim match
           - B: Decree/regulation/notification number in title (LIKE within IJ)
-          - C: (jurisdiction + date_announced ±0d + intervention_type) triple
+          - C: (jurisdiction + date_announced ±`type_date_window_days` + intervention_type)
+               triple. Default `type_date_window_days=0` preserves the original
+               exact-date semantics; callers that want to catch near-misses (e.g.
+               two announcements of the same measure 1–4 days apart) should pass
+               7. JCC-1105 widened this for the Claudino Gate 0 path.
           - D: (jurisdiction + date_announced ±window + ≥1 HS code overlap)
           - E: (jurisdiction + date_announced ±window) — wide net pool returned
                for downstream semantic ranking (Vector G runs in the MCP layer)
@@ -2610,11 +2615,17 @@ class GTADatabaseClient:
                     for row in cursor.fetchall():
                         _add_hit(row, 'DECREE', shared_decree_tokens=token)
 
-        # ---- Vector C: (IJ + date_announced ±0d + intervention_type) triple ----
+        # ---- Vector C: (IJ + date_announced ±type_date_window_days + intervention_type) triple ----
         if jurisdiction_ids and date_announced and intervention_type_ids:
             vectors_run.append('TYPE+DATE')
             jur_in = ','.join(['%s'] * len(jurisdiction_ids))
             type_in = ','.join(['%s'] * len(intervention_type_ids))
+            if type_date_window_days <= 0:
+                date_clause = 'sa.date_announced = %s'
+                date_params = [date_announced]
+            else:
+                date_clause = 'sa.date_announced BETWEEN DATE_SUB(%s, INTERVAL %s DAY) AND DATE_ADD(%s, INTERVAL %s DAY)'
+                date_params = [date_announced, type_date_window_days, date_announced, type_date_window_days]
             sql = f'''
                 SELECT DISTINCT sa.state_act_id, sa.title, sa.status_id, sa.date_announced,
                        i.intervention_type_id
@@ -2623,12 +2634,12 @@ class GTADatabaseClient:
                 JOIN api_intervention_ij iij ON iij.intervention_id = i.intervention_id
                 WHERE iij.jurisdiction_id IN ({jur_in})
                   AND sa.status_id IN ({status_in})
-                  AND sa.date_announced = %s
+                  AND {date_clause}
                   AND i.intervention_type_id IN ({type_in})
             '''
             cursor.execute(
                 sql,
-                list(jurisdiction_ids) + list(include_statuses) + [date_announced] + list(intervention_type_ids),
+                list(jurisdiction_ids) + list(include_statuses) + date_params + list(intervention_type_ids),
             )
             for row in cursor.fetchall():
                 _add_hit(row, 'TYPE+DATE', shared_intervention_types=row['intervention_type_id'])
