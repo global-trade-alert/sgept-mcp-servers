@@ -1,19 +1,13 @@
 [project]
 name = "scrapling-mnt"
-version = "0.1.0"
-description = "Scrapling MCP Server - Stealth web scraping for Sancho Claudito (GTA + DPA author)"
+version = "0.2.0"
+description = "Thin MCP client over bastiat-api /scrape_urls/ — stealth web scraping for Sancho Claudito"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
-    "scrapling[fetchers]>=0.4.7",
-    "camoufox[geoip]>=0.4.0",
     "pydantic>=2.0.0",
-    "pypdf>=4.0.0",
     "httpx>=0.26.0",
-    "beautifulsoup4>=4.12.0",
-    "lxml>=5.0.0",
-    "google-genai>=0.3.0",
 ]
 
 [project.scripts]
@@ -30,6 +24,7 @@ packages = ["src/scrapling_mnt"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "respx>=0.21.0",
 ]
 
 [tool.pytest.ini_options]
